@@ -78,6 +78,11 @@ async function handleLogout() {
       <main :class="{ 'has-nav': isAuthenticated, 'has-topbar': isAuthenticated }">
         <router-view />
       </main>
+
+      <!-- Global FAB -->
+      <button v-if="isAuthenticated" class="fab" @click="router.push('/add')" title="Nuova misurazione">
+        <AppIcon name="plus" :size="24" color="var(--color-on-accent)" />
+      </button>
       <ConfirmDialog />
     </template>
   </div>
