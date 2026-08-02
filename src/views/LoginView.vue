@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
+import { APP_VERSION, BUILD_TIME, BUILD_NUMBER } from '@/services/version.js'
 
 const router = useRouter()
 const { login, requestPasswordReset, completePasswordReset } = useAuth()
@@ -152,6 +153,8 @@ async function handleCompleteRecovery() {
         </p>
       </template>
     </div>
+
+    <p class="version-info">v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}</p>
   </div>
 </template>
 
@@ -191,5 +194,13 @@ async function handleCompleteRecovery() {
 .login-header p {
   color: var(--color-text-secondary);
   font-size: 0.9375rem;
+}
+
+.version-info {
+  text-align: center;
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-lg);
+  opacity: 0.7;
 }
 </style>

@@ -10,6 +10,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import OfflineBanner from '@/components/OfflineBanner.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ProfilePrompt from '@/components/ProfilePrompt.vue'
+import { useSWUpdate } from '@/services/swUpdate.js'
 
 const router = useRouter()
 const { isAuthenticated, isAuthReady, user, logout } = useAuth()
@@ -18,6 +19,7 @@ const isInitializing = ref(true)
 const error = ref(null)
 const confirm = inject('confirm-dialog', null)
 const showProfilePrompt = ref(false)
+const { updateAvailable, applyUpdate } = useSWUpdate()
 
 onMounted(async () => {
   initPWAInstall()
@@ -88,6 +90,12 @@ async function handleLogout() {
           </button>
         </div>
       </header>
+
+      <!-- Update available banner -->
+      <div v-if="isAuthenticated && updateAvailable" class="update-banner">
+        <span>Nuova versione disponibile</span>
+        <button class="btn btn-sm btn-primary" @click="applyUpdate">Aggiorna ora</button>
+      </div>
 
       <OfflineBanner v-if="isAuthenticated" />
 
@@ -171,6 +179,21 @@ async function handleLogout() {
 }
 .topbar-btn:hover { background: var(--color-surface-overlay); color: var(--color-text-primary); }
 .topbar-btn:active { transform: scale(0.95); }
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-accent-muted);
+  border-bottom: 1px solid var(--color-accent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  animation: slideDown 0.3s ease;
+}
+@keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
 main { padding-bottom: 1rem; }
 main.has-topbar { padding-top: 48px; }

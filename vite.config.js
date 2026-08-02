@@ -2,9 +2,22 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
+import { execSync } from 'child_process'
+
+// Build info
+const buildTime = new Date().toISOString()
+const buildNumber = (() => {
+    try { return execSync('git rev-parse --short HEAD').toString().trim() }
+    catch { return 'dev' }
+})()
 
 export default defineConfig({
     base: '/pressione/',
+    define: {
+        __APP_VERSION__: JSON.stringify('1.0.0'),
+        __BUILD_TIME__: JSON.stringify(buildTime),
+        __BUILD_NUMBER__: JSON.stringify(buildNumber)
+    },
     plugins: [
         vue(),
         VitePWA({
