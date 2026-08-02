@@ -23,7 +23,7 @@ async function loadReport(pinHash = null) {
   try {
     const token = route.params.token
     const { data, error: err } = await supabase.from('settings')
-      .select('value').eq('username', '_share_' + token).single()
+      .select('value').eq('key', '_share_' + token).limit(1).maybeSingle()
 
     if (err || !data) throw new Error('not found')
     const stored = JSON.parse(data.value)

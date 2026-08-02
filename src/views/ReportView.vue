@@ -183,15 +183,16 @@ async function shareNative() {
 async function loadActiveLinks() {
   try {
     const { data } = await supabase.from('settings')
-      .select('username, value')
-      .like('username', '_share_%')
+      .select('key, value')
+      .eq('username', user.value.username)
+      .like('key', '_share_%')
     if (data) {
       activeLinks.value = data
         .filter(s => {
-          try { const v = JSON.parse(s.value); return v.username === user.value.username && !v.revoked && new Date(v.expiresAt) > new Date() }
+          try { const v = JSON.parse(s.value); return !v.revoked && new Date(v.expiresAt) > new Date() }
           catch { return false }
         })
-        .map(s => ({ token: s.username.replace('_share_', ''), ...JSON.parse(s.value) }))
+        .map(s => ({ token: s.key.replace('_share_', ''), ...JSON.parse(s.value) }))
     }
   } catch { activeLinks.value = [] }
 }
@@ -224,12 +225,12 @@ async function generateShareLink() {
       pinHash = await hashPin(pinClear)
     }
 
-    // Store in settings table (accessible via REST API)
+    // Store in settings table using user's real username as FK
     const expiresAt = new Date(Date.now() + 48 * 3600000).toISOString()
     const { error } = await supabase.from('settings').upsert({
-      username: '_share_' + token,
-      key: 'data',
-      value: JSON.stringify({ reportData, pinHash, username: user.value.username, expiresAt, revoked: false }),
+      username: user.value.username,
+      key: '_share_' + token,
+      value: JSON.stringify({ reportData, pinHash, expiresAt, revoked: false }),
       updated_at: new Date().toISOString()
     })
     if (error) throw error
@@ -254,10 +255,11 @@ function copyLink() {
 
 async function revokeLink(token) {
   try {
-    const { data } = await supabase.from('settings').select('value').eq('username', '_share_' + token).single()
+    const key = '_share_' + token
+    const { data } = await supabase.from('settings').select('value').eq('username', user.value.username).eq('key', key).single()
     if (data) {
       const v = JSON.parse(data.value); v.revoked = true
-      await supabase.from('settings').upsert({ username: '_share_' + token, key: 'data', value: JSON.stringify(v), updated_at: new Date().toISOString() })
+      await supabase.from('settings').upsert({ username: user.value.username, key, value: JSON.stringify(v), updated_at: new Date().toISOString() })
     }
     activeLinks.value = activeLinks.value.filter(l => l.token !== token)
     linkMessage.value = 'Link revocato.'
