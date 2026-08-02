@@ -8,6 +8,7 @@ import { getCategoryColor } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
 import CategoryBadge from '@/components/CategoryBadge.vue'
 import AppIcon from '@/components/AppIcon.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const router = useRouter()
 const { user } = useAuth()
@@ -129,6 +130,13 @@ const latestCategoryColor = computed(() => {
           @edit="editReading"
         />
       </div>
+    </div>
+
+    <!-- Loading -->
+    <div v-if="isLoading">
+      <SkeletonLoader type="card" :count="2" height="140px" class="mb-md" />
+      <SkeletonLoader type="stats" class="mb-md" />
+      <SkeletonLoader type="card" :count="3" height="80px" />
     </div>
 
     <!-- Empty State -->

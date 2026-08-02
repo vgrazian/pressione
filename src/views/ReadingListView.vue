@@ -6,6 +6,8 @@ import { getReadings, deleteReading, refreshFromServer } from '@/services/dataSe
 import { ALL_CATEGORIES, getCategoryLabel } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
 import AppIcon from '@/components/AppIcon.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import { CONFIRM_DIALOG_KEY } from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const { user } = useAuth()
@@ -83,8 +85,8 @@ function goToAdd() {
     </div>
 
     <!-- Readings List -->
-    <div v-if="isLoading" class="empty-state">
-      <p>Caricamento...</p>
+    <div v-if="isLoading" class="p-lg">
+      <SkeletonLoader type="card" :count="5" height="110px" />
     </div>
 
     <div v-else-if="readings.length === 0" class="empty-state">

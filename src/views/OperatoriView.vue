@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import { useAuth } from '@/services/auth.js'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const { user, fetchUsers, updateUserRole, deactivateUser, adminResetUserPassword } = useAuth()
 
@@ -95,7 +96,9 @@ async function handleResetPassword() {
       <p style="color: var(--color-error);">{{ errorMessage }}</p>
     </div>
 
-    <div v-if="isLoading" class="empty-state"><p>Caricamento...</p></div>
+    <div v-if="isLoading" class="p-lg">
+      <SkeletonLoader type="card" :count="5" height="60px" />
+    </div>
 
     <div v-else class="card">
       <div class="users-list">

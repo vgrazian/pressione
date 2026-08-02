@@ -5,6 +5,7 @@ import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics, linearRegression, movingAverage } from '@/services/statistics.js'
 import { getCategoryLabel, ALL_CATEGORIES } from '@/services/categories.js'
 import AppIcon from '@/components/AppIcon.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const { user } = useAuth()
 
@@ -100,7 +101,11 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
       >{{ opt.label }}</button>
     </div>
 
-    <div v-if="isLoading" class="empty-state"><p>Caricamento...</p></div>
+    <div v-if="isLoading" class="p-lg">
+      <SkeletonLoader type="stats" class="mb-md" />
+      <SkeletonLoader type="chart" class="mb-md" />
+      <SkeletonLoader type="card" :count="3" height="40px" />
+    </div>
 
     <template v-else-if="filteredReadings.length > 0">
       <!-- Summary Cards -->

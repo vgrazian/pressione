@@ -6,7 +6,7 @@ import { deleteAllReadings, getReminders, upsertReminder, deleteReminder } from 
 import { isAdmin } from '@/services/rbac.js'
 
 const router = useRouter()
-const { user, logout, changePassword, updateUserEmail } = useAuth()
+const { user, changePassword, updateUserEmail } = useAuth()
 
 const confirm = inject('confirm-dialog')
 const reminders = ref([])
@@ -119,19 +119,6 @@ async function handleDeleteAll() {
     router.push('/')
   }
 }
-
-// --- Logout ---
-async function handleLogout() {
-  const confirmed = await confirm({
-    title: 'Logout',
-    message: 'Vuoi effettuare il logout?',
-    confirmText: 'Esci'
-  })
-  if (confirmed) {
-    await logout()
-    router.push('/login')
-  }
-}
 </script>
 
 <template>
@@ -226,11 +213,6 @@ async function handleLogout() {
     <div class="card mb-md" style="border: 1px solid var(--color-error);">
       <h3 class="mb-sm" style="color: var(--color-error);">Zona Pericolosa</h3>
       <button class="btn btn-error btn-sm" @click="handleDeleteAll">Elimina Tutte le Misurazioni</button>
-    </div>
-
-    <!-- Logout -->
-    <div class="card mb-md">
-      <button class="btn btn-secondary btn-block" @click="handleLogout">Logout</button>
     </div>
 
     <p class="text-center" style="color: var(--color-text-secondary); font-size: 0.75rem; padding: var(--space-lg);">

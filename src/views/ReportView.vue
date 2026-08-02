@@ -5,6 +5,7 @@ import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics } from '@/services/statistics.js'
 import { getCategoryLabel } from '@/services/categories.js'
 import AppIcon from '@/components/AppIcon.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const { user } = useAuth()
 
@@ -125,7 +126,9 @@ async function shareReport() {
       >{{ opt.label }}</button>
     </div>
 
-    <div v-if="isLoading" class="empty-state"><p>Caricamento...</p></div>
+    <div v-if="isLoading" class="p-lg">
+      <SkeletonLoader type="text" :count="12" />
+    </div>
 
     <template v-else-if="filteredReadings.length > 0">
       <div class="card mb-md">
