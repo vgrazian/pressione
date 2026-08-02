@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { getReadings, deleteReading, refreshFromServer } from '@/services/dataService.js'
@@ -10,11 +10,11 @@ import AppIcon from '@/components/AppIcon.vue'
 const router = useRouter()
 const { user } = useAuth()
 
+const confirm = inject('confirm-dialog')
 const readings = ref([])
 const isLoading = ref(true)
 const searchQuery = ref('')
 const categoryFilter = ref('')
-const confirmDialog = ref(null)
 
 onMounted(async () => {
   await loadData()
@@ -38,7 +38,7 @@ function editReading(reading) {
 }
 
 async function handleDelete(reading) {
-  const confirmed = await confirmDialog.value?.show({
+  const confirmed = await confirm({
     title: 'Elimina misurazione',
     message: `Eliminare la misurazione di ${new Date(reading.timestamp).toLocaleDateString('it-IT')}?`,
     confirmText: 'Elimina',

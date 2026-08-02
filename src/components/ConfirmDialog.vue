@@ -1,12 +1,12 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, provide } from 'vue'
 
 const visible = ref(false)
 const title = ref('')
 const message = ref('')
 const confirmText = ref('Conferma')
 const cancelText = ref('Annulla')
-const variant = ref('default') // 'default' | 'danger'
+const variant = ref('default')
 let resolvePromise = null
 
 function show(options = {}) {
@@ -37,6 +37,8 @@ function cancel() {
     resolvePromise = null
   }
 }
+
+provide('confirm-dialog', show)
 
 defineExpose({ show })
 </script>

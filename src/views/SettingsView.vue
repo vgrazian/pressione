@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { deleteAllReadings, getReminders, upsertReminder, deleteReminder } from '@/services/dataService.js'
@@ -8,7 +8,7 @@ import { isAdmin } from '@/services/rbac.js'
 const router = useRouter()
 const { user, logout, changePassword, updateUserEmail } = useAuth()
 
-const confirmDialog = ref(null)
+const confirm = inject('confirm-dialog')
 const reminders = ref([])
 const showPasswordForm = ref(false)
 const showEmailForm = ref(false)
@@ -43,7 +43,7 @@ async function saveReminder(reminder) {
 }
 
 async function removeReminder(reminder) {
-  const confirmed = await confirmDialog.value?.show({
+  const confirmed = await confirm({
     title: 'Rimuovi promemoria',
     message: 'Eliminare questo promemoria?',
     confirmText: 'Rimuovi',
@@ -108,7 +108,7 @@ async function handleEmailChange() {
 
 // --- Data Management ---
 async function handleDeleteAll() {
-  const confirmed = await confirmDialog.value?.show({
+  const confirmed = await confirm({
     title: 'Elimina tutti i dati',
     message: 'Questa operazione è irreversibile. Eliminare TUTTE le misurazioni?',
     confirmText: 'Elimina tutto',
@@ -122,7 +122,7 @@ async function handleDeleteAll() {
 
 // --- Logout ---
 async function handleLogout() {
-  const confirmed = await confirmDialog.value?.show({
+  const confirmed = await confirm({
     title: 'Logout',
     message: 'Vuoi effettuare il logout?',
     confirmText: 'Esci'

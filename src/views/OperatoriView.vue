@@ -1,13 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useAuth } from '@/services/auth.js'
 
 const { user, fetchUsers, updateUserRole, deactivateUser, adminResetUserPassword } = useAuth()
 
+const confirm = inject('confirm-dialog')
 const users = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
-const confirmDialog = ref(null)
 const resetUser = ref(null)
 const newPassword = ref('')
 
@@ -45,7 +45,7 @@ async function handleDeactivate(targetUser) {
     errorMessage.value = 'Non puoi disattivare il tuo account'
     return
   }
-  const confirmed = await confirmDialog.value?.show({
+  const confirmed = await confirm({
     title: 'Disattiva utente',
     message: `Disattivare l'utente "${targetUser.username}"?`,
     confirmText: 'Disattiva',
