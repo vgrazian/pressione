@@ -54,6 +54,11 @@ const routes = [
         name: 'operators',
         component: () => import('@/views/OperatoriView.vue'),
         meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+        path: '/share/:token',
+        name: 'sharedReport',
+        component: () => import('@/views/SharedReportView.vue')
     }
 ]
 
