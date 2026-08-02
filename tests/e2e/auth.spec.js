@@ -9,7 +9,7 @@ test.describe('Auth Flow', () => {
     })
 
     // Skipped: users table not exposed via Supabase REST API
-  test.skip('should login with bot credentials via form', async ({ page }) => {
+    test.skip('should login with bot credentials via form', async ({ page }) => {
         await loginViaForm(page, 'bot', 'test1234')
     })
 
