@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, ref, inject } from 'vue'
+import { onMounted, ref, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { initAuth, useAuth } from '@/services/auth.js'
 import { useTheme } from '@/services/theme.js'
+import { initKeepAlive } from '@/services/keepAlive.js'
 import AppNav from '@/components/AppNav.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import OfflineBanner from '@/components/OfflineBanner.vue'
@@ -24,6 +25,11 @@ onMounted(async () => {
     isInitializing.value = false
   }
 })
+
+// Start keep-alive when user logs in
+watch(() => user.value?.username, (username) => {
+  if (username) initKeepAlive(username)
+}, { immediate: true })
 
 async function handleLogout() {
   if (!confirm) {

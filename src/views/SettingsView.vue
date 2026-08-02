@@ -5,6 +5,7 @@ import { useAuth } from '@/services/auth.js'
 import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, generateTestData, refreshFromServer, backupData, restoreData } from '@/services/dataService.js'
 import { isAdmin } from '@/services/rbac.js'
 import { useI18n } from '@/services/i18n.js'
+import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, getStorageInfo, formatBytes } from '@/services/keepAlive.js'
 
 const router = useRouter()
 const { user, changePassword, updateUserEmail } = useAuth()
@@ -23,11 +24,17 @@ const emailError = ref('')
 const emailSuccess = ref('')
 const message = ref('')
 const restoreInput = ref(null)
+const keepAliveOn = ref(false)
+const storageInfo = ref(null)
 
 onMounted(async () => {
   try {
     reminders.value = await getReminders(user.value.username).catch(() => [])
   } catch { reminders.value = [] }
+  keepAliveOn.value = await isKeepAliveEnabled(user.value.username)
+  if (keepAliveOn.value) {
+    storageInfo.value = await getStorageInfo()
+  }
 })
 
 // --- Language ---
@@ -120,6 +127,19 @@ async function handleRestore(e) {
   } catch (err) { message.value = err.message }
   e.target.value = ''
 }
+
+// --- Keep-Alive ---
+async function toggleKeepAlive() {
+  if (keepAliveOn.value) {
+    await stopKeepAlive()
+    keepAliveOn.value = false
+    storageInfo.value = null
+  } else {
+    await startKeepAlive(user.value.username)
+    keepAliveOn.value = true
+    storageInfo.value = await getStorageInfo()
+  }
+}
 </script>
 
 <template>
@@ -203,6 +223,26 @@ async function handleRestore(e) {
       <div v-if="message" class="form-success mt-sm">{{ message }}</div>
     </div>
 
+    <!-- Database Keep-Alive -->
+    <div class="card mb-md">
+      <div class="flex justify-between items-center mb-sm">
+        <h3>🔄 Keep-Alive Database</h3>
+        <label class="toggle-switch">
+          <input type="checkbox" :checked="keepAliveOn" @change="toggleKeepAlive" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <p class="text-secondary" style="font-size:0.875rem">
+        Mantiene il database attivo con ping periodici a Supabase e richiede archiviazione persistente per evitare che i dati vengano eliminati dal browser.
+      </p>
+      <div v-if="keepAliveOn && storageInfo" class="mt-sm" style="font-size:0.875rem">
+        <p><strong>Stato archiviazione:</strong> {{ storageInfo.persisted ? '✅ Persistente' : '⚠️ Non persistente (i dati potrebbero essere rimossi)' }}</p>
+        <p><strong>Spazio usato:</strong> {{ formatBytes(storageInfo.usage) }} / {{ formatBytes(storageInfo.quota) }}
+          <span v-if="storageInfo.percent !== null">({{ storageInfo.percent }}%)</span>
+        </p>
+      </div>
+    </div>
+
     <!-- Admin -->
     <div v-if="isAdmin(user)" class="card mb-md">
       <h3 class="mb-sm">{{ t('admin') }}</h3>
@@ -228,4 +268,32 @@ async function handleRestore(e) {
   font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .day-chip.active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border);
+  border-radius: 26px;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  left: 3px; bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--color-accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
 </style>

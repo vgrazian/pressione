@@ -7,7 +7,6 @@ import { ALL_CATEGORIES, getCategoryLabel } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
-import { CONFIRM_DIALOG_KEY } from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const { user } = useAuth()
