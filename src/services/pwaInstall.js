@@ -40,8 +40,11 @@ export function isIOS() {
  * Whether the app is already running in standalone (installed) mode.
  */
 export function isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches ||
-        (typeof navigator !== 'undefined' && navigator.standalone) // iOS Safari
+    const mqMatches = typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia('(display-mode: standalone)').matches
+        : false
+    const iosStandalone = typeof navigator !== 'undefined' && navigator.standalone
+    return !!(mqMatches || iosStandalone)
 }
 
 /**

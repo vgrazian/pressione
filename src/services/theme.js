@@ -1,7 +1,14 @@
 import { ref, watch } from 'vue'
 
 const THEME_KEY = 'pressione_theme'
-const theme = ref(localStorage.getItem(THEME_KEY) || 'system')
+
+// Safe localStorage access for SSR/test environments
+function getStoredTheme() {
+    try { return localStorage.getItem(THEME_KEY) }
+    catch { return null }
+}
+
+const theme = ref(getStoredTheme() || 'system')
 
 export function useTheme() {
     function apply(mode) {
@@ -17,7 +24,7 @@ export function useTheme() {
 
     function setTheme(mode) {
         theme.value = mode
-        localStorage.setItem(THEME_KEY, mode)
+        try { localStorage.setItem(THEME_KEY, mode) } catch { }
         apply(mode)
     }
 

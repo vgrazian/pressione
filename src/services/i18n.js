@@ -236,7 +236,16 @@ const messages = {
     }
 }
 
-const currentLang = ref(localStorage.getItem(STORAGE_KEY) || 'it')
+function safeGet(key, fallback) {
+    try { return localStorage.getItem(key) || fallback }
+    catch { return fallback }
+}
+function safeSet(key, value) {
+    try { localStorage.setItem(key, value) }
+    catch { /* noop */ }
+}
+
+const currentLang = ref(safeGet(STORAGE_KEY, 'it'))
 
 export function useI18n() {
     const t = (key) => {
@@ -246,7 +255,7 @@ export function useI18n() {
     const setLang = (lang) => {
         if (messages[lang]) {
             currentLang.value = lang
-            localStorage.setItem(STORAGE_KEY, lang)
+            safeSet(STORAGE_KEY, lang)
         }
     }
 
