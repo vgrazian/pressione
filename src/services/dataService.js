@@ -249,3 +249,47 @@ export async function deleteReminder(id, username) {
 export async function getReminders(username) {
     return db.reminders.where('username').equals(username).toArray()
 }
+
+/**
+ * Export readings as CSV and trigger download
+ */
+export async function exportCSV(readings) {
+  const headers = ['Data', 'Ora', 'Sistolica (mmHg)', 'Diastolica (mmHg)', 'Freq. Cardiaca (BPM)', 'Categoria', 'Note']
+  const rows = readings.map(r => {
+    const d = new Date(r.timestamp)
+    return [
+      d.toLocaleDateString('it-IT'),
+      d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+      r.systolic,
+      r.diastolic,
+      r.heartRate,
+      r.category || '',
+      `"${(r.notes || '').replace(/"/g, '""')}"`
+    ].join(',')
+  })
+
+  const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `pressione_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * Generate test data via Supabase RPC
+ */
+export async function generateTestData(username, count = 30) {
+  if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+
+  const { error } = await supabase.rpc('generate_test_data', {
+    p_username: username,
+    p_count: count
+  })
+
+  if (error) throw new Error('Errore generazione dati: ' + error.message)
+  return count
+}

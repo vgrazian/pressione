@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
-import { upsertReading, getReadingById } from '@/services/dataService.js'
+import { upsertReading, getReadingById, getReadings } from '@/services/dataService.js'
 import { classifyReading, getCategoryColor, getCategoryLabel } from '@/services/categories.js'
 
 const route = useRoute()
@@ -69,6 +69,19 @@ function validate() {
   return null
 }
 
+async function checkDuplicate(timestamp, sys, dia, hr) {
+  if (isEdit.value) return false
+  const recent = await getReadings(user.value.username, { limit: 20 })
+  const tenMinAgo = new Date(timestamp).getTime() - 10 * 60 * 1000
+  const tenMinAfter = new Date(timestamp).getTime() + 10 * 60 * 1000
+
+  return recent.some(r => {
+    const rt = new Date(r.timestamp).getTime()
+    return rt >= tenMinAgo && rt <= tenMinAfter &&
+      r.systolic === sys && r.diastolic === dia && r.heartRate === hr
+  })
+}
+
 async function handleSave() {
   errorMessage.value = ''
   const validationError = validate()
@@ -80,10 +93,22 @@ async function handleSave() {
   isSaving.value = true
   try {
     const timestamp = new Date(`${date.value}T${time.value}`).toISOString()
+    const sys = parseInt(systolic.value)
+    const dia = parseInt(diastolic.value)
+    const hr = parseInt(heartRate.value)
+
+    // Duplicate check
+    const isDuplicate = await checkDuplicate(timestamp, sys, dia, hr)
+    if (isDuplicate) {
+      errorMessage.value = 'Hai già inserito una misurazione simile negli ultimi 10 minuti.'
+      isSaving.value = false
+      return
+    }
+
     const reading = {
-      systolic: parseInt(systolic.value),
-      diastolic: parseInt(diastolic.value),
-      heartRate: parseInt(heartRate.value),
+      systolic: sys,
+      diastolic: dia,
+      heartRate: hr,
       timestamp,
       notes: notes.value.trim()
     }

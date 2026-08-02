@@ -12,8 +12,8 @@ const { user } = useAuth()
 const readings = ref([])
 const stats = ref(null)
 const isLoading = ref(true)
-const dateRange = ref('all') // '7d', '30d', '90d', '180d', '365d', 'all'
-const trendType = ref('linear')
+const dateRange = ref('all')
+const trendType = ref('none') // 'none', 'linear', 'movingAverage'
 
 const dateRangeOptions = [
   { value: '7d', label: '7 giorni' },
@@ -22,6 +22,12 @@ const dateRangeOptions = [
   { value: '180d', label: '6 mesi' },
   { value: '365d', label: '1 anno' },
   { value: 'all', label: 'Tutto' }
+]
+
+const trendOptions = [
+  { value: 'none', label: 'Nessuno' },
+  { value: 'linear', label: 'Lineare' },
+  { value: 'movingAverage', label: 'Media mobile' }
 ]
 
 onMounted(async () => {
@@ -81,6 +87,21 @@ const maLine = computed(() => {
 
 const maxSystolic = computed(() => Math.max(...chartData.value.map(d => d.ySystolic), 0) + 20)
 const maxDiastolic = computed(() => Math.max(...chartData.value.map(d => d.yDiastolic), 0) + 20)
+
+// Trend points for SVG overlay
+const trendPoints = computed(() => {
+  if (!trendLine.value || chartData.value.length < 2) return ''
+  const pts = chartData.value.map((d, i) => {
+    const y = trendLine.value.slope * i + trendLine.value.intercept
+    return `${i},${(maxSystolic.value - Math.max(0, Math.min(y, maxSystolic.value)))}`
+  })
+  return pts.join(' ')
+})
+
+const maPoints = computed(() => {
+  if (!maLine.value || chartData.value.length < 3) return ''
+  return maLine.value.map((v, i) => `${i},${(maxSystolic.value - Math.max(0, Math.min(v, maxSystolic.value)))}`).join(' ')
+})
 const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate), 0) + 20)
 </script>
 
@@ -128,9 +149,16 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
         </div>
       </div>
 
-      <!-- BP Chart (Simple ASCII-style visualization) -->
+      <!-- BP Chart -->
       <div class="chart-container card mb-md">
-        <h3>Andamento Pressione</h3>
+        <div class="flex justify-between items-center mb-sm">
+          <h3>Andamento Pressione</h3>
+          <div class="flex gap-sm">
+            <button v-for="opt in trendOptions" :key="opt.value"
+              class="chip" :class="{ 'chip--active': trendType === opt.value }"
+              @click="trendType = opt.value">{{ opt.label }}</button>
+          </div>
+        </div>
         <div class="chart bp-chart">
           <div class="chart-y-axis">
             <span>{{ maxSystolic }}</span>
@@ -138,6 +166,13 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
             <span>0</span>
           </div>
           <div class="chart-area">
+            <!-- Trend line overlay -->
+            <svg v-if="trendType === 'linear' && trendPoints" class="chart-trend-svg">
+              <polyline :points="trendPoints" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="4,3" />
+            </svg>
+            <svg v-if="trendType === 'movingAverage' && maPoints" class="chart-trend-svg">
+              <polyline :points="maPoints" fill="none" stroke="var(--color-accent)" stroke-width="2" />
+            </svg>
             <div
               v-for="(point, i) in chartData"
               :key="i"
@@ -278,7 +313,14 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
   border-bottom: 1px solid var(--color-border);
   border-left: 1px solid var(--color-border);
 }
-
+.chart-trend-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
 .chart-bar-group {
   position: absolute;
   bottom: 0;
