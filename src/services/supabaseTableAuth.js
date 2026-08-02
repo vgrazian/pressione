@@ -71,7 +71,11 @@ export async function loginWithTable({ username, password }) {
     return {
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        age: user.age || null,
+        gender: user.gender || null,
+        profileCompleted: user.profile_completed || false,
+        skipProfilePrompt: user.skip_profile_prompt || false
     }
 }
 
@@ -190,4 +194,21 @@ export async function adminResetPassword(adminUsername, targetUsername, newPassw
         p_new_password: newPassword
     })
     if (error) throw new Error('Errore: ' + error.message)
+}
+
+/**
+ * Update user profile (age, gender, flags)
+ */
+export async function updateProfile(username, { age, gender, profileCompleted, skipProfilePrompt }) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+    const updates = { updated_at: new Date().toISOString() }
+    if (age !== undefined) updates.age = age
+    if (gender !== undefined) updates.gender = gender
+    if (profileCompleted !== undefined) updates.profile_completed = profileCompleted
+    if (skipProfilePrompt !== undefined) updates.skip_profile_prompt = skipProfilePrompt
+
+    const { error } = await supabase.from('users')
+        .update(updates)
+        .eq('username', username)
+    if (error) throw new Error('Errore aggiornamento profilo: ' + error.message)
 }

@@ -12,7 +12,8 @@ import {
     updateEmail,
     createRecoveryToken,
     resetPasswordWithToken,
-    adminResetPassword
+    adminResetPassword,
+    updateProfile
 } from './supabaseTableAuth'
 
 const SESSION_KEY = 'pressione_session'
@@ -39,7 +40,8 @@ export function useAuth() {
         fetchUsers,
         updateUserRole,
         deactivateUser,
-        refreshSession
+        refreshSession,
+        updateUserProfile
     }
 }
 
@@ -57,7 +59,11 @@ export async function initAuth() {
                 state.user = {
                     username: session.username,
                     email: session.email,
-                    role: session.role
+                    role: session.role,
+                    age: session.age || null,
+                    gender: session.gender || null,
+                    profileCompleted: session.profileCompleted || false,
+                    skipProfilePrompt: session.skipProfilePrompt || false
                 }
                 state.isAuthenticated = true
             } else {
@@ -75,7 +81,11 @@ export async function initAuth() {
                     state.user = {
                         username: session.username,
                         email: session.email,
-                        role: session.role
+                        role: session.role,
+                        age: session.age || null,
+                        gender: session.gender || null,
+                        profileCompleted: session.profileCompleted || false,
+                        skipProfilePrompt: session.skipProfilePrompt || false
                     }
                     state.isAuthenticated = true
                     localStorage.setItem(SESSION_KEY, dbSession)
@@ -133,6 +143,10 @@ function createSession(userData) {
         username: userData.username,
         email: userData.email,
         role: userData.role,
+        age: userData.age || null,
+        gender: userData.gender || null,
+        profileCompleted: userData.profileCompleted || false,
+        skipProfilePrompt: userData.skipProfilePrompt || false,
         expiresAt: expiresAt.toISOString()
     }
 
@@ -143,7 +157,11 @@ function createSession(userData) {
     state.user = {
         username: userData.username,
         email: userData.email,
-        role: userData.role
+        role: userData.role,
+        age: userData.age || null,
+        gender: userData.gender || null,
+        profileCompleted: userData.profileCompleted || false,
+        skipProfilePrompt: userData.skipProfilePrompt || false
     }
     state.isAuthenticated = true
 
@@ -219,6 +237,19 @@ async function updateUserEmail(newEmail) {
     const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}')
     stored.email = newEmail.toLowerCase().trim()
     localStorage.setItem(SESSION_KEY, JSON.stringify(stored))
+}
+
+/**
+ * Update current user's profile (age, gender, flags)
+ */
+async function updateUserProfile({ age, gender, profileCompleted, skipProfilePrompt }) {
+    if (!state.user) throw new Error('Non autenticato')
+    await updateProfile(state.user.username, { age, gender, profileCompleted, skipProfilePrompt })
+    if (age !== undefined) state.user.age = age
+    if (gender !== undefined) state.user.gender = gender
+    if (profileCompleted !== undefined) state.user.profileCompleted = profileCompleted
+    if (skipProfilePrompt !== undefined) state.user.skipProfilePrompt = skipProfilePrompt
+    refreshSession()
 }
 
 /**

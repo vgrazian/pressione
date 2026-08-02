@@ -16,20 +16,22 @@ import { getCategoryLabel, classifyReading } from '@/services/categories.js'
 
 // ── Design Tokens ──────────────────────────────────────────────
 const C = {
-    brand:    [0, 108, 76],   // #006C4C — primary medical green
-    brandBg:  [232, 245, 233],// #E8F5E9 — tint
-    text:     [51, 51, 51],   // #333
-    body:     [85, 85, 85],   // #555
-    muted:    [136, 136, 136],// #888
-    white:    [255, 255, 255],
-    error:    [186, 26, 26],  // #BA1A1A — dangerous values
-    warning:  [239, 108, 0],  // #EF6C00 — caution zone
+    brand: [0, 108, 76],   // #006C4C — primary medical green
+    brandBg: [232, 245, 233],// #E8F5E9 — tint
+    text: [51, 51, 51],   // #333
+    body: [85, 85, 85],   // #555
+    muted: [136, 136, 136],// #888
+    white: [255, 255, 255],
+    error: [186, 26, 26],  // #BA1A1A — dangerous values
+    warning: [239, 108, 0],  // #EF6C00 — caution zone
     critical: [211, 47, 47],  // crisis red
-    ok:       [0, 108, 76],   // normal range
-    surface:  [248, 249, 247],
+    ok: [0, 108, 76],   // normal range
+    surface: [248, 249, 247],
 }
 const S = { m: 14, gap: 8, in: 4, rh: 5.5, hh: 5.5 }
 const T = { h1: 12, h2: 10.5, h3: 9, body: 8.5, sm: 7.5, xs: 6.5 }
+
+function genderLabel(g) { return g === 'male' ? 'M' : g === 'female' ? 'F' : '' }
 
 // ── Chart helpers ──────────────────────────────────────────────
 async function renderChart(config, w, h) {
@@ -39,7 +41,7 @@ async function renderChart(config, w, h) {
     try {
         const { Chart, registerables } = await import('chart.js')
         Chart.register(...registerables)
-        try { const a = await import('chartjs-plugin-annotation'); Chart.register(a.default) } catch {}
+        try { const a = await import('chartjs-plugin-annotation'); Chart.register(a.default) } catch { }
         new Chart(c.getContext('2d'), config)
         await new Promise(r => setTimeout(r, 300))
         return c.toDataURL('image/png')
@@ -66,7 +68,7 @@ function makeLineChart(readings) {
                     annotations: {
                         zoneNormal: { type: 'box', yMin: 90, yMax: 140, backgroundColor: 'rgba(0,108,76,0.04)', borderWidth: 0 },
                         line140: { type: 'line', yMin: 140, yMax: 140, borderColor: 'rgba(186,26,26,0.3)', borderWidth: 1, borderDash: [4, 4], label: { display: true, content: '140', position: 'end', font: { size: 7 }, backgroundColor: 'rgba(255,255,255,0.7)' } },
-                        line90:  { type: 'line', yMin: 90, yMax: 90, borderColor: 'rgba(25,118,210,0.3)', borderWidth: 1, borderDash: [4, 4], label: { display: true, content: '90', position: 'end', font: { size: 7 }, backgroundColor: 'rgba(255,255,255,0.7)' } }
+                        line90: { type: 'line', yMin: 90, yMax: 90, borderColor: 'rgba(25,118,210,0.3)', borderWidth: 1, borderDash: [4, 4], label: { display: true, content: '90', position: 'end', font: { size: 7 }, backgroundColor: 'rgba(255,255,255,0.7)' } }
                     }
                 }
             },
@@ -117,13 +119,15 @@ function addHeader(doc, opts) {
     const from = opts.data.length ? new Date(opts.data[opts.data.length - 1].timestamp).toLocaleDateString('it-IT') : 'N/D'
     const to = opts.data.length ? new Date(opts.data[0].timestamp).toLocaleDateString('it-IT') : 'N/D'
     const patient = opts.anonymize ? 'Anonimo' : (opts.username || '—')
-    doc.text(`Paziente: ${patient}    •    Periodo: ${from} – ${to}    •    ${opts.data.length} misurazioni    •    Generato: ${new Date().toLocaleDateString('it-IT')}`, S.m, y)
+    const ageStr = !opts.anonymize && opts.age ? `, ${opts.age} anni` : ''
+    const genderStr = !opts.anonymize && opts.gender ? `, ${genderLabel(opts.gender)}` : ''
+    doc.text(`Paziente: ${patient}${ageStr}${genderStr}    •    Periodo: ${from} – ${to}    •    ${opts.data.length} misurazioni    •    Generato: ${new Date().toLocaleDateString('it-IT')}`, S.m, y)
 
     return y + S.gap
 }
 
 // ── Section: Clinical Summary ──────────────────────────────────
-function addClinicalSummary(doc, y, stats, readings) {
+function addClinicalSummary(doc, y, stats, readings, opts) {
     const surge = computeMorningSurge(readings)
     const load = computeHypertensiveLoad(readings)
     const hrv = computeHRV(readings)
@@ -197,6 +201,20 @@ function addClinicalSummary(doc, y, stats, readings) {
         doc.setTextColor(...C.ok)
         doc.text('✓ Nessun indicatore di rischio rilevato nel periodo.', S.m + 2, y)
         y += 5
+    }
+
+    // Age-specific note
+    if (opts.age) {
+        y += 2
+        doc.setFontSize(T.xs)
+        doc.setTextColor(...C.muted)
+        if (opts.age >= 65) {
+            doc.text(`Nota: per età ≥65 anni, il target pressorio raccomandato è <140/90 mmHg (ESC/ESH 2024).`, S.m + 2, y)
+            y += 4
+        } else if (opts.age < 18) {
+            doc.text(`Nota: per età <18 anni i riferimenti ESC/ESH standard potrebbero non applicarsi. Consultare il pediatra.`, S.m + 2, y)
+            y += 4
+        }
     }
 
     return y + S.gap
@@ -434,12 +452,13 @@ function addFooter(doc, pageNum, totalPages) {
 }
 
 // ── Main ───────────────────────────────────────────────────────
-export async function generatePDF({ data, readings7, readings30, username, anonymize, includeCharts, includeHistory }) {
+export async function generatePDF({ data, readings7, readings30, username, age, gender, anonymize, includeCharts, includeHistory }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
     const stats = computeStatistics(data)
+    const opts = { data, username, age, gender, anonymize }
 
-    let y = addHeader(doc, { data, username, anonymize })
-    y = addClinicalSummary(doc, y, stats, data)
+    let y = addHeader(doc, opts)
+    y = addClinicalSummary(doc, y, stats, data, opts)
     y = addStatsTable(doc, y, readings7, readings30, data)
 
     if (includeCharts && data.length >= 2) {

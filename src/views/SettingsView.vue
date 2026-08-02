@@ -9,7 +9,7 @@ import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, g
 import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/services/pwaInstall.js'
 
 const router = useRouter()
-const { user, changePassword, updateUserEmail } = useAuth()
+const { user, changePassword, updateUserEmail, updateUserProfile } = useAuth()
 const { t, setLang, currentLang, availableLangs } = useI18n()
 
 const confirm = inject('confirm-dialog')
@@ -27,6 +27,9 @@ const message = ref('')
 const restoreInput = ref(null)
 const keepAliveOn = ref(false)
 const storageInfo = ref(null)
+const profileAge = ref('')
+const profileGender = ref('')
+const profileMessage = ref('')
 
 onMounted(async () => {
   try {
@@ -36,6 +39,8 @@ onMounted(async () => {
   if (keepAliveOn.value) {
     storageInfo.value = await getStorageInfo()
   }
+  profileAge.value = user.value?.age || ''
+  profileGender.value = user.value?.gender || ''
 })
 
 // --- Language ---
@@ -129,6 +134,27 @@ async function handleRestore(e) {
   e.target.value = ''
 }
 
+// --- Profile ---
+async function handleSaveProfile() {
+  profileMessage.value = ''
+  try {
+    const ageNum = profileAge.value ? parseInt(profileAge.value) : null
+    if (ageNum !== null && (ageNum < 1 || ageNum > 120)) {
+      profileMessage.value = "L'età deve essere tra 1 e 120 anni"
+      return
+    }
+    await updateUserProfile({
+      age: ageNum,
+      gender: profileGender.value || null,
+      profileCompleted: true
+    })
+    profileMessage.value = 'Profilo aggiornato!'
+    setTimeout(() => profileMessage.value = '', 3000)
+  } catch (e) {
+    profileMessage.value = e.message
+  }
+}
+
 // --- Keep-Alive ---
 async function toggleKeepAlive() {
   if (keepAliveOn.value) {
@@ -188,6 +214,27 @@ async function handleInstall() {
         <div v-if="emailSuccess" class="form-success mb-sm">{{ emailSuccess }}</div>
         <button class="btn btn-primary btn-sm" @click="handleEmailChange">{{ t('update_email') }}</button>
       </div>
+
+      <!-- Age & Gender -->
+      <hr style="margin:var(--space-md) 0;border-color:var(--color-border)" />
+      <p class="text-secondary mb-sm" style="font-size:0.8125rem">Età e genere aiutano a personalizzare il report con riferimenti clinici adeguati.</p>
+      <div class="flex gap-sm mb-sm">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Età</label>
+          <input v-model="profileAge" type="number" class="form-input" placeholder="Es. 45" min="1" max="120" inputmode="numeric" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Genere</label>
+          <select v-model="profileGender" class="form-input">
+            <option value="">Non specificato</option>
+            <option value="male">Maschio</option>
+            <option value="female">Femmina</option>
+            <option value="other">Altro</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-primary" @click="handleSaveProfile">Salva profilo</button>
+      <div v-if="profileMessage" class="form-success mt-sm">{{ profileMessage }}</div>
     </div>
 
     <!-- Password -->

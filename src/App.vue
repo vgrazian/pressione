@@ -9,6 +9,7 @@ import AppNav from '@/components/AppNav.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import OfflineBanner from '@/components/OfflineBanner.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ProfilePrompt from '@/components/ProfilePrompt.vue'
 
 const router = useRouter()
 const { isAuthenticated, isAuthReady, user, logout } = useAuth()
@@ -16,6 +17,7 @@ const { theme, toggle: toggleTheme } = useTheme()
 const isInitializing = ref(true)
 const error = ref(null)
 const confirm = inject('confirm-dialog', null)
+const showProfilePrompt = ref(false)
 
 onMounted(async () => {
   initPWAInstall()
@@ -31,6 +33,13 @@ onMounted(async () => {
 // Start keep-alive when user logs in
 watch(() => user.value?.username, (username) => {
   if (username) initKeepAlive(username)
+}, { immediate: true })
+
+// Show profile prompt if incomplete and user hasn't skipped
+watch(() => user.value, (u) => {
+    if (u && u.username && !u.profileCompleted && !u.skipProfilePrompt) {
+        showProfilePrompt.value = true
+    }
 }, { immediate: true })
 
 async function handleLogout() {
@@ -92,6 +101,9 @@ async function handleLogout() {
         <AppIcon name="plus" :size="24" color="var(--color-on-accent)" />
       </button>
       <ConfirmDialog />
+
+      <!-- Profile prompt for incomplete profiles -->
+      <ProfilePrompt v-if="showProfilePrompt" @close="showProfilePrompt = false" />
     </template>
   </div>
 </template>
