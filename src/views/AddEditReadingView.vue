@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { upsertReading, getReadingById, getReadings } from '@/services/dataService.js'
 import { classifyReading, getCategoryColor, getCategoryLabel } from '@/services/categories.js'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -133,8 +134,16 @@ function goBack() {
 
 <template>
   <div class="page">
+    <!-- Breadcrumbs -->
+    <Breadcrumbs :items="[
+      { label: 'Home', to: '/' },
+      { label: isEdit ? 'Modifica Misurazione' : 'Nuova Misurazione' }
+    ]" />
+
     <div class="page-header flex items-center gap-md">
-      <button class="btn btn-sm btn-outline" @click="goBack">← Indietro</button>
+      <button class="btn btn-sm btn-outline back-btn" @click="goBack" aria-label="Indietro">
+        ←
+      </button>
       <h1>{{ isEdit ? 'Modifica' : 'Nuova' }} Misurazione</h1>
     </div>
 
@@ -146,24 +155,27 @@ function goBack() {
       </span>
     </div>
 
-    <form @submit.prevent="handleSave" class="card">
-      <div class="form-row">
+    <form @submit.prevent="handleSave" class="card add-edit-form">
+      <!-- Main values row: SYS / DIA / BPM -->
+      <div class="vitals-row">
         <div class="form-group">
-          <label class="form-label" for="systolic">Sistolica (mmHg)</label>
-          <input id="systolic" v-model="systolic" type="number" class="form-input"
+          <label class="form-label" for="systolic">Sistolica</label>
+          <input id="systolic" v-model="systolic" type="number" class="form-input form-input--lg"
             placeholder="120" min="1" max="300" inputmode="numeric" />
+          <span class="form-unit">mmHg</span>
         </div>
         <div class="form-group">
-          <label class="form-label" for="diastolic">Diastolica (mmHg)</label>
-          <input id="diastolic" v-model="diastolic" type="number" class="form-input"
+          <label class="form-label" for="diastolic">Diastolica</label>
+          <input id="diastolic" v-model="diastolic" type="number" class="form-input form-input--lg"
             placeholder="80" min="1" max="200" inputmode="numeric" />
+          <span class="form-unit">mmHg</span>
         </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="heartRate">Frequenza Cardiaca (BPM)</label>
-        <input id="heartRate" v-model="heartRate" type="number" class="form-input"
-          placeholder="72" min="1" max="300" inputmode="numeric" />
+        <div class="form-group">
+          <label class="form-label" for="heartRate">BPM</label>
+          <input id="heartRate" v-model="heartRate" type="number" class="form-input form-input--lg"
+            placeholder="72" min="1" max="300" inputmode="numeric" />
+          <span class="form-unit">bpm</span>
+        </div>
       </div>
 
       <div class="form-row">
@@ -178,17 +190,20 @@ function goBack() {
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="notes">Note (opzionale)</label>
+        <label class="form-label" for="notes">Note</label>
         <input id="notes" v-model="notes" type="text" class="form-input"
           placeholder="Es. dopo attività fisica, a riposo..." maxlength="500" />
       </div>
 
       <div v-if="errorMessage" class="form-error mb-md">{{ errorMessage }}</div>
 
+      <!-- Action buttons -->
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" @click="goBack">Annulla</button>
-        <button type="submit" class="btn btn-primary" :disabled="isSaving">
-          {{ isSaving ? 'Salvataggio...' : 'Salva' }}
+        <button type="button" class="btn btn-error" @click="goBack">
+          ✕ Annulla
+        </button>
+        <button type="submit" class="btn btn-primary btn--full-mobile" :disabled="isSaving">
+          {{ isSaving ? 'Salvataggio...' : '✓ Salva' }}
         </button>
       </div>
     </form>
@@ -196,6 +211,14 @@ function goBack() {
 </template>
 
 <style scoped>
+/* Vitals row: SYS / DIA / BPM in a compact row */
+.vitals-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -215,13 +238,95 @@ function goBack() {
 .form-actions {
   display: flex;
   gap: var(--space-sm);
-  justify-content: flex-end;
-  margin-top: var(--space-md);
+  justify-content: space-between;
+  margin-top: var(--space-lg);
 }
 
+.form-unit {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.form-input--lg {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  padding: var(--space-sm) var(--space-xs);
+  height: auto;
+}
+
+/* Back button */
+.back-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Mobile optimization */
 @media (max-width: 480px) {
+  .add-edit-form {
+    padding: var(--space-md);
+  }
+
+  .vitals-row {
+    gap: 6px;
+  }
+
+  .vitals-row .form-label {
+    font-size: 0.6875rem;
+  }
+
+  .vitals-row .form-input--lg {
+    font-size: 1.125rem;
+    padding: 6px 4px;
+  }
+
   .form-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+  }
+
+  .form-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-surface);
+    padding: var(--space-sm) 0;
+    margin: var(--space-md) calc(-1 * var(--space-md)) calc(-1 * var(--space-md));
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+    border-top: 1px solid var(--color-border);
+    z-index: 5;
+  }
+
+  .btn--full-mobile {
+    flex: 1;
+  }
+
+  .page-header h1 {
+    font-size: 1.0625rem;
+  }
+}
+
+/* Very small screens (iPhone SE) */
+@media (max-width: 375px) {
+  .vitals-row .form-input--lg {
+    font-size: 1rem;
+    padding: 4px 2px;
+  }
+
+  .vitals-row {
+    gap: 4px;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
   }
 }
 </style>
