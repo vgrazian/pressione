@@ -176,23 +176,28 @@ function addMultiPeriodComparison(doc, y, readings7, readings30, data) {
     doc.text('Confronto Multi-Periodo', 14, y)
     y += 8
 
-    // Table with 3 columns
-    const colW = 55
+    // Table layout: label col + 3 data columns
+    const labelW = 32
+    const colW = 45
     const x0 = 14
+    const xLabel = x0
+    const x1 = x0 + labelW
+    const x2 = x1 + colW
+    const x3 = x2 + colW
+    const tableW = labelW + colW * 3
 
     doc.setFontSize(8)
     doc.setTextColor(0, 0, 0)
 
     // Headers
-    const headers = ['', '7 Giorni', '30 Giorni', 'Periodo selezionato']
-    const cols = [x0, x0 + 2, x0 + colW, x0 + colW * 2]
     doc.setFillColor(0, 108, 76, 0.1)
-    doc.rect(cols[0], y, colW * 3 + 2, 5, 'F')
+    doc.rect(x0, y, tableW, 5, 'F')
     doc.setTextColor(0, 108, 76)
     doc.setFontSize(7)
-    doc.text(headers[1], cols[1] + 2, y + 3.5)
-    doc.text(headers[2], cols[2] + 2, y + 3.5)
-    doc.text(headers[3], cols[3] + 2, y + 3.5)
+    doc.text('', xLabel + 2, y + 3.5)  // empty label column
+    doc.text('7 Giorni', x1 + 2, y + 3.5)
+    doc.text('30 Giorni', x2 + 2, y + 3.5)
+    doc.text('Periodo selez.', x3 + 2, y + 3.5)
     y += 6
 
     // Rows
@@ -200,8 +205,8 @@ function addMultiPeriodComparison(doc, y, readings7, readings30, data) {
         ['Letture', String(s7.readingsCount), String(s30.readingsCount), String(sSel.readingsCount)],
         ['SYS/DIA media', `${s7.avgSystolic}/${s7.avgDiastolic}`, `${s30.avgSystolic}/${s30.avgDiastolic}`, `${sSel.avgSystolic}/${sSel.avgDiastolic}`],
         ['BPM medio', String(s7.avgHeartRate), String(s30.avgHeartRate), String(sSel.avgHeartRate)],
-        ['Min–Max SYS', `${s7.minSystolic}–${s7.maxSystolic}`, `${s30.minSystolic}–${s30.maxSystolic}`, `${sSel.minSystolic}–${sSel.maxSystolic}`],
-        ['Min–Max DIA', `${s7.minDiastolic}–${s7.maxDiastolic}`, `${s30.minDiastolic}–${s30.maxDiastolic}`, `${sSel.minDiastolic}–${sSel.maxDiastolic}`]
+        ['SYS min–max', `${s7.minSystolic}–${s7.maxSystolic}`, `${s30.minSystolic}–${s30.maxSystolic}`, `${sSel.minSystolic}–${sSel.maxSystolic}`],
+        ['DIA min–max', `${s7.minDiastolic}–${s7.maxDiastolic}`, `${s30.minDiastolic}–${s30.maxDiastolic}`, `${sSel.minDiastolic}–${sSel.maxDiastolic}`]
     ]
 
     doc.setFontSize(7)
@@ -210,14 +215,14 @@ function addMultiPeriodComparison(doc, y, readings7, readings30, data) {
         const isEven = i % 2 === 0
         if (isEven) {
             doc.setFillColor(245, 245, 245)
-            doc.rect(cols[0], y - 1, colW * 3 + 2, 5, 'F')
+            doc.rect(x0, y - 1, tableW, 5, 'F')
         }
         doc.setTextColor(100, 100, 100)
-        doc.text(rows[i][0], cols[0] + 1, y + 2.5)
+        doc.text(rows[i][0], xLabel + 2, y + 2.5)
         doc.setTextColor(60, 60, 60)
-        doc.text(rows[i][1], cols[1] + 2, y + 2.5)
-        doc.text(rows[i][2], cols[2] + 2, y + 2.5)
-        doc.text(rows[i][3], cols[3] + 2, y + 2.5)
+        doc.text(rows[i][1], x1 + 2, y + 2.5)
+        doc.text(rows[i][2], x2 + 2, y + 2.5)
+        doc.text(rows[i][3], x3 + 2, y + 2.5)
         y += 5
     }
 
@@ -238,7 +243,7 @@ function addAdvancedStats(doc, y, readings) {
     doc.setTextColor(60, 60, 60)
 
     const items = [
-        { label: 'Morning Surge', value: surge.delta !== null ? `${surge.delta > 0 ? '+' : ''}${surge.delta} mmHg` : 'N/D', alert: surge.alert },
+        { label: 'Picco Mattutino', value: surge.delta !== null ? `${surge.delta > 0 ? '+' : ''}${surge.delta} mmHg` : 'N/D', alert: surge.alert },
         { label: 'Carico Ipertensivo', value: `${load.percentage}% (${load.abnormal}/${load.total})`, alert: load.percentage > 30 },
         { label: 'HRV (dev. std.)', value: hrv !== null ? `${hrv} BPM` : 'N/D', alert: false }
     ]
