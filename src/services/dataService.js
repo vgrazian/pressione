@@ -4,7 +4,41 @@ import { db } from '../db'
 import { generateId } from './ids'
 import { classifyReading } from './categories'
 
-const TABLES = ['readings', 'reminders']
+const MAX_RETRIES = 2
+const RETRY_DELAY = 1000
+
+/**
+ * Retry wrapper with exponential backoff
+ */
+async function withRetry(fn, retries = MAX_RETRIES) {
+    for (let i = 0; i <= retries; i++) {
+        try {
+            return await fn()
+        } catch (e) {
+            if (i === retries) throw e
+            await new Promise(r => setTimeout(r, RETRY_DELAY * Math.pow(2, i)))
+        }
+    }
+}
+
+/**
+ * Check if we can reach Supabase
+ */
+let lastOnlineCheck = 0
+let lastOnlineStatus = true
+export async function isOnline() {
+    if (Date.now() - lastOnlineCheck < 30000) return lastOnlineStatus
+    if (!isSupabaseConfigured) { lastOnlineStatus = false; lastOnlineCheck = Date.now(); return false }
+    try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 3000)
+        const { error } = await supabase.from('users').select('username').limit(1).abortSignal(controller.signal)
+        clearTimeout(timeout)
+        lastOnlineStatus = !error
+    } catch { lastOnlineStatus = false }
+    lastOnlineCheck = Date.now()
+    return lastOnlineStatus
+}
 
 /**
  * Upsert a reading (offline-first)
@@ -143,38 +177,29 @@ export async function getReadingById(id) {
 export async function refreshFromServer(username) {
     if (!isSupabaseConfigured) return
 
-    // Pull readings
-    const { data: readings, error } = await supabase
-        .from('readings')
-        .select('*')
-        .eq('username', username)
-        .order('timestamp', { ascending: false })
+    try {
+        await withRetry(async () => {
+            const { data: readings, error } = await supabase
+                .from('readings')
+                .select('*')
+                .eq('username', username)
+                .order('timestamp', { ascending: false })
 
-    if (error) throw new Error('Errore nel recupero dati: ' + error.message)
+            if (error) throw error
 
-    if (readings) {
-        const mapped = readings.map(r => ({
-            id: r.id,
-            username: r.username,
-            timestamp: r.timestamp,
-            systolic: r.systolic,
-            diastolic: r.diastolic,
-            heartRate: r.heart_rate,
-            notes: r.notes,
-            category: classifyReading(r.systolic, r.diastolic),
-            updatedAt: r.updated_at
-        }))
-        await db.readings.bulkPut(mapped)
-    }
-
-    // Pull reminders
-    const { data: reminders } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('username', username)
-
-    if (reminders) {
-        await db.reminders.bulkPut(reminders)
+            if (readings && readings.length > 0) {
+                const mapped = readings.map(r => ({
+                    id: r.id, username: r.username, timestamp: r.timestamp,
+                    systolic: r.systolic, diastolic: r.diastolic,
+                    heartRate: r.heart_rate, notes: r.notes || '',
+                    category: classifyReading(r.systolic, r.diastolic),
+                    updatedAt: r.updated_at
+                }))
+                await db.readings.bulkPut(mapped)
+            }
+        })
+    } catch (e) {
+        console.warn('refreshFromServer failed (will retry later):', e.message)
     }
 }
 
@@ -254,42 +279,42 @@ export async function getReminders(username) {
  * Export readings as CSV and trigger download
  */
 export async function exportCSV(readings) {
-  const headers = ['Data', 'Ora', 'Sistolica (mmHg)', 'Diastolica (mmHg)', 'Freq. Cardiaca (BPM)', 'Categoria', 'Note']
-  const rows = readings.map(r => {
-    const d = new Date(r.timestamp)
-    return [
-      d.toLocaleDateString('it-IT'),
-      d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-      r.systolic,
-      r.diastolic,
-      r.heartRate,
-      r.category || '',
-      `"${(r.notes || '').replace(/"/g, '""')}"`
-    ].join(',')
-  })
+    const headers = ['Data', 'Ora', 'Sistolica (mmHg)', 'Diastolica (mmHg)', 'Freq. Cardiaca (BPM)', 'Categoria', 'Note']
+    const rows = readings.map(r => {
+        const d = new Date(r.timestamp)
+        return [
+            d.toLocaleDateString('it-IT'),
+            d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+            r.systolic,
+            r.diastolic,
+            r.heartRate,
+            r.category || '',
+            `"${(r.notes || '').replace(/"/g, '""')}"`
+        ].join(',')
+    })
 
-  const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
+    const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
 
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `pressione_${new Date().toISOString().slice(0, 10)}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pressione_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
 }
 
 /**
  * Generate test data via Supabase RPC
  */
 export async function generateTestData(username, count = 30) {
-  if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
 
-  const { error } = await supabase.rpc('generate_test_data', {
-    p_username: username,
-    p_count: count
-  })
+    const { error } = await supabase.rpc('generate_test_data', {
+        p_username: username,
+        p_count: count
+    })
 
-  if (error) throw new Error('Errore generazione dati: ' + error.message)
-  return count
+    if (error) throw new Error('Errore generazione dati: ' + error.message)
+    return count
 }

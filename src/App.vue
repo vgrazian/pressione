@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { initAuth, useAuth } from '@/services/auth.js'
 import AppNav from '@/components/AppNav.vue'
 import AppIcon from '@/components/AppIcon.vue'
+import OfflineBanner from '@/components/OfflineBanner.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
@@ -63,6 +64,8 @@ async function handleLogout() {
           <AppIcon name="logout" :size="18" />
         </button>
       </header>
+
+      <OfflineBanner v-if="isAuthenticated" />
 
       <AppNav v-if="isAuthenticated" />
       <main :class="{ 'has-nav': isAuthenticated, 'has-topbar': isAuthenticated }">
