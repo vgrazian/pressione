@@ -3,10 +3,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics, computeMorningSurge, computeHypertensiveLoad } from '@/services/statistics.js'
+import { generatePDF as generatePDFReport } from '@/services/pdfReport.js'
 import { supabase } from '@/services/supabaseClient.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import AppIcon from '@/components/AppIcon.vue'
-import { jsPDF } from 'jspdf'
 
 const { user } = useAuth()
 const readings = ref([])
@@ -63,89 +63,39 @@ const htnLoad = computed(() => computeHypertensiveLoad(filteredReadings.value))
 
 const titleSuffix = computed(() => anonymize.value ? '' : ` - ${user.value?.username}`)
 
+// Subsets for multi-period comparison
+const readings7 = computed(() => {
+  const cutoff = new Date(Date.now() - 7 * 86400000)
+  return readings.value.filter(r => new Date(r.timestamp) >= cutoff)
+})
+const readings30 = computed(() => {
+  const cutoff = new Date(Date.now() - 30 * 86400000)
+  return readings.value.filter(r => new Date(r.timestamp) >= cutoff)
+})
+
 // --- PDF Generation ---
 async function generatePDF() {
   generatingPDF.value = true
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
-  const data = filteredReadings.value
-  let y = 20
- 
-  // Header
-  doc.setFontSize(16)
-  doc.setTextColor(0, 108, 76)
-  doc.text('Report Pressione Arteriosa' + titleSuffix.value, 20, y)
-  y += 10
-  doc.setFontSize(10)
-  doc.setTextColor(100, 100, 100)
-  const from = data.length ? new Date(data[data.length-1].timestamp).toLocaleDateString('it-IT') : 'N/D'
-  const to = data.length ? new Date(data[0].timestamp).toLocaleDateString('it-IT') : 'N/D'
-  doc.text(`Periodo: ${from} - ${to}  |  Misurazioni: ${data.length}`, 20, y)
-  y += 12
-
-  // Stats
-  doc.setFontSize(12)
-  doc.setTextColor(0, 0, 0)
-  doc.text('Riepilogo', 20, y)
-  y += 7
-  doc.setFontSize(10)
-  const s = stats.value
-  doc.text(`Media: ${s.avgSystolic}/${s.avgDiastolic} mmHg  |  BPM medio: ${s.avgHeartRate}`, 20, y)
-  y += 6
-  doc.text(`Intervallo: ${s.minSystolic}-${s.maxSystolic} / ${s.minDiastolic}-${s.maxDiastolic} mmHg`, 20, y)
-  y += 10
-
-  if (htnLoad.value) {
-    doc.text(`Carico Ipertensivo: ${htnLoad.value.percentage}% (${htnLoad.value.abnormal} fuori norma su ${htnLoad.value.total})`, 20, y)
-    y += 8
+  try {
+    await generatePDFReport({
+      data: filteredReadings.value,
+      readings7: readings7.value,
+      readings30: readings30.value,
+      username: user.value?.username,
+      anonymize: anonymize.value,
+      includeCharts: includeCharts.value,
+      includeHistory: includeHistory.value
+    })
+  } catch (e) {
+    linkMessage.value = 'Errore nella generazione PDF: ' + e.message
+  } finally {
+    generatingPDF.value = false
   }
-
-  // History table
-  if (includeHistory.value && data.length > 0) {
-    y += 4
-    doc.setFontSize(11)
-    doc.text('Storico Misurazioni', 20, y)
-    y += 7
-    doc.setFontSize(8)
-    // Table header
-    doc.setFillColor(240, 240, 240)
-    doc.rect(20, y, 170, 6, 'F')
-    doc.text('Data', 22, y + 4)
-    doc.text('Ora', 45, y + 4)
-    doc.text('Sistolica', 65, y + 4)
-    doc.text('Diastolica', 85, y + 4)
-    doc.text('BPM', 105, y + 4)
-    doc.text('Categoria', 125, y + 4)
-    doc.text('Note', 155, y + 4)
-    y += 7
-
-    for (const r of data) {
-      if (y > 270) { doc.addPage(); y = 20 }
-      const d = new Date(r.timestamp)
-      doc.text(d.toLocaleDateString('it-IT'), 22, y + 4)
-      doc.text(d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }), 45, y + 4)
-      doc.text(String(r.systolic), 65, y + 4)
-      doc.text(String(r.diastolic), 85, y + 4)
-      doc.text(String(r.heartRate), 105, y + 4)
-      doc.text(r.category || '', 125, y + 4)
-      doc.text((r.notes || '').slice(0, 25), 155, y + 4)
-      y += 5
-    }
-  }
-
-  // Footer
-  doc.setFontSize(7)
-  doc.setTextColor(150, 150, 150)
-  doc.text(`Generato il ${new Date().toLocaleDateString('it-IT')} — Pressione App`, 20, 285)
-
-  doc.save(`pressione_report_${new Date().toISOString().slice(0,10)}.pdf`)
-  generatingPDF.value = false
 }
 
 // --- Sharing ---
 function sharePDF() {
-  generatePDF().then(() => {
-    // After download, no further action needed
-  })
+  generatePDF()
 }
 
 async function shareViaEmail() {
