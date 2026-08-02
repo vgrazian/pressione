@@ -155,7 +155,7 @@ async function handleLogout() {
       </div>
 
       <div v-if="reminders.length === 0" class="text-center p-md">
-        <p style="color: var(--color-on-surface-variant);">Nessun promemoria configurato</p>
+        <p style="color: var(--color-text-secondary);">Nessun promemoria configurato</p>
       </div>
 
       <div v-for="(reminder, i) in reminders" :key="reminder.id || `new-${i}`" class="reminder-item">
@@ -179,7 +179,7 @@ async function handleLogout() {
           <button class="btn btn-sm btn-primary" @click="saveReminder(reminder)">Salva</button>
           <button v-if="!reminder.isNew" class="btn btn-sm btn-secondary" @click="removeReminder(reminder)">Rimuovi</button>
         </div>
-        <hr v-if="i < reminders.length - 1" style="margin: var(--space-md) 0; border-color: var(--color-surface-container);" />
+        <hr v-if="i < reminders.length - 1" style="margin: var(--space-md) 0; border-color: var(--color-surface-overlay);" />
       </div>
     </div>
 
@@ -200,7 +200,7 @@ async function handleLogout() {
       <button class="btn btn-secondary btn-block" @click="handleLogout">Logout</button>
     </div>
 
-    <p class="text-center" style="color: var(--color-on-surface-variant); font-size: 0.75rem; padding: var(--space-lg);">
+    <p class="text-center" style="color: var(--color-text-secondary); font-size: 0.75rem; padding: var(--space-lg);">
       Pressione v1.0.0
     </p>
   </div>
@@ -208,7 +208,7 @@ async function handleLogout() {
 
 <style scoped>
 .form-success {
-  color: var(--color-primary);
+  color: var(--color-accent);
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -221,7 +221,7 @@ async function handleLogout() {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid var(--color-outline-variant);
+  border: 1px solid var(--color-border);
   background: white;
   font-size: 0.75rem;
   cursor: pointer;
@@ -231,8 +231,8 @@ async function handleLogout() {
 }
 
 .day-chip.active {
-  background: var(--color-primary);
+  background: var(--color-accent);
   color: white;
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 </style>

@@ -112,7 +112,7 @@ async function handleDeactivate(targetUser) {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-md) 0;
-  border-bottom: 1px solid var(--color-surface-container);
+  border-bottom: 1px solid var(--color-surface-overlay);
   gap: var(--space-md);
   flex-wrap: wrap;
 }
@@ -133,18 +133,18 @@ async function handleDeactivate(targetUser) {
 }
 
 .user-email {
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   font-size: 0.8125rem;
 }
 
 .chip-admin {
-  background: var(--color-primary-container);
-  color: var(--color-on-primary-container);
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
 }
 
 .chip-user {
-  background: var(--color-surface-container);
-  color: var(--color-on-surface);
+  background: var(--color-surface-overlay);
+  color: var(--color-text-primary);
 }
 
 .chip-inactive {

@@ -4,6 +4,7 @@ import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics } from '@/services/statistics.js'
 import { getCategoryLabel } from '@/services/categories.js'
+import AppIcon from '@/components/AppIcon.vue'
 
 const { user } = useAuth()
 
@@ -57,7 +58,7 @@ const reportText = computed(() => {
     ? new Date(filteredReadings.value[0].timestamp).toLocaleDateString('it-IT')
     : 'N/D'
 
-  let text = `📊 REPORT PRESSIONE ARTERIOSA\n`
+  let text = `REPORT PRESSIONE ARTERIOSA\n`
   text += `Utente: ${user.value.username}\n`
   text += `Periodo: ${from} - ${to}\n`
   text += `Misurazioni: ${s.readingsCount}\n\n`
@@ -132,13 +133,17 @@ async function shareReport() {
       </div>
 
       <div class="flex gap-sm">
-        <button class="btn btn-primary" @click="copyToClipboard">📋 Copia</button>
-        <button class="btn btn-outline" @click="shareReport">📤 Condividi</button>
+        <button class="btn btn-primary" @click="copyToClipboard">
+          <AppIcon name="copy" :size="16" /> Copia
+        </button>
+        <button class="btn btn-ghost" @click="shareReport">
+          <AppIcon name="share" :size="16" /> Condividi
+        </button>
       </div>
     </template>
 
     <div v-else class="empty-state">
-      <span class="empty-state__icon">📄</span>
+      <AppIcon name="copy" :size="48" color="var(--color-text-tertiary)" class="empty-state__icon" />
       <h3>Nessun dato disponibile</h3>
       <p>Aggiungi misurazioni per generare un report.</p>
     </div>
@@ -147,17 +152,17 @@ async function shareReport() {
 
 <style scoped>
 .chip {
-  background: var(--color-surface-container);
-  color: var(--color-on-surface);
+  background: var(--color-surface-overlay);
+  color: var(--color-text-primary);
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .chip--active {
-  background: var(--color-primary-container);
-  color: var(--color-on-primary-container);
-  border-color: var(--color-primary);
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .report-text {
@@ -165,6 +170,6 @@ async function shareReport() {
   font-size: 0.8125rem;
   white-space: pre-wrap;
   line-height: 1.6;
-  color: var(--color-on-surface);
+  color: var(--color-text-primary);
 }
 </style>

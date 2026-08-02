@@ -60,8 +60,8 @@ onMounted(async () => {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid var(--color-surface-container);
-  border-top-color: var(--color-primary);
+  border: 4px solid var(--color-surface-overlay);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

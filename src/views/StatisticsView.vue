@@ -4,6 +4,7 @@ import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics, linearRegression, movingAverage } from '@/services/statistics.js'
 import { getCategoryLabel, ALL_CATEGORIES } from '@/services/categories.js'
+import AppIcon from '@/components/AppIcon.vue'
 
 const { user } = useAuth()
 
@@ -176,22 +177,22 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
         <h3 class="mb-sm">Distribuzione Oraria</h3>
         <div class="tod-grid">
           <div class="tod-item">
-            <span class="tod-icon">🌅</span>
+            <AppIcon name="sun" :size="24" />
             <span class="tod-label">Mattina</span>
             <span class="tod-value">{{ filteredStats.timeOfDayDistribution?.MORNING || 0 }}</span>
           </div>
           <div class="tod-item">
-            <span class="tod-icon">☀️</span>
+            <AppIcon name="sun" :size="24" />
             <span class="tod-label">Pomeriggio</span>
             <span class="tod-value">{{ filteredStats.timeOfDayDistribution?.AFTERNOON || 0 }}</span>
           </div>
           <div class="tod-item">
-            <span class="tod-icon">🌆</span>
+            <AppIcon name="sun" :size="24" />
             <span class="tod-label">Sera</span>
             <span class="tod-value">{{ filteredStats.timeOfDayDistribution?.EVENING || 0 }}</span>
           </div>
           <div class="tod-item">
-            <span class="tod-icon">🌙</span>
+            <AppIcon name="moon" :size="24" />
             <span class="tod-label">Notte</span>
             <span class="tod-value">{{ filteredStats.timeOfDayDistribution?.NIGHT || 0 }}</span>
           </div>
@@ -200,7 +201,7 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
     </template>
 
     <div v-else class="empty-state">
-      <span class="empty-state__icon">📊</span>
+      <AppIcon name="chart" :size="48" color="var(--color-text-tertiary)" class="empty-state__icon" />
       <h3>Nessun dato</h3>
       <p>Aggiungi misurazioni per vedere le statistiche.</p>
     </div>
@@ -209,17 +210,17 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
 
 <style scoped>
 .chip {
-  background: var(--color-surface-container);
-  color: var(--color-on-surface);
+  background: var(--color-surface-overlay);
+  color: var(--color-text-primary);
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .chip--active {
-  background: var(--color-primary-container);
-  color: var(--color-on-primary-container);
-  border-color: var(--color-primary);
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .stats-grid {
@@ -237,7 +238,7 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
 
 .stat-card__label {
   font-size: 0.6875rem;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   text-transform: uppercase;
 }
 
@@ -261,7 +262,7 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
   flex-direction: column;
   justify-content: space-between;
   font-size: 0.625rem;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   width: 30px;
   text-align: right;
 }
@@ -269,8 +270,8 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
 .chart-area {
   flex: 1;
   position: relative;
-  border-bottom: 1px solid var(--color-outline-variant);
-  border-left: 1px solid var(--color-outline-variant);
+  border-bottom: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
 }
 
 .chart-bar-group {
@@ -327,14 +328,14 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
 .cat-bar-container {
   flex: 1;
   height: 8px;
-  background: var(--color-surface-container);
+  background: var(--color-surface-overlay);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .cat-bar {
   height: 100%;
-  background: var(--color-primary);
+  background: var(--color-accent);
   border-radius: 4px;
 }
 
@@ -357,11 +358,11 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
   align-items: center;
   gap: 4px;
   padding: var(--space-md);
-  background: var(--color-surface-container);
+  background: var(--color-surface-overlay);
   border-radius: var(--radius-md);
 }
 
 .tod-icon { font-size: 1.5rem; }
-.tod-label { font-size: 0.75rem; color: var(--color-on-surface-variant); }
+.tod-label { font-size: 0.75rem; color: var(--color-text-secondary); }
 .tod-value { font-size: 1.25rem; font-weight: 700; }
 </style>

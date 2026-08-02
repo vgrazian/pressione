@@ -80,7 +80,7 @@ defineExpose({ show })
   padding: var(--space-lg);
   max-width: 360px;
   width: 100%;
-  box-shadow: var(--elevation-3);
+  box-shadow: var(--shadow-lg);
 }
 
 .dialog h3 {
@@ -88,7 +88,7 @@ defineExpose({ show })
 }
 
 .dialog p {
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   font-size: 0.9375rem;
   margin-bottom: var(--space-lg);
 }

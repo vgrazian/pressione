@@ -5,6 +5,7 @@ import { useAuth } from '@/services/auth.js'
 import { getReadings, deleteReading, refreshFromServer } from '@/services/dataService.js'
 import { ALL_CATEGORIES, getCategoryLabel } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
+import AppIcon from '@/components/AppIcon.vue'
 
 const router = useRouter()
 const { user } = useAuth()
@@ -87,7 +88,7 @@ function goToAdd() {
     </div>
 
     <div v-else-if="readings.length === 0" class="empty-state">
-      <span class="empty-state__icon">📋</span>
+      <AppIcon name="list" :size="48" color="var(--color-text-tertiary)" class="empty-state__icon" />
       <h3>Nessuna misurazione</h3>
       <p>Aggiungi la tua prima misurazione di pressione.</p>
       <button class="btn btn-primary mt-md" @click="goToAdd">Aggiungi Misurazione</button>
@@ -119,17 +120,17 @@ function goToAdd() {
 }
 
 .chip {
-  background: var(--color-surface-container);
-  color: var(--color-on-surface);
+  background: var(--color-surface-overlay);
+  color: var(--color-text-primary);
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .chip--active {
-  background: var(--color-primary-container);
-  color: var(--color-on-primary-container);
-  border-color: var(--color-primary);
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .chip:active {

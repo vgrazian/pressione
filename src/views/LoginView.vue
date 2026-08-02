@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
+import AppIcon from '@/components/AppIcon.vue'
 
 const router = useRouter()
 const { login } = useAuth()
@@ -34,7 +35,7 @@ async function handleSubmit() {
   <div class="login-page">
     <div class="login-card card">
       <div class="login-header text-center">
-        <span class="login-icon">❤️</span>
+        <AppIcon name="heart" :size="40" color="var(--color-accent)" class="login-icon" />
         <h1>Pressione</h1>
         <p>Monitoraggio pressione arteriosa</p>
       </div>
@@ -99,18 +100,17 @@ async function handleSubmit() {
 }
 
 .login-icon {
-  font-size: 2.5rem;
   display: block;
-  margin-bottom: var(--space-sm);
+  margin: 0 auto var(--space-sm);
 }
 
 .login-header h1 {
-  color: var(--color-primary);
+  color: var(--color-accent);
   margin-bottom: var(--space-xs);
 }
 
 .login-header p {
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   font-size: 0.9375rem;
 }
 </style>

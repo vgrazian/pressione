@@ -7,6 +7,7 @@ import { computeStatistics } from '@/services/statistics.js'
 import { getCategoryColor } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
 import CategoryBadge from '@/components/CategoryBadge.vue'
+import AppIcon from '@/components/AppIcon.vue'
 
 const router = useRouter()
 const { user } = useAuth()
@@ -81,7 +82,7 @@ const latestCategoryColor = computed(() => {
         </div>
         <div class="latest-value">
           <span class="latest-value__number">{{ latestReading.heartRate }}</span>
-          <span class="latest-value__label">❤️ BPM</span>
+          <span class="latest-value__label"><AppIcon name="heart" :size="12" /> BPM</span>
         </div>
       </div>
       <div class="latest-card__info">
@@ -132,7 +133,7 @@ const latestCategoryColor = computed(() => {
 
     <!-- Empty State -->
     <div v-if="!isLoading && !latestReading" class="empty-state">
-      <span class="empty-state__icon">❤️</span>
+      <AppIcon name="heart" :size="48" color="var(--color-text-tertiary)" class="empty-state__icon" />
       <h3>Nessuna misurazione</h3>
       <p>Inizia a monitorare la tua pressione aggiungendo la prima misurazione.</p>
       <button class="btn btn-primary mt-md" @click="goToAdd">Aggiungi Misurazione</button>
@@ -142,12 +143,12 @@ const latestCategoryColor = computed(() => {
 
 <style scoped>
 .text-secondary {
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
 }
 
 .latest-card {
-  border-left: 4px solid var(--color-primary);
+  border-left: 4px solid var(--color-accent);
 }
 
 .latest-card__header {
@@ -159,7 +160,7 @@ const latestCategoryColor = computed(() => {
 
 .latest-card__header h2 {
   font-size: 1rem;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
 }
 
 .latest-card__values {
@@ -183,19 +184,19 @@ const latestCategoryColor = computed(() => {
 
 .latest-value__label {
   font-size: 0.6875rem;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   text-transform: uppercase;
 }
 
 .latest-value__sep {
   font-size: 2rem;
-  color: var(--color-outline);
+  color: var(--color-text-tertiary);
   padding-bottom: 1.25rem;
 }
 
 .latest-card__info {
   font-size: 0.8125rem;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
 }
 
 .stats-grid {
@@ -213,7 +214,7 @@ const latestCategoryColor = computed(() => {
 
 .stat-card__label {
   font-size: 0.6875rem;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
   text-transform: uppercase;
 }
 
@@ -224,6 +225,6 @@ const latestCategoryColor = computed(() => {
 
 .stat-card__unit {
   font-size: 0.75rem;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-secondary);
 }
 </style>

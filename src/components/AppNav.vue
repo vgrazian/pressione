@@ -1,16 +1,17 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
+import AppIcon from './AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { user, logout } = useAuth()
 
 const navItems = [
-  { name: 'home', label: 'Home', icon: '🏠', path: '/' },
-  { name: 'readingList', label: 'Lista', icon: '📋', path: '/list' },
-  { name: 'statistics', label: 'Statistiche', icon: '📊', path: '/statistics' },
-  { name: 'settings', label: 'Impostazioni', icon: '⚙️', path: '/settings' },
+  { name: 'home', label: 'Home', icon: 'home', path: '/' },
+  { name: 'readingList', label: 'Lista', icon: 'list', path: '/list' },
+  { name: 'statistics', label: 'Statistiche', icon: 'chart', path: '/statistics' },
+  { name: 'settings', label: 'Impostazioni', icon: 'settings', path: '/settings' },
 ]
 
 function isActive(item) {
@@ -32,7 +33,7 @@ async function handleLogout() {
       class="nav-item"
       :class="{ active: isActive(item) }"
     >
-      <span class="nav-icon">{{ item.icon }}</span>
+      <AppIcon :name="item.icon" :size="22" />
       <span class="nav-label">{{ item.label }}</span>
     </router-link>
   </nav>
@@ -46,37 +47,31 @@ async function handleLogout() {
   right: 0;
   display: flex;
   justify-content: space-around;
-  background: white;
-  border-top: 1px solid var(--color-surface-container);
+  background: var(--color-surface-raised);
+  border-top: 1px solid var(--color-border);
   padding: 0.5rem 0 env(safe-area-inset-bottom, 0.5rem);
   z-index: 100;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.05);
 }
 
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 0.25rem 0.75rem;
+  gap: 3px;
+  padding: 0.375rem 0.75rem;
   text-decoration: none;
-  color: var(--color-on-surface-variant);
+  color: var(--color-text-tertiary);
   font-size: 0.6875rem;
   font-weight: 500;
-  transition: color 0.2s;
+  transition: color 0.15s;
   min-width: 56px;
-}
-
-.nav-icon {
-  font-size: 1.25rem;
 }
 
 .nav-item.active,
 .nav-item.router-link-exact-active {
-  color: var(--color-primary);
+  color: var(--color-accent);
 }
 
-.nav-item:active {
-  opacity: 0.7;
-}
+.nav-item:active { opacity: 0.7; }
 </style>

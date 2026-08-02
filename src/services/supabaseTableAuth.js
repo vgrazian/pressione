@@ -37,7 +37,7 @@ export async function createUserWithTable({ username, email, password, role = 'u
             password_hash: passwordHash,
             role
         })
-.select('id, username, email, role, disabled')
+        .select('id, username, email, role, disabled')
         .single()
 
     if (error) {
@@ -138,7 +138,7 @@ export async function getAllUsers() {
     const { data, error } = await supabase
         .from('users')
         .select('id, username, email, role, disabled, created_at')
-    .order('username', { ascending: true })
+        .order('username', { ascending: true })
     if (error) throw new Error('Errore nel recupero utenti')
     return data
 }

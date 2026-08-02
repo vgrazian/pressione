@@ -43,10 +43,10 @@ async function main() {
                 email: user.email,
                 password_hash: passwordHash,
                 role: user.role,
-        disabled: false,
-        } else {
-            console.log(`✅ ${user.username} (${user.role}) - Password: ${DEFAULT_PASSWORD}`)
-        }
+                disabled: false,
+            } else {
+                console.log(`✅ ${user.username} (${user.role}) - Password: ${DEFAULT_PASSWORD}`)
+            }
     }
 
     console.log('\n✨ Operazione completata!')
