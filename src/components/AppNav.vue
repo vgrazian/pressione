@@ -1,0 +1,82 @@
+<script setup>
+import { useRoute, useRouter } from 'vue-router'
+import { useAuth } from '@/services/auth.js'
+
+const route = useRoute()
+const router = useRouter()
+const { user, logout } = useAuth()
+
+const navItems = [
+  { name: 'home', label: 'Home', icon: '🏠', path: '/' },
+  { name: 'readingList', label: 'Lista', icon: '📋', path: '/list' },
+  { name: 'statistics', label: 'Statistiche', icon: '📊', path: '/statistics' },
+  { name: 'settings', label: 'Impostazioni', icon: '⚙️', path: '/settings' },
+]
+
+function isActive(item) {
+  return route.path === item.path
+}
+
+async function handleLogout() {
+  await logout()
+  router.push('/login')
+}
+</script>
+
+<template>
+  <nav class="app-nav">
+    <router-link
+      v-for="item in navItems"
+      :key="item.name"
+      :to="item.path"
+      class="nav-item"
+      :class="{ active: isActive(item) }"
+    >
+      <span class="nav-icon">{{ item.icon }}</span>
+      <span class="nav-label">{{ item.label }}</span>
+    </router-link>
+  </nav>
+</template>
+
+<style scoped>
+.app-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  background: white;
+  border-top: 1px solid var(--color-surface-container);
+  padding: 0.5rem 0 env(safe-area-inset-bottom, 0.5rem);
+  z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.25rem 0.75rem;
+  text-decoration: none;
+  color: var(--color-on-surface-variant);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  min-width: 56px;
+}
+
+.nav-icon {
+  font-size: 1.25rem;
+}
+
+.nav-item.active,
+.nav-item.router-link-exact-active {
+  color: var(--color-primary);
+}
+
+.nav-item:active {
+  opacity: 0.7;
+}
+</style>
