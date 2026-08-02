@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { getReadings, deleteReading, refreshFromServer } from '@/services/dataService.js'
@@ -13,10 +13,43 @@ const router = useRouter()
 const { user } = useAuth()
 
 const confirm = inject('confirm-dialog')
-const readings = ref([])
+const allReadings = ref([])
 const isLoading = ref(true)
 const searchQuery = ref('')
 const categoryFilter = ref('')
+const dateFilter = ref('all')
+const customFrom = ref('')
+const customTo = ref('')
+
+const filteredReadings = computed(() => {
+  let result = [...allReadings.value]
+  // Date filter
+  if (dateFilter.value === '7') {
+    const cutoff = new Date(Date.now() - 7 * 86400000)
+    result = result.filter(r => new Date(r.timestamp) >= cutoff)
+  } else if (dateFilter.value === '30') {
+    const cutoff = new Date(Date.now() - 30 * 86400000)
+    result = result.filter(r => new Date(r.timestamp) >= cutoff)
+  } else if (dateFilter.value === 'custom' && customFrom.value && customTo.value) {
+    result = result.filter(r => {
+      const t = new Date(r.timestamp)
+      return t >= new Date(customFrom.value) && t <= new Date(customTo.value + 'T23:59:59')
+    })
+  }
+  // Category filter
+  if (categoryFilter.value) {
+    result = result.filter(r => r.category === categoryFilter.value)
+  }
+  // Search
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(r =>
+      (r.notes || '').toLowerCase().includes(q) ||
+      String(r.systolic).includes(q) || String(r.diastolic).includes(q) || String(r.heartRate).includes(q)
+    )
+  }
+  return result
+})
 
 onMounted(async () => {
   await loadData()
@@ -26,8 +59,7 @@ async function loadData() {
   isLoading.value = true
   try {
     await refreshFromServer(user.value.username)
-    const all = await getReadings(user.value.username)
-    readings.value = all
+    allReadings.value = await getReadings(user.value.username)
   } catch (e) {
     console.error('Load error:', e)
   } finally {
@@ -48,7 +80,7 @@ async function handleDelete(reading) {
   })
   if (confirmed) {
     await deleteReading(reading.id, user.value.username)
-    readings.value = readings.value.filter(r => r.id !== reading.id)
+    allReadings.value = allReadings.value.filter(r => r.id !== reading.id)
   }
 }
 
@@ -88,7 +120,13 @@ function onTouchEnd(id, reading) {
     <div class="filters mb-md">
       <input v-model="searchQuery" type="search" class="form-input"
         placeholder="Cerca per note o valori..." />
-      <div class="filter-chips flex gap-sm" style="flex-wrap: wrap; margin-top: var(--space-sm);">
+      <!-- Date filter -->
+      <div class="flex gap-sm mt-sm flex-wrap">
+        <button v-for="p in [{v:'all',l:'Tutte'},{v:'7',l:'7gg'},{v:'30',l:'30gg'}]" :key="p.v"
+          class="chip" :class="{ 'chip--active': dateFilter === p.v }" @click="dateFilter = p.v">{{ p.l }}</button>
+      </div>
+      <!-- Category filter -->
+      <div class="filter-chips flex gap-sm mt-sm" style="flex-wrap: wrap;">
         <button
           class="chip"
           :class="{ 'chip--active': !categoryFilter }"
@@ -109,7 +147,7 @@ function onTouchEnd(id, reading) {
       <SkeletonLoader type="card" :count="5" height="110px" />
     </div>
 
-    <div v-else-if="readings.length === 0" class="empty-state">
+    <div v-else-if="filteredReadings.length === 0" class="empty-state">
       <AppIcon name="list" :size="48" color="var(--color-text-tertiary)" class="empty-state__icon" />
       <h3>Nessuna misurazione</h3>
       <p>Aggiungi la tua prima misurazione di pressione.</p>
@@ -117,7 +155,7 @@ function onTouchEnd(id, reading) {
     </div>
 
     <div v-else class="readings-list flex flex-col gap-sm">
-      <div v-for="reading in readings" :key="reading.id"
+      <div v-for="reading in filteredReadings" :key="reading.id"
         class="swipe-container"
         @touchstart="onTouchStart(reading.id, $event)"
         @touchmove="onTouchMove(reading.id, $event)"
