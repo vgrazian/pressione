@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
-import AppIcon from '@/components/AppIcon.vue'
 
 const router = useRouter()
 const { login, requestPasswordReset, completePasswordReset } = useAuth()
@@ -89,7 +88,7 @@ async function handleCompleteRecovery() {
   <div class="login-page">
     <div class="login-card card">
       <div class="login-header text-center">
-        <AppIcon name="heart" :size="40" color="var(--color-accent)" class="login-icon" />
+        <img src="/logo.png" alt="Pressione" class="login-logo" />
         <h1>Pressione</h1>
         <p>Monitoraggio pressione arteriosa</p>
       </div>
@@ -176,9 +175,12 @@ async function handleCompleteRecovery() {
   margin-bottom: var(--space-xl);
 }
 
-.login-icon {
+.login-logo {
   display: block;
+  width: 64px;
+  height: 64px;
   margin: 0 auto var(--space-sm);
+  border-radius: 12px;
 }
 
 .login-header h1 {
