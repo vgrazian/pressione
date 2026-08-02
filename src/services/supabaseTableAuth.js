@@ -142,3 +142,52 @@ export async function getAllUsers() {
     if (error) throw new Error('Errore nel recupero utenti')
     return data
 }
+
+/**
+ * Update email
+ */
+export async function updateEmail({ username, newEmail }) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+    const { error } = await supabase.rpc('update_email', {
+        p_username: username,
+        p_new_email: newEmail
+    })
+    if (error) throw new Error('Errore aggiornamento email: ' + error.message)
+}
+
+/**
+ * Create a password recovery token
+ */
+export async function createRecoveryToken(username) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+    const { data, error } = await supabase.rpc('create_recovery_token', {
+        p_username: username.toLowerCase().trim()
+    })
+    if (error) throw new Error('Errore: ' + error.message)
+    return data
+}
+
+/**
+ * Reset password using recovery token
+ */
+export async function resetPasswordWithToken(token, newPassword) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+    const { error } = await supabase.rpc('reset_password_with_token', {
+        p_token: token,
+        p_new_password: newPassword
+    })
+    if (error) throw new Error('Errore: ' + error.message)
+}
+
+/**
+ * Admin reset password for any user
+ */
+export async function adminResetPassword(adminUsername, targetUsername, newPassword) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+    const { error } = await supabase.rpc('admin_reset_password', {
+        p_admin_username: adminUsername,
+        p_target_username: targetUsername,
+        p_new_password: newPassword
+    })
+    if (error) throw new Error('Errore: ' + error.message)
+}

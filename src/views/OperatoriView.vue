@@ -2,12 +2,14 @@
 import { ref, onMounted } from 'vue'
 import { useAuth } from '@/services/auth.js'
 
-const { user, fetchUsers, updateUserRole, deactivateUser } = useAuth()
+const { user, fetchUsers, updateUserRole, deactivateUser, adminResetUserPassword } = useAuth()
 
 const users = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 const confirmDialog = ref(null)
+const resetUser = ref(null)
+const newPassword = ref('')
 
 onMounted(async () => {
   await loadUsers()
@@ -58,6 +60,28 @@ async function handleDeactivate(targetUser) {
     }
   }
 }
+
+function startResetPassword(targetUser) {
+  resetUser.value = targetUser
+  newPassword.value = ''
+  errorMessage.value = ''
+}
+
+async function handleResetPassword() {
+  if (!newPassword.value || newPassword.value.length < 8) {
+    errorMessage.value = 'La password deve essere di almeno 8 caratteri'
+    return
+  }
+  try {
+    await adminResetUserPassword(resetUser.value.username, newPassword.value)
+    errorMessage.value = ''
+    resetUser.value = null
+    newPassword.value = ''
+    alert(`Password reimpostata per ${resetUser.value?.username || 'utente'}`)
+  } catch (e) {
+    errorMessage.value = e.message
+  }
+}
 </script>
 
 <template>
@@ -94,6 +118,13 @@ async function handleDeactivate(targetUser) {
             </button>
             <button
               v-if="!u.disabled"
+              class="btn btn-sm btn-ghost"
+              @click="startResetPassword(u)"
+            >
+              Reset PW
+            </button>
+            <button
+              v-if="!u.disabled"
               class="btn btn-sm btn-secondary"
               @click="handleDeactivate(u)"
             >
@@ -101,6 +132,19 @@ async function handleDeactivate(targetUser) {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Reset Password Section -->
+    <div v-if="resetUser" class="card mt-md" style="border-color: var(--color-accent);">
+      <h3 class="mb-sm">Reimposta password per {{ resetUser.username }}</h3>
+      <div class="form-group">
+        <label class="form-label">Nuova password</label>
+        <input v-model="newPassword" type="password" class="form-input" placeholder="Minimo 8 caratteri" />
+      </div>
+      <div class="flex gap-sm">
+        <button class="btn btn-primary btn-sm" @click="handleResetPassword">Reimposta</button>
+        <button class="btn btn-sm btn-secondary" @click="resetUser = null">Annulla</button>
       </div>
     </div>
   </div>

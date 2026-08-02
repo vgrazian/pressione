@@ -8,7 +8,11 @@ import {
     changePasswordWithTable,
     getAllUsers,
     setUserRoleWithTable,
-    deleteUserWithTable
+    deleteUserWithTable,
+    updateEmail,
+    createRecoveryToken,
+    resetPasswordWithToken,
+    adminResetPassword
 } from './supabaseTableAuth'
 
 const SESSION_KEY = 'pressione_session'
@@ -28,6 +32,10 @@ export function useAuth() {
         logout,
         register,
         changePassword,
+        updateUserEmail,
+        requestPasswordReset,
+        completePasswordReset,
+        adminResetUserPassword,
         fetchUsers,
         updateUserRole,
         deactivateUser,
@@ -198,4 +206,39 @@ async function updateUserRole(username, role) {
  */
 async function deactivateUser(username) {
     await deleteUserWithTable({ username })
+}
+
+/**
+ * Update current user's email
+ */
+async function updateUserEmail(newEmail) {
+    if (!state.user) throw new Error('Non autenticato')
+    await updateEmail({ username: state.user.username, newEmail })
+    state.user.email = newEmail.toLowerCase().trim()
+    // Update stored session
+    const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}')
+    stored.email = newEmail.toLowerCase().trim()
+    localStorage.setItem(SESSION_KEY, JSON.stringify(stored))
+}
+
+/**
+ * Request password recovery token
+ */
+async function requestPasswordReset(username) {
+    return createRecoveryToken(username)
+}
+
+/**
+ * Complete password reset with token
+ */
+async function completePasswordReset(token, newPassword) {
+    await resetPasswordWithToken(token, newPassword)
+}
+
+/**
+ * Admin resets another user's password
+ */
+async function adminResetUserPassword(targetUsername, newPassword) {
+    if (!state.user || state.user.role !== 'admin') throw new Error('Accesso non autorizzato')
+    await adminResetPassword(state.user.username, targetUsername, newPassword)
 }

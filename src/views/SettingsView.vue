@@ -6,15 +6,19 @@ import { deleteAllReadings, getReminders, upsertReminder, deleteReminder } from 
 import { isAdmin } from '@/services/rbac.js'
 
 const router = useRouter()
-const { user, logout, changePassword } = useAuth()
+const { user, logout, changePassword, updateUserEmail } = useAuth()
 
 const confirmDialog = ref(null)
 const reminders = ref([])
 const showPasswordForm = ref(false)
+const showEmailForm = ref(false)
 const currentPassword = ref('')
 const newPassword = ref('')
 const passwordError = ref('')
 const passwordSuccess = ref('')
+const newEmail = ref('')
+const emailError = ref('')
+const emailSuccess = ref('')
 
 onMounted(async () => {
   reminders.value = await getReminders(user.value.username)
@@ -85,6 +89,23 @@ async function handlePasswordChange() {
   }
 }
 
+// --- Email Change ---
+async function handleEmailChange() {
+  emailError.value = ''
+  emailSuccess.value = ''
+  if (!newEmail.value || !newEmail.value.includes('@')) {
+    emailError.value = 'Inserisci un indirizzo email valido'
+    return
+  }
+  try {
+    await updateUserEmail(newEmail.value)
+    emailSuccess.value = 'Email aggiornata con successo!'
+    newEmail.value = ''
+  } catch (e) {
+    emailError.value = e.message
+  }
+}
+
 // --- Data Management ---
 async function handleDeleteAll() {
   const confirmed = await confirmDialog.value?.show({
@@ -123,8 +144,20 @@ async function handleLogout() {
     <div class="card mb-md">
       <h3 class="mb-sm">Account</h3>
       <p><strong>Username:</strong> {{ user?.username }}</p>
-      <p><strong>Email:</strong> {{ user?.email }}</p>
+      <p><strong>Email:</strong> {{ user?.email || 'Non impostata' }}</p>
       <p><strong>Ruolo:</strong> {{ user?.role === 'admin' ? 'Amministratore' : 'Utente' }}</p>
+      <button class="btn btn-sm btn-ghost mt-sm" @click="showEmailForm = !showEmailForm">
+        {{ showEmailForm ? 'Annulla' : 'Cambia Email' }}
+      </button>
+      <div v-if="showEmailForm" class="mt-md">
+        <div class="form-group">
+          <label class="form-label">Nuova email</label>
+          <input v-model="newEmail" type="email" class="form-input" placeholder="nuova@email.com" />
+        </div>
+        <div v-if="emailError" class="form-error mb-sm">{{ emailError }}</div>
+        <div v-if="emailSuccess" class="form-success mb-sm">{{ emailSuccess }}</div>
+        <button class="btn btn-primary btn-sm" @click="handleEmailChange">Aggiorna Email</button>
+      </div>
     </div>
 
     <!-- Password -->
