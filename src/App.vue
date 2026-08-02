@@ -161,6 +161,6 @@ async function handleLogout() {
 .topbar-btn:active { transform: scale(0.95); }
 
 main { padding-bottom: 1rem; }
-main.has-topbar { padding-top: 0; }
-main.has-nav { padding-bottom: 5rem; }
+main.has-topbar { padding-top: 48px; }
+main.has-nav { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0.5rem)); }
 </style>
