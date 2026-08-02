@@ -23,10 +23,10 @@ async function loadReport(pinHash = null) {
   try {
     const token = route.params.token
     const { data, error: err } = await supabase.from('settings')
-      .select('value').eq('key', '_share_' + token).limit(1).maybeSingle()
+      .select('value').eq('key', '_share_' + token).limit(1)
 
-    if (err || !data) throw new Error('not found')
-    const stored = JSON.parse(data.value)
+    if (err || !data || data.length === 0) throw new Error('not found')
+    const stored = JSON.parse(data[0].value)
     if (stored.revoked || new Date(stored.expiresAt) < new Date()) throw new Error('expired')
 
     if (stored.pinHash) {
