@@ -25,7 +25,9 @@ const message = ref('')
 const restoreInput = ref(null)
 
 onMounted(async () => {
-  reminders.value = await getReminders(user.value.username)
+  try {
+    reminders.value = await getReminders(user.value.username).catch(() => [])
+  } catch { reminders.value = [] }
 })
 
 // --- Language ---

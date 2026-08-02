@@ -10,8 +10,9 @@ const { user, logout } = useAuth()
 const navItems = [
   { name: 'home', label: 'Home', icon: 'home', path: '/' },
   { name: 'readingList', label: 'Lista', icon: 'list', path: '/list' },
-  { name: 'statistics', label: 'Statistiche', icon: 'chart', path: '/statistics' },
-  { name: 'settings', label: 'Impostazioni', icon: 'settings', path: '/settings' },
+  { name: 'statistics', label: 'Stats', icon: 'chart', path: '/statistics' },
+  { name: 'report', label: 'Report', icon: 'copy', path: '/report' },
+  { name: 'settings', label: 'Altro', icon: 'settings', path: '/settings' },
 ]
 
 function isActive(item) {
@@ -59,13 +60,13 @@ async function handleLogout() {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.375rem;
   text-decoration: none;
   color: var(--color-text-tertiary);
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 500;
   transition: color 0.15s;
-  min-width: 56px;
+  min-width: 52px;
 }
 
 .nav-item.active,
