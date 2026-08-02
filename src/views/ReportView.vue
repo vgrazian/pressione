@@ -237,7 +237,10 @@ async function generateShareLink() {
 
     shareLink.value = `https://vgrazian.github.io/pressione/#/share/${token}`
     showPin.value = pinClear
-    linkMessage.value = pinClear ? `PIN: ${pinClear} (comunicalo al medico)` : 'Link generato! Valido per 48 ore.'
+    const expiryStr = new Date(expiresAt).toLocaleString('it-IT')
+    linkMessage.value = pinClear
+      ? `PIN: ${pinClear} (comunicalo al medico). Scade il ${expiryStr}`
+      : `Link generato! Scade il ${expiryStr}`
     await loadActiveLinks()
   } catch (e) {
     linkMessage.value = 'Errore: ' + e.message
@@ -379,7 +382,7 @@ async function revokeLink(token) {
           <div v-for="link in activeLinks" :key="link.token" class="active-link-row">
             <code style="font-size:0.6875rem">{{ link.token.slice(0, 12) }}...</code>
             <span style="font-size:0.6875rem;color:var(--color-text-tertiary)">
-              Scade {{ new Date(link.expires_at).toLocaleString('it-IT') }}
+              Scade {{ new Date(link.expiresAt).toLocaleString('it-IT') }}
             </span>
             <button class="btn btn-sm btn-error" @click="revokeLink(link.token)" style="font-size:0.6875rem;padding:2px 8px;min-height:24px">Revoca</button>
           </div>
