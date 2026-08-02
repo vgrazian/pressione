@@ -22,15 +22,16 @@ const customFrom = ref('')
 const customTo = ref('')
 
 const filteredReadings = computed(() => {
-  let result = [...allReadings.value]
+  let result = allReadings.value
   // Date filter
-  if (dateFilter.value === '7') {
+  const df = dateFilter.value
+  if (df === '7') {
     const cutoff = new Date(Date.now() - 7 * 86400000)
     result = result.filter(r => new Date(r.timestamp) >= cutoff)
-  } else if (dateFilter.value === '30') {
+  } else if (df === '30') {
     const cutoff = new Date(Date.now() - 30 * 86400000)
     result = result.filter(r => new Date(r.timestamp) >= cutoff)
-  } else if (dateFilter.value === 'custom' && customFrom.value && customTo.value) {
+  } else if (df === 'custom' && customFrom.value && customTo.value) {
     result = result.filter(r => {
       const t = new Date(r.timestamp)
       return t >= new Date(customFrom.value) && t <= new Date(customTo.value + 'T23:59:59')
@@ -50,6 +51,10 @@ const filteredReadings = computed(() => {
   }
   return result
 })
+
+function setDateFilter(val) {
+  dateFilter.value = val
+}
 
 onMounted(async () => {
   await loadData()
@@ -123,7 +128,7 @@ function onTouchEnd(id, reading) {
       <!-- Date filter -->
       <div class="flex gap-sm mt-sm flex-wrap">
         <button v-for="p in [{v:'all',l:'Tutte'},{v:'7',l:'7gg'},{v:'30',l:'30gg'}]" :key="p.v"
-          class="chip" :class="{ 'chip--active': dateFilter === p.v }" @click="dateFilter = p.v">{{ p.l }}</button>
+          class="chip" :class="{ 'chip--active': dateFilter === p.v }" @click="setDateFilter(p.v)">{{ p.l }}</button>
       </div>
       <!-- Category filter -->
       <div class="filter-chips flex gap-sm mt-sm" style="flex-wrap: wrap;">
