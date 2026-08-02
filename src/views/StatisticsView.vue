@@ -88,19 +88,62 @@ const maLine = computed(() => {
 const maxSystolic = computed(() => Math.max(...chartData.value.map(d => d.ySystolic), 0) + 20)
 const maxDiastolic = computed(() => Math.max(...chartData.value.map(d => d.yDiastolic), 0) + 20)
 
-// Trend points for SVG overlay
+// Aggregate data for charts with many points (max ~50 points)
+const chartPoints = computed(() => {
+  const data = chartData.value
+  if (data.length <= 50) return data
+  // Aggregate by grouping every N points
+  const groupSize = Math.ceil(data.length / 50)
+  const result = []
+  for (let i = 0; i < data.length; i += groupSize) {
+    const slice = data.slice(i, i + groupSize)
+    result.push({
+      x: i,
+      label: slice[0].label,
+      ySystolic: Math.round(slice.reduce((s, d) => s + d.ySystolic, 0) / slice.length),
+      yDiastolic: Math.round(slice.reduce((s, d) => s + d.yDiastolic, 0) / slice.length)
+    })
+  }
+  return result
+})
+
+// SVG polyline points (invert Y since SVG Y goes down)
+const sysPoints = computed(() => {
+  if (chartPoints.value.length < 1) return ''
+  const n = chartPoints.value.length - 1
+  return chartPoints.value.map((d, i) => {
+    const y = 100 - ((d.ySystolic / maxSystolic.value) * 100)
+    return `${(i / Math.max(n, 1)) * 100},${Math.max(2, Math.min(98, y))}`
+  }).join(' ')
+})
+
+const diaPoints = computed(() => {
+  if (chartPoints.value.length < 1) return ''
+  const n = chartPoints.value.length - 1
+  return chartPoints.value.map((d, i) => {
+    const y = 100 - ((d.yDiastolic / maxSystolic.value) * 100)
+    return `${(i / Math.max(n, 1)) * 100},${Math.max(2, Math.min(98, y))}`
+  }).join(' ')
+})
+
+// Trend points in SVG coordinates
 const trendPoints = computed(() => {
-  if (!trendLine.value || chartData.value.length < 2) return ''
-  const pts = chartData.value.map((d, i) => {
+  if (!trendLine.value || chartPoints.value.length < 2) return ''
+  const n = chartPoints.value.length - 1
+  return chartPoints.value.map((d, i) => {
     const y = trendLine.value.slope * i + trendLine.value.intercept
-    return `${i},${(maxSystolic.value - Math.max(0, Math.min(y, maxSystolic.value)))}`
-  })
-  return pts.join(' ')
+    const svgY = 100 - ((y / maxSystolic.value) * 100)
+    return `${(i / Math.max(n, 1)) * 100},${Math.max(1, Math.min(99, svgY))}`
+  }).join(' ')
 })
 
 const maPoints = computed(() => {
-  if (!maLine.value || chartData.value.length < 3) return ''
-  return maLine.value.map((v, i) => `${i},${(maxSystolic.value - Math.max(0, Math.min(v, maxSystolic.value)))}`).join(' ')
+  if (!maLine.value || chartPoints.value.length < 3) return ''
+  const n = chartPoints.value.length - 1
+  return maLine.value.map((v, i) => {
+    const svgY = 100 - ((v / maxSystolic.value) * 100)
+    return `${(i / Math.max(n, 1)) * 100},${Math.max(1, Math.min(99, svgY))}`
+  }).join(' ')
 })
 const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate), 0) + 20)
 </script>
@@ -166,25 +209,24 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
             <span>0</span>
           </div>
           <div class="chart-area">
-            <!-- Trend line overlay -->
-            <svg v-if="trendType === 'linear' && trendPoints" class="chart-trend-svg">
-              <polyline :points="trendPoints" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="4,3" />
+            <!-- SVG Line Chart -->
+            <svg class="chart-line-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <!-- Grid lines -->
+              <line x1="0" y1="50" x2="100" y2="50" stroke="var(--color-border)" stroke-width="0.3" />
+              <!-- Diastolic line -->
+              <polyline v-if="diaPoints" :points="diaPoints" fill="none" stroke="var(--color-accent)" stroke-width="1.5" opacity="0.7" />
+              <!-- Systolic line -->
+              <polyline v-if="sysPoints" :points="sysPoints" fill="none" stroke="#BA1A1A" stroke-width="2" />
+              <!-- Trend line -->
+              <polyline v-if="trendType === 'linear' && trendPoints" :points="trendPoints" fill="none" stroke="var(--color-accent)" stroke-width="1" stroke-dasharray="3,3" opacity="0.6" />
+              <polyline v-if="trendType === 'movingAverage' && maPoints" :points="maPoints" fill="none" stroke="var(--color-accent)" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.5" />
             </svg>
-            <svg v-if="trendType === 'movingAverage' && maPoints" class="chart-trend-svg">
-              <polyline :points="maPoints" fill="none" stroke="var(--color-accent)" stroke-width="2" />
-            </svg>
-            <div
-              v-for="(point, i) in chartData"
-              :key="i"
-              class="chart-bar-group"
-              :style="{ left: (i / Math.max(chartData.length - 1, 1)) * 100 + '%' }"
-            >
-              <div class="chart-bar sys-bar"
-                :style="{ height: (point.ySystolic / maxSystolic) * 100 + '%' }"
-                title="SYS: {{ point.ySystolic }}"></div>
-              <div class="chart-bar dia-bar"
-                :style="{ height: (point.yDiastolic / maxSystolic) * 100 + '%' }"
-                title="DIA: {{ point.yDiastolic }}"></div>
+            <!-- Hover tooltip area -->
+            <div class="chart-dots">
+              <div v-for="(p, i) in chartPoints" :key="i" class="chart-dot"
+                :style="{ left: (i / Math.max(chartPoints.length - 1, 1)) * 100 + '%', bottom: ((p.ySystolic / maxSystolic) * 100) + '%' }"
+                :title="p.label + ': ' + p.ySystolic + '/' + p.yDiastolic">
+              </div>
             </div>
           </div>
         </div>
@@ -310,17 +352,32 @@ const maxHR = computed(() => Math.max(...chartData.value.map(d => d.yHeartRate),
 .chart-area {
   flex: 1;
   position: relative;
-  border-bottom: 1px solid var(--color-border);
-  border-left: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-strong);
+  border-left: 1px solid var(--color-border-strong);
+  overflow: hidden;
 }
-.chart-trend-svg {
+
+.chart-line-svg {
   position: absolute;
-  inset: 0;
+  inset: 5px 0 0 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 5px);
   pointer-events: none;
-  z-index: 2;
 }
+
+.chart-dots { position: absolute; inset: 0; }
+.chart-dot {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #BA1A1A;
+  transform: translate(-50%, 50%);
+  opacity: 0;
+  transition: opacity 0.15s;
+  cursor: pointer;
+}
+.chart-dot:hover { opacity: 1; }
+
 .chart-bar-group {
   position: absolute;
   bottom: 0;
