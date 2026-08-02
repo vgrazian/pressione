@@ -276,8 +276,62 @@ export async function getReminders(username) {
 }
 
 /**
- * Export readings as CSV and trigger download
+ * Backup all user data as JSON download
  */
+export async function backupData(username) {
+    const readings = await db.readings.where('username').equals(username).toArray()
+    const reminders = await db.reminders.where('username').equals(username).toArray()
+    const settings = await db.settings.where('username').equals(username).toArray()
+
+    const backup = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        username,
+        readings: readings.map(r => ({
+            systolic: r.systolic, diastolic: r.diastolic, heartRate: r.heartRate,
+            timestamp: r.timestamp, notes: r.notes, category: r.category
+        })),
+        reminders,
+        settings
+    }
+
+    const json = JSON.stringify(backup, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pressione_backup_${username}_${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    return backup.readings.length
+}
+
+/**
+ * Restore data from a JSON backup file
+ */
+export async function restoreData(username, file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = async (e) => {
+            try {
+                const backup = JSON.parse(e.target.result)
+                if (!backup.readings || !Array.isArray(backup.readings)) {
+                    throw new Error('Formato backup non valido')
+                }
+                // Import readings
+                for (const r of backup.readings) {
+                    await upsertReading({
+                        systolic: r.systolic, diastolic: r.diastolic, heartRate: r.heartRate,
+                        timestamp: r.timestamp, notes: r.notes || ''
+                    }, username)
+                }
+                resolve(backup.readings.length)
+            } catch (err) { reject(err) }
+        }
+        reader.onerror = () => reject(new Error('Errore lettura file'))
+        reader.readAsText(file)
+    })
+}
 export async function exportCSV(readings) {
     const headers = ['Data', 'Ora', 'Sistolica (mmHg)', 'Diastolica (mmHg)', 'Freq. Cardiaca (BPM)', 'Categoria', 'Note']
     const rows = readings.map(r => {

@@ -2,6 +2,7 @@
 import { onMounted, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { initAuth, useAuth } from '@/services/auth.js'
+import { useTheme } from '@/services/theme.js'
 import AppNav from '@/components/AppNav.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import OfflineBanner from '@/components/OfflineBanner.vue'
@@ -9,6 +10,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const { isAuthenticated, isAuthReady, user, logout } = useAuth()
+const { theme, toggle: toggleTheme } = useTheme()
 const isInitializing = ref(true)
 const error = ref(null)
 const confirm = inject('confirm-dialog', null)
@@ -60,9 +62,14 @@ async function handleLogout() {
           <AppIcon name="heart" :size="18" color="var(--color-accent)" />
           Pressione
         </span>
-        <button class="topbar-logout" @click="handleLogout" title="Logout">
-          <AppIcon name="logout" :size="18" />
-        </button>
+        <div class="topbar-actions">
+          <button class="topbar-btn" @click="toggleTheme" :title="'Tema: ' + theme">
+            <AppIcon :name="theme === 'dark' ? 'moon' : 'sun'" :size="18" />
+          </button>
+          <button class="topbar-btn" @click="handleLogout" title="Logout">
+            <AppIcon name="logout" :size="18" />
+          </button>
+        </div>
       </header>
 
       <OfflineBanner v-if="isAuthenticated" />
@@ -123,26 +130,16 @@ async function handleLogout() {
   letter-spacing: -0.01em;
 }
 
-.topbar-logout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+.topbar-actions { display: flex; align-items: center; gap: 4px; }
+.topbar-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border: none; border-radius: var(--radius-sm);
+  background: transparent; color: var(--color-text-tertiary);
+  cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-
-.topbar-logout:hover {
-  background: var(--color-surface-overlay);
-  color: var(--color-text-primary);
-}
-
-.topbar-logout:active { transform: scale(0.95); }
+.topbar-btn:hover { background: var(--color-surface-overlay); color: var(--color-text-primary); }
+.topbar-btn:active { transform: scale(0.95); }
 
 main { padding-bottom: 1rem; }
 main.has-topbar { padding-top: 0; }

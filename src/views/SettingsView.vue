@@ -2,7 +2,7 @@
 import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
-import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, generateTestData, refreshFromServer } from '@/services/dataService.js'
+import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, generateTestData, refreshFromServer, backupData, restoreData } from '@/services/dataService.js'
 import { isAdmin } from '@/services/rbac.js'
 import { useI18n } from '@/services/i18n.js'
 
@@ -22,6 +22,7 @@ const newEmail = ref('')
 const emailError = ref('')
 const emailSuccess = ref('')
 const message = ref('')
+const restoreInput = ref(null)
 
 onMounted(async () => {
   reminders.value = await getReminders(user.value.username)
@@ -91,6 +92,31 @@ async function handleGenerateTestData() {
     await refreshFromServer(user.value.username)
     message.value = t('test_data_generated')
   } catch (e) { message.value = e.message }
+}
+
+async function handleBackup() {
+  message.value = ''
+  try {
+    await refreshFromServer(user.value.username)
+    const count = await backupData(user.value.username)
+    message.value = `Backup creato con ${count} misurazioni`
+  } catch (e) { message.value = e.message }
+}
+
+function triggerRestore() { restoreInput.value?.click() }
+
+async function handleRestore(e) {
+  message.value = ''
+  const file = e.target.files?.[0]
+  if (!file) return
+  const ok = await confirm({ title: 'Ripristina dati', message: 'I dati esistenti verranno uniti al backup. Continuare?', confirmText: 'Ripristina' })
+  if (!ok) { e.target.value = ''; return }
+  try {
+    const count = await restoreData(user.value.username, file)
+    await refreshFromServer(user.value.username)
+    message.value = `Ripristinate ${count} misurazioni`
+  } catch (err) { message.value = err.message }
+  e.target.value = ''
 }
 </script>
 
@@ -167,6 +193,9 @@ async function handleGenerateTestData() {
       <h3 class="mb-sm">Dati</h3>
       <div class="flex flex-col gap-sm">
         <button class="btn btn-sm btn-ghost" @click="handleExportCSV">{{ t('export_csv') }}</button>
+        <button class="btn btn-sm btn-ghost" @click="handleBackup">Backup (JSON)</button>
+        <button class="btn btn-sm btn-ghost" @click="triggerRestore">Ripristina Backup</button>
+        <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
         <button class="btn btn-sm btn-ghost" @click="handleGenerateTestData">{{ t('generate_test_data') }}</button>
       </div>
       <div v-if="message" class="form-success mt-sm">{{ message }}</div>
