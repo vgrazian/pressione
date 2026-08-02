@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer, retrySyncQueue } from '@/services/dataService.js'
-import { computeStatistics } from '@/services/statistics.js'
+import { computeStatistics, computeDerivatives } from '@/services/statistics.js'
 import { getCategoryColor } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
 import CategoryBadge from '@/components/CategoryBadge.vue'
@@ -15,6 +15,7 @@ const { user } = useAuth()
 
 const latestReading = ref(null)
 const statistics = ref(null)
+const weeklyTrend = ref(null)
 const recentReadings = ref([])
 const isLoading = ref(true)
 
@@ -33,6 +34,20 @@ async function loadData() {
       latestReading.value = allReadings[0]
       statistics.value = computeStatistics(allReadings)
       recentReadings.value = allReadings.slice(0, 5)
+
+      // Weekly trend: compute derivative on last 7 days
+      const weekAgo = new Date(Date.now() - 7 * 86400000)
+      const weekReadings = allReadings.filter(r => new Date(r.timestamp) >= weekAgo)
+      if (weekReadings.length >= 2) {
+        const deriv = computeDerivatives(weekReadings)
+        const avgDs = deriv.systolic.length ? deriv.systolic.reduce((a, b) => a + b, 0) / deriv.systolic.length : 0
+        const avgDd = deriv.diastolic.length ? deriv.diastolic.reduce((a, b) => a + b, 0) / deriv.diastolic.length : 0
+        weeklyTrend.value = {
+          systolicRate: Math.round(avgDs * 10) / 10,
+          diastolicRate: Math.round(avgDd * 10) / 10,
+          alarmCount: deriv.alarmSegments.length
+        }
+      }
     }
   } catch (e) {
     console.error('Load error:', e)
@@ -113,6 +128,31 @@ const latestCategoryColor = computed(() => {
         <span class="stat-card__label">Totale Misurazioni</span>
         <span class="stat-card__value">{{ statistics.readingsCount }}</span>
       </div>
+    </div>
+
+    <!-- Weekly Trend -->
+    <div v-if="weeklyTrend" class="trend-card card mb-md">
+      <h3 class="mb-sm">Trend Settimanale (7 giorni)</h3>
+      <div class="trend-row">
+        <div class="trend-item">
+          <span class="trend-label">Sistolica</span>
+          <span class="trend-value" :class="{ 'trend-up': weeklyTrend.systolicRate > 2, 'trend-down': weeklyTrend.systolicRate < -2 }">
+            {{ weeklyTrend.systolicRate > 0 ? '+' : '' }}{{ weeklyTrend.systolicRate }}
+          </span>
+          <span class="trend-unit">mmHg/giorno</span>
+        </div>
+        <div class="trend-item">
+          <span class="trend-label">Diastolica</span>
+          <span class="trend-value" :class="{ 'trend-up': weeklyTrend.diastolicRate > 1.5, 'trend-down': weeklyTrend.diastolicRate < -1.5 }">
+            {{ weeklyTrend.diastolicRate > 0 ? '+' : '' }}{{ weeklyTrend.diastolicRate }}
+          </span>
+          <span class="trend-unit">mmHg/giorno</span>
+        </div>
+      </div>
+      <div v-if="weeklyTrend.alarmCount > 0" class="trend-alert mt-sm">
+        ⚠️ {{ weeklyTrend.alarmCount }} picco{{ weeklyTrend.alarmCount > 1 ? 'i' : '' }} pressori{{ weeklyTrend.alarmCount > 1 ? 'o' : 'o' }} nella settimana
+      </div>
+      <p v-else class="trend-stable mt-sm">✅ Andamento stabile</p>
     </div>
 
     <!-- Recent Readings -->
@@ -235,4 +275,15 @@ const latestCategoryColor = computed(() => {
   font-size: 0.75rem;
   color: var(--color-text-secondary);
 }
+
+.trend-card { border-left: 4px solid var(--color-accent); }
+.trend-row { display: flex; gap: var(--space-xl); }
+.trend-item { display: flex; flex-direction: column; }
+.trend-label { font-size: 0.6875rem; color: var(--color-text-secondary); text-transform: uppercase; }
+.trend-value { font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); }
+.trend-value.trend-up { color: #BA1A1A; }
+.trend-value.trend-down { color: #006C4C; }
+.trend-unit { font-size: 0.625rem; color: var(--color-text-tertiary); }
+.trend-alert { font-size: 0.8125rem; color: var(--color-error); font-weight: 500; }
+.trend-stable { font-size: 0.8125rem; color: var(--color-accent); }
 </style>
