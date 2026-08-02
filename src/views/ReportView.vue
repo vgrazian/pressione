@@ -19,7 +19,9 @@ const includeHistory = ref(true)
 const anonymize = ref(false)
 const shareLink = ref(null)
 const sharePin = ref('')
+const showPin = ref('')
 const linkMessage = ref('')
+const activeLinks = ref([])
 const generatingPDF = ref(false)
 
 const periods = [
@@ -33,6 +35,7 @@ onMounted(async () => {
   try {
     await refreshFromServer(user.value.username)
     readings.value = await getReadings(user.value.username)
+    await loadActiveLinks()
   } finally { isLoading.value = false }
 })
 
@@ -177,28 +180,51 @@ async function shareNative() {
 }
 
 // --- Temporary Link ---
+async function loadActiveLinks() {
+  try {
+    const { data } = await supabase.rpc('get_my_share_links', { p_username: user.value.username })
+    if (data) activeLinks.value = typeof data === 'string' ? JSON.parse(data) : data
+  } catch { /* ignore */ }
+}
+
+async function hashPin(pin) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(pin)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 async function generateShareLink() {
   linkMessage.value = ''
-  const data = filteredReadings.value
-  if (!data.length) { linkMessage.value = 'Nessun dato da condividere'; return }
+  const readingsData = filteredReadings.value
+  if (!readingsData.length) { linkMessage.value = 'Nessun dato da condividere'; return }
   try {
     const reportData = {
       stats: stats.value,
-      readings: data.slice(0, 100).map(r => ({
+      readings: readingsData.slice(0, 100).map(r => ({
         systolic: r.systolic, diastolic: r.diastolic, heartRate: r.heartRate,
         timestamp: r.timestamp, notes: r.notes, category: r.category
       }))
     }
-    const pin = sharePin.value || null
-    const { data: result, error } = await supabase.rpc('create_share_link', {
+    // Generate random 4-digit PIN if requested
+    let pinHash = null
+    let pinClear = ''
+    if (sharePin.value) {
+      pinClear = String(Math.floor(1000 + Math.random() * 9000))
+      pinHash = await hashPin(pinClear)
+    }
+
+    const { data: result, error } = await supabase.rpc('create_share_link_v2', {
       p_username: user.value.username,
       p_report_data: reportData,
-      p_pin: pin || null
+      p_pin_hash: pinHash
     })
     if (error) throw error
+
     shareLink.value = `https://vgrazian.github.io/pressione/#/share/${result.token}`
-    if (pin) shareLink.value += `?pin=${pin}`
-    linkMessage.value = 'Link generato! Valido per 48 ore.'
+    showPin.value = pinClear
+    linkMessage.value = pinClear ? `PIN: ${pinClear} (comunicalo al medico)` : 'Link generato! Valido per 48 ore.'
+    await loadActiveLinks()
   } catch (e) {
     linkMessage.value = 'Errore: ' + e.message
   }
@@ -206,9 +232,21 @@ async function generateShareLink() {
 
 function copyLink() {
   if (shareLink.value) {
-    navigator.clipboard.writeText(shareLink.value)
-    linkMessage.value = 'Link copiato!'
+    const text = showPin.value ? `${shareLink.value}\nPIN: ${showPin.value}` : shareLink.value
+    navigator.clipboard.writeText(text)
+    linkMessage.value = 'Copiato!'
     setTimeout(() => linkMessage.value = '', 3000)
+  }
+}
+
+async function revokeLink(token) {
+  try {
+    await supabase.rpc('revoke_share_link', { p_token: token })
+    activeLinks.value = activeLinks.value.filter(l => l.token !== token)
+    linkMessage.value = 'Link revocato.'
+    setTimeout(() => linkMessage.value = '', 3000)
+  } catch (e) {
+    linkMessage.value = 'Errore: ' + e.message
   }
 }
 </script>
@@ -302,17 +340,31 @@ function copyLink() {
       <div class="card mb-md">
         <h3 class="mb-sm">Link Temporaneo (48h)</h3>
         <p class="text-secondary mb-sm" style="font-size:0.8125rem">
-          Genera un link web che il medico può aprire dal browser. Si autodistrugge dopo 48 ore.
+          Genera un link web per il medico. Con PIN opzionale per maggiore privacy.
         </p>
-        <div class="flex gap-sm mb-sm">
-          <input v-model="sharePin" type="text" class="form-input" placeholder="PIN 4 cifre (opzionale)" maxlength="4" style="width:160px" />
+        <div class="flex gap-sm mb-sm items-center">
+          <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
+            <input type="checkbox" v-model="sharePin" /> Proteggi con PIN
+          </label>
           <button class="btn btn-primary btn-sm" @click="generateShareLink">Genera Link</button>
         </div>
-        <div v-if="shareLink" class="share-link-box">
+        <div v-if="shareLink" class="share-link-box mb-sm">
           <code>{{ shareLink }}</code>
           <button class="btn btn-sm btn-ghost" @click="copyLink">Copia</button>
         </div>
-        <div v-if="linkMessage" class="form-success mt-sm">{{ linkMessage }}</div>
+        <div v-if="linkMessage" class="form-success mb-sm">{{ linkMessage }}</div>
+
+        <!-- Active Links -->
+        <div v-if="activeLinks.length > 0" class="mt-md">
+          <h4 class="mb-sm" style="font-size:0.875rem">Link Attivi</h4>
+          <div v-for="link in activeLinks" :key="link.token" class="active-link-row">
+            <code style="font-size:0.6875rem">{{ link.token.slice(0, 12) }}...</code>
+            <span style="font-size:0.6875rem;color:var(--color-text-tertiary)">
+              Scade {{ new Date(link.expires_at).toLocaleString('it-IT') }}
+            </span>
+            <button class="btn btn-sm btn-error" @click="revokeLink(link.token)" style="font-size:0.6875rem;padding:2px 8px;min-height:24px">Revoca</button>
+          </div>
+        </div>
       </div>
     </template>
   </div>

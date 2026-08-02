@@ -7,8 +7,9 @@ import { computeStatistics, computeDerivatives, computeMorningSurge, computeHype
 import { getCategoryLabel } from '@/services/categories.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { Chart, registerables } from 'chart.js'
+import annotationPlugin from 'chartjs-plugin-annotation'
 
-Chart.register(...registerables)
+Chart.register(...registerables, annotationPlugin)
 
 const router = useRouter()
 const { user } = useAuth()
@@ -141,6 +142,12 @@ function renderBPChart() {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 } } },
+        annotation: {
+          annotations: {
+            sysSafe: { type: 'box', yMin: 90, yMax: 140, backgroundColor: 'rgba(0,108,76,0.04)', borderColor: 'transparent' },
+            diaSafe: { type: 'box', yMin: 60, yMax: 90, backgroundColor: 'rgba(0,108,76,0.06)', borderColor: 'transparent' }
+          }
+        },
         tooltip: {
           callbacks: {
             title: (ctx) => data[ctx[0].dataIndex] ? new Date(data[ctx[0].dataIndex].timestamp).toLocaleString('it-IT') : '',
@@ -252,6 +259,14 @@ function renderPieChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      onClick: (_event, elements) => {
+        if (elements.length > 0) {
+          const idx = elements[0].index
+          const label = Object.keys(cats)[idx]
+          // Navigate to list filtered by category
+          router.push({ name: 'readingList', query: { category: label } })
+        }
+      },
       plugins: {
         legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } }
       }

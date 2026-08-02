@@ -1,8 +1,8 @@
 # Pressione — Feature Inventory & Review Document
 
 > **Versione:** 1.0.0 | **Data:** 2026-08-02  
-> **URL:** https://vgrazian.github.io/pressione/  
-> **Repo:** https://github.com/vgrazian/pressione  
+> **URL:** <https://vgrazian.github.io/pressione/>  
+> **Repo:** <https://github.com/vgrazian/pressione>  
 > **Stack:** Vue 3 + Vite PWA · Supabase (PostgreSQL) · Dexie/IndexedDB · Chart.js · jsPDF  
 > **Test:** 29 unit (Vitest) + 15 E2E (Playwright) — 44 test passanti
 
@@ -11,7 +11,7 @@
 ## 1. Autenticazione e Gestione Utenti
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | Login/Logout | ✅ | Table-based auth su Supabase (SHA-256) |
 | Sessione persistente | ✅ | localStorage con TTL 8 ore |
 | Registrazione nuovi utenti | ✅ | Via admin o script seed |
@@ -27,7 +27,7 @@
 ## 2. Dashboard (Home)
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | Saluto personalizzato | ✅ | "Ciao, {username}" |
 | Ultima misurazione | ✅ | Card con valori, categoria, data/ora |
 | Statistiche rapide (4 KPI) | ✅ | Media SYS/DIA/BPM + conteggio |
@@ -42,7 +42,7 @@
 ## 3. CRUD Misurazioni
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | Inserimento lettura | ✅ | SYS, DIA, BPM, data, ora, note |
 | Modifica lettura | ✅ | Navigazione da lista o home |
 | Validazione input | ✅ | Range 1-300/1-200/1-300 + DIA < SYS |
@@ -57,7 +57,7 @@
 ## 4. Lista Misurazioni
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | Lista cronologica | ✅ | Ordinata per data decrescente |
 | Filtro per categoria | ✅ | Chip selezionabili (6 categorie ESC/ESH) |
 | Ricerca testuale | ✅ | Per note o valori |
@@ -72,7 +72,7 @@
 ## 5. Statistiche Avanzate
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | **Filtri temporali** | ✅ | 7gg, 30gg, personalizzato (date picker) |
 | **Line chart (Chart.js)** | ✅ | SYS (rosso), DIA (blu), BPM (grigio) |
 | **Doppio asse Y** | ✅ | mmHg sinistra, BPM destra |
@@ -92,7 +92,7 @@
 ## 6. Report e Condivisione
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | **Filtri contenuto** | ✅ | Periodo, includi storico, anonimizza |
 | **Anteprima tabella** | ✅ | Prime 20 righe visibili in-app |
 | **PDF (jsPDF)** | ✅ | A4 con header, stats, tabella completa |
@@ -108,7 +108,7 @@
 ## 7. Impostazioni
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | Lingua IT/EN | ✅ | Selettore in cima alle Impostazioni |
 | Account info | ✅ | Username, email, ruolo |
 | Modifica email | ✅ | |
@@ -125,7 +125,7 @@
 ## 8. UI/UX e Design System
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | Design system CSS | ✅ | Variabili CSS, radius 12px consistente |
 | Dark mode | ✅ | `prefers-color-scheme: dark` |
 | Font Inter | ✅ | Google Fonts, font-display: swap |
@@ -145,7 +145,7 @@
 ## 9. Infrastruttura e Affidabilità
 
 | Feature | Stato | Note |
-|---|---|---|
+| --- | --- | --- |
 | Retry automatico | ✅ | 2 tentativi con backoff esponenziale |
 | Offline-first | ✅ | Dexie/IndexedDB sempre disponibile |
 | Sync queue | ✅ | Operazioni in coda se offline |
@@ -162,7 +162,7 @@
 ## 10. Funzionalità bp-tracker Originali
 
 | Feature bp-tracker | Pressione | Gap |
-|---|---|---|
+| --- | --- | --- |
 | CRUD misurazioni | ✅ | |
 | Classificazione ESC/ESH | ✅ | |
 | Home dashboard | ✅ | |
@@ -185,6 +185,7 @@
 ## Aree di Miglioramento Identificate
 
 ### Priorità Alta
+
 - [ ] **Notifiche push** per promemoria misurazione
 - [ ] **Fascia di sicurezza** (OMS) sul grafico principale come area sfumata
 - [ ] **Tooltip interattivo** sul line chart con long-press/tap
@@ -192,6 +193,7 @@
 - [ ] **Revoca link** nella UI del report
 
 ### Priorità Media
+
 - [ ] **Grafico BPM** separato come sub-chart sotto l'asse X
 - [ ] **Pie chart cliccabile** per filtrare lo storico
 - [ ] **Esportazione CSV** con più opzioni (solo medie, solo storico)
@@ -199,6 +201,7 @@
 - [ ] **Cache locale** delle statistiche (ricalcolo solo su nuovo dato)
 
 ### Priorità Bassa
+
 - [ ] **PIN obbligatorio** sui link temporanei
 - [ ] **Multi-lingua** esteso (FR, ES, DE, PT)
 - [ ] **Dark mode toggle** manuale (oltre a prefers-color-scheme)

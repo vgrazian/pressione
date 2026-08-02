@@ -7,53 +7,69 @@ const route = useRoute()
 const report = ref(null)
 const error = ref('')
 const isLoading = ref(true)
+const needsPin = ref(false)
+const pinInput = ref('')
+const pinError = ref('')
 
-onMounted(async () => {
-  const token = route.params.token
-  const pin = route.query.pin || null
+async function hashPin(pin) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(pin)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function loadReport(pinHash = null) {
+  isLoading.value = true; error.value = ''
   try {
-    const { data, error: err } = await supabase.rpc('get_shared_report', {
-      p_token: token, p_pin: pin || null
+    const token = route.params.token
+    const { data, error: err } = await supabase.rpc('get_shared_report_v2', {
+      p_token: token, p_pin_hash: pinHash
     })
     if (err) throw err
+    if (data.needs_pin) { needsPin.value = true; isLoading.value = false; return }
     report.value = data.report_data
+    needsPin.value = false
   } catch (e) {
-    error.value = 'Link non valido o scaduto.'
-  } finally {
-    isLoading.value = false
-  }
-})
+    error.value = 'Link non valido, scaduto o revocato.'
+  } finally { isLoading.value = false }
+}
+
+async function submitPin() {
+  pinError.value = ''
+  if (pinInput.value.length !== 4) { pinError.value = 'Inserisci 4 cifre'; return }
+  const h = await hashPin(pinInput.value)
+  await loadReport(h)
+}
+
+onMounted(() => loadReport())
 </script>
 
 <template>
   <div style="max-width:800px;margin:0 auto;padding:2rem;font-family:Inter,sans-serif;">
-    <div v-if="isLoading" style="text-align:center;padding:4rem;">
-      <p>Caricamento report...</p>
+    <div v-if="isLoading" style="text-align:center;padding:4rem;"><p>Caricamento...</p></div>
+
+    <!-- PIN Gate -->
+    <div v-else-if="needsPin" style="text-align:center;padding:4rem;">
+      <h2 style="color:#006C4C;margin-bottom:1rem">🔒 Report Protetto</h2>
+      <p style="color:#666;margin-bottom:1.5rem">Inserisci il PIN di 4 cifre fornito dal paziente.</p>
+      <input v-model="pinInput" type="text" inputmode="numeric" maxlength="4" placeholder="1234"
+        style="font-size:2rem;text-align:center;width:120px;padding:8px;border:2px solid #006C4C;border-radius:8px;letter-spacing:8px" />
+      <div v-if="pinError" style="color:#BA1A1A;margin-top:8px;font-size:0.875rem">{{ pinError }}</div>
+      <button @click="submitPin" style="margin-top:1rem;padding:8px 24px;background:#006C4C;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer">Sblocca</button>
     </div>
 
     <div v-else-if="error" style="text-align:center;padding:4rem;">
       <h2 style="color:#BA1A1A">⚠️ {{ error }}</h2>
-      <p style="color:#666">Il link potrebbe essere scaduto o revocato.</p>
     </div>
 
     <template v-else-if="report">
       <h1 style="color:#006C4C;margin-bottom:0.5rem">Report Pressione Arteriosa</h1>
-      <p style="color:#666;margin-bottom:1.5rem">
-        {{ report.readings?.length || 0 }} misurazioni — Generato il {{ new Date().toLocaleDateString('it-IT') }}
-      </p>
-
+      <p style="color:#666;margin-bottom:1.5rem">{{ report.readings?.length || 0 }} misurazioni</p>
       <div v-if="report.readings?.length" style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:0.875rem">
-          <thead>
-            <tr style="background:#E8F5E9">
-              <th style="padding:8px;text-align:left">Data</th>
-              <th style="padding:8px;text-align:right">Sistolica</th>
-              <th style="padding:8px;text-align:right">Diastolica</th>
-              <th style="padding:8px;text-align:right">BPM</th>
-              <th style="padding:8px;text-align:left">Categoria</th>
-              <th style="padding:8px;text-align:left">Note</th>
-            </tr>
-          </thead>
+          <thead><tr style="background:#E8F5E9">
+            <th style="padding:8px;text-align:left">Data</th><th style="padding:8px;text-align:right">Sistolica</th><th style="padding:8px;text-align:right">Diastolica</th><th style="padding:8px;text-align:right">BPM</th><th style="padding:8px;text-align:left">Categoria</th><th style="padding:8px;text-align:left">Note</th>
+          </tr></thead>
           <tbody>
             <tr v-for="(r, i) in report.readings" :key="i" style="border-bottom:1px solid #E0E0E0">
               <td style="padding:6px 8px">{{ new Date(r.timestamp).toLocaleDateString('it-IT') }}</td>
@@ -66,10 +82,7 @@ onMounted(async () => {
           </tbody>
         </table>
       </div>
-
-      <p style="color:#999;font-size:0.75rem;margin-top:2rem;text-align:center">
-        Report generato da Pressione App — Questo link si autodistruggerà dopo 48 ore
-      </p>
+      <p style="color:#999;font-size:0.75rem;margin-top:2rem;text-align:center">Report generato da Pressione App — Autodistruzione dopo 48 ore</p>
     </template>
   </div>
 </template>

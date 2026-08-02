@@ -55,6 +55,26 @@ async function handleDelete(reading) {
 function goToAdd() {
   router.push('/add')
 }
+
+// --- Swipe-to-delete ---
+const swipeState = ref({}) // { [id]: { deltaX: number } }
+
+function onTouchStart(id, e) {
+  swipeState.value[id] = { startX: e.touches[0].clientX, deltaX: 0 }
+}
+function onTouchMove(id, e) {
+  const s = swipeState.value[id]
+  if (!s) return
+  s.deltaX = Math.min(0, e.touches[0].clientX - s.startX)
+}
+function onTouchEnd(id, reading) {
+  const s = swipeState.value[id]
+  if (!s) return
+  if (s.deltaX < -80) {
+    handleDelete(reading)
+  }
+  delete swipeState.value[id]
+}
 </script>
 
 <template>
@@ -97,13 +117,14 @@ function goToAdd() {
     </div>
 
     <div v-else class="readings-list flex flex-col gap-sm">
-      <ReadingCard
-        v-for="reading in readings"
-        :key="reading.id"
-        :reading="reading"
-        @edit="editReading"
-        @delete="handleDelete"
-      />
+      <div v-for="reading in readings" :key="reading.id"
+        class="swipe-container"
+        @touchstart="onTouchStart(reading.id, $event)"
+        @touchmove="onTouchMove(reading.id, $event)"
+        @touchend="onTouchEnd(reading.id, reading)"
+        :style="{ transform: swipeState[reading.id] ? 'translateX(' + swipeState[reading.id].deltaX + 'px)' : '' }">
+        <ReadingCard :reading="reading" @edit="editReading" @delete="handleDelete" />
+      </div>
     </div>
   </div>
 </template>
@@ -137,5 +158,10 @@ function goToAdd() {
 
 .chip:active {
   opacity: 0.7;
+}
+
+.swipe-container {
+  transition: transform 0.1s ease-out;
+  touch-action: pan-y;
 }
 </style>

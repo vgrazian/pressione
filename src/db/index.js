@@ -7,7 +7,8 @@ db.version(1).stores({
     settings: '[username+key], username',
     reminders: 'id, username',
     syncQueue: '++id, username, tableName, recordId',
-    cachedUsers: 'username'
+    cachedUsers: 'username',
+    cachedStats: '[username+dateRange]'
 })
 
 // Helper to get a setting
