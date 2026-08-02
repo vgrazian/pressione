@@ -43,8 +43,7 @@ async function loadData() {
   try {
     await refreshFromServer(user.value.username)
     readings.value = await getReadings(user.value.username)
-    await nextTick()
-    renderCharts()
+    // Charts will render via the watch on filteredReadings
   } finally { isLoading.value = false }
 }
 
@@ -76,12 +75,16 @@ function applyCustomRange() {
   if (customFrom.value && customTo.value) renderCharts()
 }
 
+// Watch for data changes and render charts after DOM update
+watch(filteredReadings, async () => {
+  await nextTick()
+  renderCharts()
+}, { deep: false })
+
 function renderCharts() {
-  setTimeout(() => {
-    renderBPChart()
-    renderDerivChart()
-    renderPieChart()
-  }, 100)
+  renderBPChart()
+  renderDerivChart()
+  renderPieChart()
 }
 
 // --- Main BP Chart ---
