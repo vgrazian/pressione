@@ -5,6 +5,7 @@ import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics, computeDerivatives, computeMorningSurge, computeHypertensiveLoad, computeHRV } from '@/services/statistics.js'
 import { getCategoryLabel } from '@/services/categories.js'
+import { useI18n } from '@/services/i18n.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { Chart, registerables } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
@@ -13,6 +14,7 @@ Chart.register(...registerables, annotationPlugin)
 
 const router = useRouter()
 const { user } = useAuth()
+const { t } = useI18n()
 
 const readings = ref([])
 const isLoading = ref(true)
@@ -320,7 +322,7 @@ function goToAdd() { router.push('/add') }
           <span class="kpi-value">{{ stats.avgSystolic }} / {{ stats.avgDiastolic }} <small>mmHg</small></span>
         </div>
         <div class="kpi-card card card--flat">
-          <span class="kpi-label">Morning Surge (06-09 vs 20-23)</span>
+          <span class="kpi-label">Picco Mattutino (06-09 vs 20-23)</span>
           <span class="kpi-value" v-if="morningSurge.delta !== null">
             Δ {{ morningSurge.delta > 0 ? '+' : '' }}{{ morningSurge.delta }}
             <span v-if="morningSurge.alert" class="badge" style="background:var(--color-error-muted);color:var(--color-error)">⚠️ Rischio</span>
