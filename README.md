@@ -1,116 +1,146 @@
-# Pressione ❤️
+# Pressione
 
 PWA per il monitoraggio della pressione arteriosa e delle pulsazioni cardiache.
 Multi-utente, con sincronizzazione cloud via Supabase.
 
+**URL:** https://vgrazian.github.io/pressione/
+
 ## Funzionalità
 
-- 📊 **Monitoraggio completo**: sistolica, diastolica, frequenza cardiaca
-- 🏷️ **Classificazione automatica**: secondo linee guida ESC/ESH
-- 📈 **Statistiche avanzate**: medie, trend, distribuzione categorie e oraria
-- 📄 **Report**: generazione e condivisione report testuali
-- 🔔 **Promemoria**: configurazione promemoria per misurazioni regolari
-- 👥 **Multi-utente**: ogni utente ha i propri dati isolati
-- 🔐 **Autenticazione**: login sicuro con password hashed (SHA-256)
-- 📱 **PWA**: installabile su qualsiasi dispositivo (iOS, Android, desktop)
-- ☁️ **Sync cloud**: dati sincronizzati su Supabase
-- 🌐 **Offline-first**: funziona anche senza connessione
+### Autenticazione e Utenti
+- Login/Logout con password hashed (SHA-256), sessione persistente 8 ore
+- Recupero password via token, modifica email
+- RBAC: admin (gestione utenti, reset password) e user
+- 8 utenti pre-configurati
+
+### Monitoraggio
+- CRUD misurazioni: sistolica, diastolica, frequenza cardiaca, data/ora, note
+- Classificazione automatica ESC/ESH in tempo reale (6 categorie)
+- Rilevazione duplicati (stessa misurazione entro 10 minuti)
+- Validazione input con range clinici
+
+### Dashboard
+- Ultima misurazione con categoria e valori
+- 4 KPI rapidi: media SYS/DIA/BPM + conteggio
+- Ultime 5 letture recenti
+- Empty state con CTA
+
+### Lista Misurazioni
+- Lista cronologica con filtri per categoria e ricerca testuale
+- Swipe-to-delete su mobile
+- Icona momento giornata (mattina/pomeriggio/sera/notte)
+
+### Statistiche Avanzate
+- **Line chart (Chart.js)**: Sistolica (rossa) + Diastolica (blu) + BPM (grigia)
+- **Fascia sicurezza OMS**: rettangoli sfumati (SYS 90-140, DIA 60-90)
+- **Grafico derivate dP/dt**: variazione mmHg/ora, allarme a >10 mmHg/h
+- **Morning Surge**: Δ mattina (06-09) vs sera (20-23) con badge allarme
+- **Carico Ipertensivo**: % letture fuori norma con barra progresso
+- **HRV**: deviazione standard frequenza cardiaca
+- **Pie chart OMS**: 4 categorie cliccabili (filtrano la lista)
+- **Trend algorithm**: lineare e media mobile
+- Filtri temporali: 7/30 giorni + personalizzato
+
+### Report e Condivisione
+- **PDF (jsPDF)**: A4 con header, statistiche, tabella completa
+- **Condivisione**: Email, WhatsApp, Web Share API nativa
+- **Link temporaneo (48h)**: URL condivisibile con PIN opzionale 4 cifre
+- **Revoca link**: lista link attivi con bottone revoca immediata
+- **Pagina medico**: SharedReportView pubblica con PIN gate
+- Filtri contenuto: includi storico, anonimizza
+
+### Impostazioni
+- Lingua IT/EN
+- Modifica email e password
+- Promemoria configurabili (orari + giorni settimana)
+- CSV Export
+- Genera dati test (30 letture casuali)
+- Gestione utenti (admin): cambio ruolo, reset password, disattivazione
+
+### UI/UX
+- Design system con dark mode automatica
+- Font Inter, icone SVG, radius 12px consistente
+- Skeleton loader in tutte le viste
+- Offline banner quando Supabase non raggiungibile
+- PWA installabile (service worker, manifest)
+- Top bar con logout, bottom navigation 4 tab
+
+### Affidabilità
+- Offline-first: IndexedDB (Dexie) sempre disponibile
+- Retry automatico con backoff esponenziale
+- Sync queue per operazioni offline
+- 44 test (29 unit Vitest + 15 E2E Playwright)
 
 ## Tecnologie
 
-- **Frontend**: Vue 3 + Vite + Vue Router
-- **Backend**: Supabase (PostgreSQL)
-- **Database locale**: Dexie (IndexedDB)
-- **Test**: Vitest + Playwright
-- **PWA**: Vite PWA Plugin
+| Layer | Tecnologia |
+|---|---|
+| Frontend | Vue 3 + Vite + Vue Router |
+| Grafici | Chart.js + chartjs-plugin-annotation |
+| PDF | jsPDF |
+| Backend | Supabase (PostgreSQL + RLS + RPC) |
+| Database locale | Dexie (IndexedDB) |
+| Test | Vitest (29) + Playwright (15) |
+| PWA | Vite PWA Plugin |
+| UI | Inter font, CSS custom properties |
 
 ## Setup
 
-### Prerequisiti
-
-- Node.js 18+
-- Account Supabase (free tier)
-
-### Installazione
-
 ```bash
-# Clona il repository
 git clone https://github.com/vgrazian/pressione.git
 cd pressione
-
-# Installa le dipendenze
 npm install
-
-# Configura le variabili d'ambiente
-cp .env.example .env
-# Modifica .env con le tue credenziali Supabase
-
-# Avvia in sviluppo
-npm run dev
+cp .env.example .env  # configura credenziali Supabase
+npm run dev            # http://localhost:5173
 ```
-
-### Configurazione Supabase
-
-1. Crea un progetto Supabase
-2. Esegui la migration in `supabase/migrations/001_initial_schema.sql`
-3. Crea gli utenti seed:
-
-```bash
-SUPABASE_URL=... SUPABASE_SECRET_KEY=... node scripts/provision-users.mjs
-```
-
-## Utenti Predefiniti
-
-| Username | Password | Ruolo |
-| ---------- | ---------- | ------- |
-| nadia | Pressione2026! | admin |
-| roberto | Pressione2026! | user |
-| barbara | Pressione2026! | user |
-| valerio | Pressione2026! | admin |
-| marco | Pressione2026! | user |
-| rita | Pressione2026! | user |
-| anna | Pressione2026! | user |
-
-⚠️ **Cambia le password al primo accesso!**
 
 ## Comandi
 
 | Comando | Descrizione |
-| --------- | ------------- |
-| `npm run dev` | Avvia server sviluppo |
-| `npm run build` | Build di produzione |
-| `npm run preview` | Anteprima build |
-| `npm test` | Esegui test unitari |
-| `npm run test:e2e` | Esegui test E2E |
+|---|---|
+| `npm run dev` | Server sviluppo |
+| `npm run build` | Build produzione |
+| `npm test` | Test unitari (Vitest) |
+| `npm run test:e2e` | Test E2E (Playwright) |
 | `npm run seed:users` | Crea utenti seed |
 
-## Struttura Progetto
+## Utenti
+
+| Username | Password | Ruolo |
+|---|---|---|
+| nadia | Pressione2026! | admin |
+| valerio | Pressione2026! | admin |
+| roberto | Pressione2026! | user |
+| barbara | Pressione2026! | user |
+| marco | Pressione2026! | user |
+| rita | Pressione2026! | user |
+| anna | Pressione2026! | user |
+| bot | test1234 | user (test) |
+
+⚠️ Cambia la password al primo accesso.
+
+## Struttura
 
 ```
-pressione/
-├── src/
-│   ├── main.js              # Entry point
-│   ├── App.vue              # Root component
-│   ├── style.css            # Design system
-│   ├── router/              # Vue Router
-│   ├── db/                  # Dexie IndexedDB
-│   ├── services/            # Business logic
-│   │   ├── auth.js          # Auth state + session
-│   │   ├── supabaseTableAuth.js  # Supabase auth CRUD
-│   │   ├── supabaseClient.js     # Supabase client
-│   │   ├── dataService.js        # CRUD + sync
-│   │   ├── categories.js         # BP classification
-│   │   ├── statistics.js         # Statistics math
-│   │   ├── rbac.js               # Role-based access
-│   │   └── errorHandling.js      # Error utilities
-│   ├── components/          # Reusable components
-│   └── views/               # Page components
-├── tests/
-│   ├── unit/                # Vitest unit tests
-│   └── e2e/                 # Playwright E2E tests
-├── supabase/
-│   └── migrations/          # SQL migrations
-└── scripts/                 # Utility scripts
+src/
+├── main.js, App.vue, style.css
+├── router/          # Vue Router (hash history)
+├── db/              # Dexie IndexedDB schema
+├── services/
+│   ├── auth.js              # Auth state + session
+│   ├── supabaseTableAuth.js # Supabase auth CRUD
+│   ├── supabaseClient.js    # Supabase client
+│   ├── dataService.js       # CRUD + sync + retry
+│   ├── categories.js        # Classificazione ESC/ESH
+│   ├── statistics.js        # Stats, derivate, HRV, morning surge
+│   ├── i18n.js              # IT/EN translations
+│   ├── rbac.js, ids.js, errorHandling.js
+├── components/      # AppNav, AppIcon, CategoryBadge, ReadingCard, etc.
+├── views/           # Home, Login, AddEdit, List, Stats, Report, Settings, Operators, SharedReport
+tests/
+├── unit/            # 29 Vitest tests
+├── e2e/             # 15 Playwright tests
+supabase/migrations/ # SQL schema
 ```
 
 ## Licenza
