@@ -6,6 +6,7 @@ import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getRea
 import { isAdmin } from '@/services/rbac.js'
 import { useI18n } from '@/services/i18n.js'
 import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, getStorageInfo, formatBytes } from '@/services/keepAlive.js'
+import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/services/pwaInstall.js'
 
 const router = useRouter()
 const { user, changePassword, updateUserEmail } = useAuth()
@@ -140,6 +141,22 @@ async function toggleKeepAlive() {
     storageInfo.value = await getStorageInfo()
   }
 }
+
+// --- PWA Install ---
+const installAvailable = ref(isInstallPromptAvailable())
+const appInstalled = ref(isStandalone())
+const installMessage = ref('')
+
+async function handleInstall() {
+  installMessage.value = ''
+  const accepted = await promptInstall()
+  if (accepted) {
+    installMessage.value = '✅ App installata!'
+    appInstalled.value = true
+  } else {
+    installMessage.value = 'Installazione annullata. Puoi riprovare in qualsiasi momento.'
+  }
+}
 </script>
 
 <template>
@@ -243,6 +260,41 @@ async function toggleKeepAlive() {
       </div>
     </div>
 
+    <!-- PWA Install -->
+    <div v-if="!appInstalled" class="card mb-md">
+      <h3 class="mb-sm">📲 Installa App</h3>
+      <p class="text-secondary mb-sm" style="font-size:0.875rem">
+        Aggiungi Pressione alla schermata Home per un accesso rapido come una vera app.
+      </p>
+
+      <!-- Android / Chrome -->
+      <div v-if="installAvailable">
+        <button class="btn btn-primary" @click="handleInstall">
+          <AppIcon name="copy" :size="16" /> Installa su Home
+        </button>
+        <div v-if="installMessage" class="form-success mt-sm">{{ installMessage }}</div>
+      </div>
+
+      <!-- iOS Safari -->
+      <div v-else-if="isIOS()">
+        <div class="ios-install-steps">
+          <p class="mb-sm" style="font-weight:600">Per installare su iOS:</p>
+          <ol style="padding-left:1.25rem;line-height:1.8;font-size:0.875rem">
+            <li>Tocca il pulsante <strong>Condividi</strong> <span style="font-size:1.1rem">⎋</span> nella barra di Safari</li>
+            <li>Scorri e seleziona <strong>"Aggiungi a Home"</strong></li>
+            <li>Tocca <strong>Aggiungi</strong> per confermare</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Desktop Chrome -->
+      <div v-else>
+        <p class="text-secondary" style="font-size:0.8125rem">
+          Su desktop, usa l'icona <strong>Installa</strong> nella barra degli indirizzi del browser.
+        </p>
+      </div>
+    </div>
+
     <!-- Admin -->
     <div v-if="isAdmin(user)" class="card mb-md">
       <h3 class="mb-sm">{{ t('admin') }}</h3>
@@ -296,4 +348,13 @@ async function toggleKeepAlive() {
 }
 .toggle-switch input:checked + .toggle-slider { background: var(--color-accent); }
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+/* iOS Install Steps */
+.ios-install-steps {
+  background: var(--color-surface-overlay);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.form-success { color: var(--color-accent); font-size: 0.875rem; font-weight: 500; }
 </style>

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { initAuth, useAuth } from '@/services/auth.js'
 import { useTheme } from '@/services/theme.js'
 import { initKeepAlive } from '@/services/keepAlive.js'
+import { initPWAInstall } from '@/services/pwaInstall.js'
 import AppNav from '@/components/AppNav.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import OfflineBanner from '@/components/OfflineBanner.vue'
@@ -17,6 +18,7 @@ const error = ref(null)
 const confirm = inject('confirm-dialog', null)
 
 onMounted(async () => {
+  initPWAInstall()
   try {
     await initAuth()
   } catch (e) {
