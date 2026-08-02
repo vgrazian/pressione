@@ -1,15 +1,16 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { initAuth, useAuth } from '@/services/auth.js'
-import { refreshFromServer } from '@/services/dataService.js'
 import AppNav from '@/components/AppNav.vue'
+import AppIcon from '@/components/AppIcon.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
-const { isAuthenticated, isAuthReady, user } = useAuth()
+const { isAuthenticated, isAuthReady, user, logout } = useAuth()
 const isInitializing = ref(true)
 const error = ref(null)
+const confirm = inject('confirm-dialog', null)
 
 onMounted(async () => {
   try {
@@ -20,6 +21,23 @@ onMounted(async () => {
     isInitializing.value = false
   }
 })
+
+async function handleLogout() {
+  if (!confirm) {
+    await logout()
+    router.push('/login')
+    return
+  }
+  const ok = await confirm({
+    title: 'Logout',
+    message: 'Vuoi effettuare il logout?',
+    confirmText: 'Esci'
+  })
+  if (ok) {
+    await logout()
+    router.push('/login')
+  }
+}
 </script>
 
 <template>
@@ -35,8 +53,19 @@ onMounted(async () => {
     </div>
 
     <template v-else>
+      <!-- Top Bar -->
+      <header v-if="isAuthenticated" class="topbar">
+        <span class="topbar-brand">
+          <AppIcon name="heart" :size="18" color="var(--color-accent)" />
+          Pressione
+        </span>
+        <button class="topbar-logout" @click="handleLogout" title="Logout">
+          <AppIcon name="logout" :size="18" />
+        </button>
+      </header>
+
       <AppNav v-if="isAuthenticated" />
-      <main :class="{ 'has-nav': isAuthenticated }">
+      <main :class="{ 'has-nav': isAuthenticated, 'has-topbar': isAuthenticated }">
         <router-view />
       </main>
       <ConfirmDialog />
@@ -60,21 +89,59 @@ onMounted(async () => {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid var(--color-surface-overlay);
+  border: 4px solid var(--color-border);
   border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 var(--space-lg);
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
 }
 
-main {
-  padding-bottom: 1rem;
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
-main.has-nav {
-  padding-bottom: 5rem;
+.topbar-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
+
+.topbar-logout:hover {
+  background: var(--color-surface-overlay);
+  color: var(--color-text-primary);
+}
+
+.topbar-logout:active { transform: scale(0.95); }
+
+main { padding-bottom: 1rem; }
+main.has-topbar { padding-top: 0; }
+main.has-nav { padding-bottom: 5rem; }
 </style>
