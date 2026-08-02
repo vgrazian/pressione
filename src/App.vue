@@ -67,7 +67,7 @@ async function handleLogout() {
       <!-- Top Bar -->
       <header v-if="isAuthenticated" class="topbar">
         <span class="topbar-brand">
-          <AppIcon name="heart" :size="18" color="var(--color-accent)" />
+          <img src="/logo.png" alt="Pressione" class="topbar-logo" />
           Pressione
         </span>
         <div class="topbar-actions">
@@ -141,6 +141,12 @@ async function handleLogout() {
   font-weight: 600;
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
+}
+
+.topbar-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
 }
 
 .topbar-actions { display: flex; align-items: center; gap: 4px; }

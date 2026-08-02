@@ -3,39 +3,45 @@
 PWA per il monitoraggio della pressione arteriosa e delle pulsazioni cardiache.
 Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 
-**URL:** https://vgrazian.github.io/pressione/
+**URL:** <https://vgrazian.github.io/pressione/>
 
 ## Funzionalità
 
 ### Autenticazione e Utenti
+
 - Login/Logout con password hashed (SHA-256), sessione persistente 8 ore
 - Recupero password via token, modifica email
 - RBAC: admin (gestione utenti, reset password) e user
 - 8 utenti pre-configurati
 
 ### Navigazione
+
 - **Top bar**: logo, toggle tema (☀️/🌙/sistema), logout
 - **Bottom nav 5 tab**: Home, Lista, Statistiche, Report, Impostazioni
 - **FAB globale**: pulsante "+" flottante su tutte le pagine per aggiungere una misurazione
 
 ### Monitoraggio
+
 - CRUD misurazioni: sistolica, diastolica, frequenza cardiaca, data/ora, note
 - Classificazione automatica ESC/ESH in tempo reale (6 categorie)
 - Rilevazione duplicati (stessa misurazione entro 10 minuti)
 - Validazione input con range clinici
 
 ### Dashboard (Home)
+
 - Ultima misurazione con categoria e valori
 - 4 KPI rapidi: media SYS/DIA/BPM + conteggio
 - Trend settimanale con derivata dP/dt e conteggio allarmi
 - Empty state con CTA
 
 ### Lista Misurazioni
+
 - Lista cronologica con filtri per **periodo** (Tutte/7gg/30gg), categoria e ricerca testuale
 - Swipe-to-delete su mobile
 - Icona momento giornata (mattina/pomeriggio/sera/notte)
 
 ### Statistiche Avanzate
+
 - **Line chart (Chart.js)**: Sistolica (rossa) + Diastolica (blu) + BPM (grigia)
 - **Fascia sicurezza OMS**: rettangoli sfumati (SYS 90-140, DIA 60-90)
 - **Grafico derivate dP/dt**: variazione mmHg/ora, allarme a >10 mmHg/h con lista segmenti
@@ -47,6 +53,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Filtri temporali: 7/30 giorni + personalizzato
 
 ### Report e Condivisione
+
 - **PDF (jsPDF)**: A4 con header, statistiche, tabella completa, footer
 - **Condivisione**: Email, WhatsApp, Web Share API nativa, copia appunti
 - **Link temporaneo (48h)**: URL condivisibile con PIN opzionale 4 cifre (SHA-256)
@@ -56,6 +63,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Filtri contenuto: periodo, includi storico, includi grafici, anonimizza
 
 ### Impostazioni
+
 - **Lingua**: Italiano / English
 - **Account**: modifica email, cambio password
 - **Tema**: chiaro / scuro / sistema (con toggle nella top bar)
@@ -67,6 +75,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - **Danger Zone**: elimina tutti i dati
 
 ### UI/UX
+
 - Design system con **dark mode** (data-theme + prefers-color-scheme)
 - Font Inter, icone SVG inline (18 icone), radius 12px consistente
 - Skeleton loader in tutte le viste
@@ -76,6 +85,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Reduced motion support
 
 ### Affidabilità
+
 - **Offline-first**: IndexedDB (Dexie) sempre disponibile, sync queue
 - Retry automatico con backoff esponenziale
 - Keep-alive database: ping Supabase ogni 5 min + navigator.storage.persist()
@@ -85,7 +95,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 ## Tecnologie
 
 | Layer | Tecnologia |
-|---|---|
+| --- | --- |
 | Frontend | Vue 3 + Vite + Vue Router (hash history) |
 | Grafici | Chart.js 4 + chartjs-plugin-annotation |
 | PDF | jsPDF (A4) |
@@ -108,7 +118,7 @@ npm run dev            # http://localhost:5173
 ## Comandi
 
 | Comando | Descrizione |
-|---|---|
+| --- | --- |
 | `npm run dev` | Server sviluppo |
 | `npm run build` | Build produzione |
 | `npm test` | Test unitari (Vitest) |
@@ -118,7 +128,7 @@ npm run dev            # http://localhost:5173
 ## Utenti
 
 | Username | Password | Ruolo |
-|---|---|---|
+| --- | --- | --- |
 | nadia | Pressione2026! | admin |
 | valerio | Pressione2026! | admin |
 | roberto | Pressione2026! | user |
