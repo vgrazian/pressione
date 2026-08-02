@@ -22,13 +22,18 @@ async function loadReport(pinHash = null) {
   isLoading.value = true; error.value = ''
   try {
     const token = route.params.token
-    const { data, error: err } = await supabase.rpc('get_shared_report_v2', {
-      p_token: token, p_pin_hash: pinHash
-    })
-    if (err) throw err
-    if (data.needs_pin) { needsPin.value = true; isLoading.value = false; return }
-    report.value = data.report_data
-    needsPin.value = false
+    const { data, error: err } = await supabase.from('settings')
+      .select('value').eq('username', '_share_' + token).single()
+
+    if (err || !data) throw new Error('not found')
+    const stored = JSON.parse(data.value)
+    if (stored.revoked || new Date(stored.expiresAt) < new Date()) throw new Error('expired')
+
+    if (stored.pinHash) {
+      if (!pinHash) { needsPin.value = true; isLoading.value = false; return }
+      if (pinHash !== stored.pinHash) throw new Error('wrong pin')
+    }
+    report.value = stored.reportData
   } catch (e) {
     error.value = 'Link non valido, scaduto o revocato.'
   } finally { isLoading.value = false }

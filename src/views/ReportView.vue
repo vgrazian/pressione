@@ -182,9 +182,18 @@ async function shareNative() {
 // --- Temporary Link ---
 async function loadActiveLinks() {
   try {
-    const { data } = await supabase.rpc('get_my_share_links', { p_username: user.value.username })
-    if (data) activeLinks.value = typeof data === 'string' ? JSON.parse(data) : data
-  } catch { /* ignore */ }
+    const { data } = await supabase.from('settings')
+      .select('username, value')
+      .like('username', '_share_%')
+    if (data) {
+      activeLinks.value = data
+        .filter(s => {
+          try { const v = JSON.parse(s.value); return v.username === user.value.username && !v.revoked && new Date(v.expiresAt) > new Date() }
+          catch { return false }
+        })
+        .map(s => ({ token: s.username.replace('_share_', ''), ...JSON.parse(s.value) }))
+    }
+  } catch { activeLinks.value = [] }
 }
 
 async function hashPin(pin) {
@@ -206,7 +215,8 @@ async function generateShareLink() {
         timestamp: r.timestamp, notes: r.notes, category: r.category
       }))
     }
-    // Generate random 4-digit PIN if requested
+    // Generate random token and optional PIN
+    const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('')
     let pinHash = null
     let pinClear = ''
     if (sharePin.value) {
@@ -214,14 +224,17 @@ async function generateShareLink() {
       pinHash = await hashPin(pinClear)
     }
 
-    const { data: result, error } = await supabase.rpc('create_share_link_v2', {
-      p_username: user.value.username,
-      p_report_data: reportData,
-      p_pin_hash: pinHash
+    // Store in settings table (accessible via REST API)
+    const expiresAt = new Date(Date.now() + 48 * 3600000).toISOString()
+    const { error } = await supabase.from('settings').upsert({
+      username: '_share_' + token,
+      key: 'data',
+      value: JSON.stringify({ reportData, pinHash, username: user.value.username, expiresAt, revoked: false }),
+      updated_at: new Date().toISOString()
     })
     if (error) throw error
 
-    shareLink.value = `https://vgrazian.github.io/pressione/#/share/${result.token}`
+    shareLink.value = `https://vgrazian.github.io/pressione/#/share/${token}`
     showPin.value = pinClear
     linkMessage.value = pinClear ? `PIN: ${pinClear} (comunicalo al medico)` : 'Link generato! Valido per 48 ore.'
     await loadActiveLinks()
@@ -241,7 +254,11 @@ function copyLink() {
 
 async function revokeLink(token) {
   try {
-    await supabase.rpc('revoke_share_link', { p_token: token })
+    const { data } = await supabase.from('settings').select('value').eq('username', '_share_' + token).single()
+    if (data) {
+      const v = JSON.parse(data.value); v.revoked = true
+      await supabase.from('settings').upsert({ username: '_share_' + token, key: 'data', value: JSON.stringify(v), updated_at: new Date().toISOString() })
+    }
     activeLinks.value = activeLinks.value.filter(l => l.token !== token)
     linkMessage.value = 'Link revocato.'
     setTimeout(() => linkMessage.value = '', 3000)
