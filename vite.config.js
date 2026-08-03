@@ -1,11 +1,15 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
 import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // Build info — version from package.json, git hash for build number
-const pkg = JSON.parse(require('fs').readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
 const appVersion = pkg.version
 const buildTime = new Date().toISOString()
 const buildNumber = (() => {
