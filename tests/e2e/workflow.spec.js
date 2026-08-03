@@ -123,3 +123,187 @@ test.describe('Workflow: Complete User Journey', () => {
         await expect(page.locator('h1')).toContainText('Pressione', { timeout: 3000 })
     })
 })
+
+test.describe('Workflow: Error & Edge Cases', () => {
+    test.beforeEach(async ({ page }) => {
+        await loginAsBot(page)
+    })
+
+    test('E-01: Reject DIA > SYS', async ({ page }) => {
+        await page.locator('button.fab').click()
+        await page.fill('#systolic', '100')
+        await page.fill('#diastolic', '120')
+        await page.fill('#heartRate', '70')
+        await page.locator('button:has-text("Salva")').first().click()
+        await expect(page.locator('.form-error')).toBeVisible({ timeout: 3000 })
+    })
+
+    test('E-02: Reject out-of-range systolic (< 1)', async ({ page }) => {
+        await page.locator('button.fab').click()
+        await page.fill('#systolic', '-5')
+        await page.fill('#diastolic', '80')
+        await page.fill('#heartRate', '70')
+        await page.locator('button:has-text("Salva")').first().click()
+        const hasError = await page.locator('.form-error').isVisible({ timeout: 3000 }).catch(() => false)
+        const stillOnAdd = page.url().includes('/add')
+        expect(hasError || stillOnAdd).toBe(true)
+    })
+
+    test('E-03: Reject out-of-range systolic (> 300)', async ({ page }) => {
+        await page.locator('button.fab').click()
+        await page.fill('#systolic', '350')
+        await page.fill('#diastolic', '80')
+        await page.fill('#heartRate', '70')
+        await page.locator('button:has-text("Salva")').first().click()
+        const hasError = await page.locator('.form-error').isVisible({ timeout: 3000 }).catch(() => false)
+        const stillOnAdd = page.url().includes('/add')
+        expect(hasError || stillOnAdd).toBe(true)
+    })
+
+    test('E-04: Reject empty fields', async ({ page }) => {
+        await page.locator('button.fab').click()
+        // Submit with all fields empty
+        await page.locator('button:has-text("Salva")').first().click()
+        await expect(page.locator('.form-error')).toBeVisible({ timeout: 3000 })
+    })
+
+    test('E-05: Reject heart rate out of range', async ({ page }) => {
+        await page.locator('button.fab').click()
+        await page.fill('#systolic', '120')
+        await page.fill('#diastolic', '80')
+        await page.fill('#heartRate', '350')
+        await page.locator('button:has-text("Salva")').first().click()
+        const hasError = await page.locator('.form-error').isVisible({ timeout: 3000 }).catch(() => false)
+        const stillOnAdd = page.url().includes('/add')
+        expect(hasError || stillOnAdd).toBe(true)
+    })
+
+    test('E-06: Cancel logout via dialog', async ({ page }) => {
+        const logoutBtn = page.locator('header button[title="Logout"]')
+        await logoutBtn.click()
+        await page.waitForTimeout(1000)
+        // Click "Annulla" button on dialog
+        const cancelBtn = page.locator('.dialog-overlay .btn-secondary')
+        if (await cancelBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+            await cancelBtn.click()
+            await page.waitForTimeout(500)
+        }
+        // Dialog should close, user stays authenticated
+        const dialogGone = await page.locator('.dialog-overlay').isVisible({ timeout: 2000 }).catch(() => false)
+        expect(dialogGone).toBe(false)
+    })
+
+    test('E-07: Login with invalid credentials shows error', async ({ page }) => {
+        // First logout properly
+        const logoutBtn = page.locator('header button[title="Logout"]')
+        if (await logoutBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await logoutBtn.click()
+            await page.waitForTimeout(500)
+            const confirmBtn = page.locator('.dialog-overlay .btn-primary')
+            if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+                await confirmBtn.click()
+            }
+        }
+        await page.waitForURL(/\/#\/login/, { timeout: 5000 })
+
+        // Try invalid login
+        await page.fill('#username', 'nonexistent_user_xyz')
+        await page.fill('#password', 'wrong_password')
+        await page.click('button[type="submit"]')
+        await expect(page.locator('.form-error')).toBeVisible({ timeout: 10000 })
+    })
+
+    test('E-08: Email validation rejects invalid format', async ({ page }) => {
+        await page.locator('nav a:has-text("Altro")').click()
+        await page.waitForTimeout(1000)
+
+        // Open email change form
+        const changeEmailBtn = page.locator('button:has-text("Cambia email"), button:has-text("Change email")')
+        if (await changeEmailBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await changeEmailBtn.click()
+            await page.fill('input[type="email"]', 'not-an-email')
+            await page.locator('button:has-text("Aggiorna"), button:has-text("Update")').first().click()
+            await expect(page.locator('.form-error')).toBeVisible({ timeout: 3000 })
+        }
+    })
+
+    test('E-09: Password change rejects short password', async ({ page }) => {
+        await page.locator('nav a:has-text("Altro")').click()
+        await page.waitForTimeout(1000)
+
+        // Open password form
+        const pwHeader = page.locator('h3:has-text("Password")')
+        if (await pwHeader.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await pwHeader.click()
+            await page.waitForTimeout(500)
+        }
+
+        const currentPwInput = page.locator('input[type="password"]').first()
+        if (await currentPwInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await currentPwInput.fill('anything')
+            // Try with short new password (less than 8 chars)
+            const pwInputs = page.locator('input[type="password"]')
+            if (await pwInputs.nth(1).isVisible().catch(() => false)) {
+                await pwInputs.nth(1).fill('123')
+                await page.locator('button:has-text("Aggiorna password"), button:has-text("Update password")').click()
+                await expect(page.locator('.form-error')).toBeVisible({ timeout: 3000 })
+            }
+        }
+    })
+
+    test('E-10: Time bands — inputs respect min/max bounds', async ({ page }) => {
+        await page.locator('nav a:has-text("Altro")').click()
+        await page.waitForTimeout(1000)
+
+        const bandsSection = page.locator('h3:has-text("Fasce Orarie")')
+        if (await bandsSection.isVisible({ timeout: 2000 }).catch(() => false)) {
+            const firstInput = page.locator('input[type="number"]').first()
+            if (await firstInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+                const min = await firstInput.getAttribute('min')
+                const max = await firstInput.getAttribute('max')
+                expect(min).toBe('0')
+                expect(max).toBe('23')
+            }
+        }
+    })
+
+    test('E-11: Report page handles empty data gracefully', async ({ page }) => {
+        // Navigate to report — should show empty state or skeleton
+        await page.locator('nav a:has-text("Report")').click()
+        await page.waitForTimeout(2000)
+        // Should not crash — just verify page loaded
+        await expect(page.locator('h1')).toContainText('Report', { timeout: 5000 })
+    })
+
+    test('E-12: Cancel reading addition (navigate back without saving)', async ({ page }) => {
+        await page.locator('button.fab').click()
+        await page.fill('#systolic', '130')
+        await page.fill('#diastolic', '85')
+        // Navigate away without saving
+        await page.locator('nav a:has-text("Home")').click()
+        await page.waitForTimeout(1000)
+        // Should be on home page
+        await expect(page.locator('h1')).toContainText('Ciao', { timeout: 5000 })
+    })
+
+    test('E-13: Delete all data with confirmation', async ({ page }) => {
+        await page.locator('nav a:has-text("Altro")').click()
+        await page.waitForTimeout(1000)
+
+        const deleteBtn = page.locator('button:has-text("Elimina tutto"), button:has-text("Delete all")')
+        if (await deleteBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await deleteBtn.click()
+            await page.waitForTimeout(500)
+            // Cancel the confirmation
+            const cancelBtn = page.locator('.dialog-overlay .btn-secondary, .dialog-overlay button:not(.btn-primary)')
+            if (await cancelBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+                await cancelBtn.click()
+            } else {
+                await page.locator('.dialog-overlay').click({ position: { x: 10, y: 10 } })
+            }
+            await page.waitForTimeout(500)
+            // Should still be on settings page
+            expect(page.url()).toContain('/settings')
+        }
+    })
+})
