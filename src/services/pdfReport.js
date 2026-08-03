@@ -257,9 +257,9 @@ function addStatsTable(doc, y, r7, r30, data) {
     doc.rect(x0, y, tw, S.hh, 'F')
     doc.setFontSize(T.sm)
     doc.setTextColor(...C.white)
-    doc.text('7 giorni', x1, y + 3.8)
-    doc.text('30 giorni', x2, y + 3.8)
-    doc.text('Periodo selez.', x3, y + 3.8)
+    doc.text('7 giorni', x1 + cw - 1, y + 3.8, { align: 'right' })
+    doc.text('30 giorni', x2 + cw - 1, y + 3.8, { align: 'right' })
+    doc.text('Periodo selez.', x3 + cw - 1, y + 3.8, { align: 'right' })
     y += S.hh
 
     const der7 = computeDerivatives(r7), der30 = computeDerivatives(r30), der = computeDerivatives(data)
@@ -283,10 +283,8 @@ function addStatsTable(doc, y, r7, r30, data) {
         doc.setTextColor(...C.body)
         for (let j = 1; j <= 3; j++) {
             const cx = [x1, x2, x3][j - 1]
-            // Numeric rows: 0 (Letture), 5 (dP/dt), 6 (Allarmi), 7 (Carico)
-            const isNumeric = i === 0 || i === 5 || i === 6 || i === 7
-            const align = isNumeric ? 'right' : 'left'
-            doc.text(String(rows[i][j]), align === 'right' ? cx + cw - 1 : cx + 1, y + 3.2, align === 'right' ? { align: 'right' } : undefined)
+            // All value columns are numeric — right-align
+            doc.text(String(rows[i][j]), cx + cw - 1, y + 3.2, { align: 'right' })
         }
         y += S.rh
     }
