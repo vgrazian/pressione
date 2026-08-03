@@ -119,7 +119,7 @@ async function generatePDF() {
       readings7: readings7.value,
       readings30: readings30.value,
       username: user.value?.username,
-      age: user.value?.age || null,
+      birthDate: user.value?.birthDate || null,
       gender: user.value?.gender || null,
       anonymize: anonymize.value,
       includeCharts: includeCharts.value,

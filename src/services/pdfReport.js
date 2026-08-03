@@ -33,6 +33,19 @@ const T = { h1: 12, h2: 10.5, h3: 9, body: 8.5, sm: 7.5, xs: 6.5 }
 
 function genderLabel(g) { return g === 'male' ? 'M' : g === 'female' ? 'F' : '' }
 
+/** Compute age from birth date (returns null if no birth date) */
+function computeAge(birthDate) {
+    if (!birthDate) return null
+    const today = new Date()
+    const birth = new Date(birthDate)
+    let age = today.getFullYear() - birth.getFullYear()
+    const m = today.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--
+    }
+    return age
+}
+
 // ── Chart helpers ──────────────────────────────────────────────
 async function renderChart(config, w, h) {
     const c = document.createElement('canvas')
@@ -119,7 +132,8 @@ function addHeader(doc, opts) {
     const from = opts.data.length ? new Date(opts.data[opts.data.length - 1].timestamp).toLocaleDateString('it-IT') : 'N/D'
     const to = opts.data.length ? new Date(opts.data[0].timestamp).toLocaleDateString('it-IT') : 'N/D'
     const patient = opts.anonymize ? 'Anonimo' : (opts.username || '—')
-    const ageStr = !opts.anonymize && opts.age ? `, ${opts.age} anni` : ''
+    const age = computeAge(opts.birthDate)
+    const ageStr = !opts.anonymize && age ? `, ${age} anni` : ''
     const genderStr = !opts.anonymize && opts.gender ? `, ${genderLabel(opts.gender)}` : ''
     doc.text(`Paziente: ${patient}${ageStr}${genderStr}    •    Periodo: ${from} – ${to}    •    ${opts.data.length} misurazioni    •    Generato: ${new Date().toLocaleDateString('it-IT')}`, S.m, y)
 
@@ -207,14 +221,15 @@ function addClinicalSummary(doc, y, stats, readings, opts) {
     }
 
     // Age-specific note
-    if (opts.age) {
+    const age = computeAge(opts.birthDate)
+    if (age !== null) {
         y += 2
         doc.setFontSize(T.xs)
         doc.setTextColor(...C.muted)
-        if (opts.age >= 65) {
+        if (age >= 65) {
             doc.text(`Nota: per età ≥65 anni, il target pressorio raccomandato è <140/90 mmHg (ESC/ESH 2024).`, S.m + 2, y)
             y += 4
-        } else if (opts.age < 18) {
+        } else if (age < 18) {
             doc.text(`Nota: per età <18 anni i riferimenti ESC/ESH standard potrebbero non applicarsi. Consultare il pediatra.`, S.m + 2, y)
             y += 4
         }

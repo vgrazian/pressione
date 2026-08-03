@@ -6,7 +6,7 @@ const emit = defineEmits(['close'])
 
 const { user, updateUserProfile } = useAuth()
 
-const age = ref(user.value?.age || '')
+const birthDate = ref(user.value?.birthDate || '')
 const gender = ref(user.value?.gender || '')
 const skipForever = ref(false)
 const error = ref('')
@@ -19,19 +19,40 @@ const genderOptions = [
     { value: 'other', label: 'Altro' }
 ]
 
+function computeAge(birthDateStr) {
+    if (!birthDateStr) return null
+    const today = new Date()
+    const birth = new Date(birthDateStr)
+    let age = today.getFullYear() - birth.getFullYear()
+    const m = today.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--
+    }
+    return age
+}
+
 async function handleSave() {
     error.value = ''
     saving.value = true
     try {
-        const ageNum = age.value ? parseInt(age.value) : null
-        if (ageNum !== null && (ageNum < 1 || ageNum > 120)) {
-            error.value = "L'età deve essere tra 1 e 120 anni"
-            saving.value = false
-            return
+        const bd = birthDate.value || null
+        if (bd) {
+            const age = computeAge(bd)
+            if (age !== null && (age < 1 || age > 120)) {
+                error.value = 'Data di nascita non valida'
+                saving.value = false
+                return
+            }
+            // Don't allow future dates
+            if (new Date(bd) > new Date()) {
+                error.value = 'La data di nascita non può essere futura'
+                saving.value = false
+                return
+            }
         }
 
         await updateUserProfile({
-            age: ageNum,
+            birthDate: bd,
             gender: gender.value || null,
             profileCompleted: true,
             skipProfilePrompt: skipForever.value
@@ -57,14 +78,16 @@ async function handleSkip() {
         <div class="profile-prompt card">
             <h2>Completa il tuo profilo</h2>
             <p class="text-secondary mb-md" style="font-size:0.875rem">
-                Età e genere (opzionali) aiutano a personalizzare il report con riferimenti clinici adeguati.
+                Data di nascita e genere (opzionali) aiutano a personalizzare il report con riferimenti clinici adeguati.
                 Puoi modificarli in qualsiasi momento dalle Impostazioni.
             </p>
 
             <div class="form-group">
-                <label class="form-label" for="pp-age">Età (anni)</label>
-                <input id="pp-age" v-model="age" type="number" class="form-input"
-                    placeholder="Es. 45" min="1" max="120" inputmode="numeric" />
+                <label class="form-label" for="pp-birthdate">Data di nascita</label>
+                <input id="pp-birthdate" v-model="birthDate" type="date" class="form-input" />
+                <span v-if="birthDate" class="text-secondary" style="font-size:0.75rem">
+                    Età calcolata: {{ computeAge(birthDate) }} anni
+                </span>
             </div>
 
             <div class="form-group">

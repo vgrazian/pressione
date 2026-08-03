@@ -37,9 +37,9 @@ watch(() => user.value?.username, (username) => {
   if (username) initKeepAlive(username)
 }, { immediate: true })
 
-// Show profile prompt if incomplete and user hasn't skipped
-watch(() => user.value, (u) => {
-    if (u && u.username && !u.profileCompleted && !u.skipProfilePrompt) {
+// Show profile prompt if incomplete and user hasn't skipped (only after auth is ready)
+watch([() => user.value, () => isAuthReady.value], ([u, ready]) => {
+    if (ready && u && u.username && !u.profileCompleted && !u.skipProfilePrompt) {
         showProfilePrompt.value = true
     }
 }, { immediate: true })

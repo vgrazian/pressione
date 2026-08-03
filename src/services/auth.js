@@ -61,22 +61,23 @@ export async function initAuth() {
                     username: session.username,
                     email: session.email,
                     role: session.role,
-                    age: session.age || null,
+                    birthDate: session.birthDate || null,
                     gender: session.gender || null,
                     profileCompleted: session.profileCompleted || false,
                     skipProfilePrompt: session.skipProfilePrompt || false
                 }
                 state.isAuthenticated = true
-                // Refresh profile from settings (bypasses PostgREST cache)
-                getProfile(session.username).then(p => {
+                // Refresh profile from settings (bypasses PostgREST cache) — await so state is ready
+                try {
+                    const p = await getProfile(session.username)
                     if (p) Object.assign(state.user, {
-                        age: p.age ?? state.user.age,
+                        birthDate: p.birthDate ?? state.user.birthDate,
                         gender: p.gender ?? state.user.gender,
                         profileCompleted: p.profileCompleted ?? state.user.profileCompleted,
                         skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt
                     })
                     refreshSession()
-                }).catch(() => { })
+                } catch { /* best effort */ }
             } else {
                 localStorage.removeItem(SESSION_KEY)
             }
@@ -93,22 +94,23 @@ export async function initAuth() {
                         username: session.username,
                         email: session.email,
                         role: session.role,
-                        age: session.age || null,
+                        birthDate: session.birthDate || null,
                         gender: session.gender || null,
                         profileCompleted: session.profileCompleted || false,
                         skipProfilePrompt: session.skipProfilePrompt || false
                     }
                     state.isAuthenticated = true
                     localStorage.setItem(SESSION_KEY, dbSession)
-                    getProfile(session.username).then(p => {
+                    try {
+                        const p = await getProfile(session.username)
                         if (p) Object.assign(state.user, {
-                            age: p.age ?? state.user.age,
+                            birthDate: p.birthDate ?? state.user.birthDate,
                             gender: p.gender ?? state.user.gender,
                             profileCompleted: p.profileCompleted ?? state.user.profileCompleted,
                             skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt
                         })
                         refreshSession()
-                    }).catch(() => { })
+                    } catch { /* best effort */ }
                 }
             }
         }
@@ -163,7 +165,7 @@ function createSession(userData) {
         username: userData.username,
         email: userData.email,
         role: userData.role,
-        age: userData.age || null,
+        birthDate: userData.birthDate || null,
         gender: userData.gender || null,
         profileCompleted: userData.profileCompleted || false,
         skipProfilePrompt: userData.skipProfilePrompt || false,
@@ -178,7 +180,7 @@ function createSession(userData) {
         username: userData.username,
         email: userData.email,
         role: userData.role,
-        age: userData.age || null,
+        birthDate: userData.birthDate || null,
         gender: userData.gender || null,
         profileCompleted: userData.profileCompleted || false,
         skipProfilePrompt: userData.skipProfilePrompt || false
@@ -188,7 +190,7 @@ function createSession(userData) {
     // Async: fetch profile from settings table (bypasses PostgREST cache)
     getProfile(userData.username).then(profile => {
         if (profile && Object.keys(profile).length > 0) {
-            if (profile.age !== undefined) state.user.age = profile.age
+            if (profile.birthDate !== undefined) state.user.birthDate = profile.birthDate
             if (profile.gender !== undefined) state.user.gender = profile.gender
             if (profile.profileCompleted !== undefined) state.user.profileCompleted = profile.profileCompleted
             if (profile.skipProfilePrompt !== undefined) state.user.skipProfilePrompt = profile.skipProfilePrompt
@@ -225,9 +227,14 @@ async function changePassword(currentPassword, newPassword) {
  * Refresh session TTL
  */
 function refreshSession() {
-    if (!state.isAuthenticated) return
+    if (!state.isAuthenticated || !state.user) return
     const session = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}')
     session.expiresAt = new Date(Date.now() + state.sessionTtlMinutes * 60 * 1000).toISOString()
+    // Persist current profile flags so they survive app restarts
+    session.birthDate = state.user.birthDate || null
+    session.gender = state.user.gender || null
+    session.profileCompleted = state.user.profileCompleted || false
+    session.skipProfilePrompt = state.user.skipProfilePrompt || false
     const sessionJson = JSON.stringify(session)
     localStorage.setItem(SESSION_KEY, sessionJson)
     setSetting('_system', 'session', sessionJson).catch(() => { })
@@ -273,10 +280,10 @@ async function updateUserEmail(newEmail) {
 /**
  * Update current user's profile (age, gender, flags)
  */
-async function updateUserProfile({ age, gender, profileCompleted, skipProfilePrompt }) {
+async function updateUserProfile({ birthDate, gender, profileCompleted, skipProfilePrompt }) {
     if (!state.user) throw new Error('Non autenticato')
-    await updateProfile(state.user.username, { age, gender, profileCompleted, skipProfilePrompt })
-    if (age !== undefined) state.user.age = age
+    await updateProfile(state.user.username, { birthDate, gender, profileCompleted, skipProfilePrompt })
+    if (birthDate !== undefined) state.user.birthDate = birthDate
     if (gender !== undefined) state.user.gender = gender
     if (profileCompleted !== undefined) state.user.profileCompleted = profileCompleted
     if (skipProfilePrompt !== undefined) state.user.skipProfilePrompt = skipProfilePrompt

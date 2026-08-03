@@ -27,9 +27,21 @@ const message = ref('')
 const restoreInput = ref(null)
 const keepAliveOn = ref(false)
 const storageInfo = ref(null)
-const profileAge = ref('')
+const profileBirthDate = ref('')
 const profileGender = ref('')
 const profileMessage = ref('')
+
+function computeAge(birthDateStr) {
+  if (!birthDateStr) return null
+  const today = new Date()
+  const birth = new Date(birthDateStr)
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age
+}
 
 onMounted(async () => {
   try {
@@ -39,7 +51,7 @@ onMounted(async () => {
   if (keepAliveOn.value) {
     storageInfo.value = await getStorageInfo()
   }
-  profileAge.value = user.value?.age || ''
+  profileBirthDate.value = user.value?.birthDate || ''
   profileGender.value = user.value?.gender || ''
 })
 
@@ -138,13 +150,20 @@ async function handleRestore(e) {
 async function handleSaveProfile() {
   profileMessage.value = ''
   try {
-    const ageNum = profileAge.value ? parseInt(profileAge.value) : null
-    if (ageNum !== null && (ageNum < 1 || ageNum > 120)) {
-      profileMessage.value = "L'età deve essere tra 1 e 120 anni"
-      return
+    const bd = profileBirthDate.value || null
+    if (bd) {
+      const age = computeAge(bd)
+      if (age !== null && (age < 1 || age > 120)) {
+        profileMessage.value = 'Data di nascita non valida'
+        return
+      }
+      if (new Date(bd) > new Date()) {
+        profileMessage.value = 'La data di nascita non può essere futura'
+        return
+      }
     }
     await updateUserProfile({
-      age: ageNum,
+      birthDate: bd,
       gender: profileGender.value || null,
       profileCompleted: true
     })
@@ -215,13 +234,16 @@ async function handleInstall() {
         <button class="btn btn-primary btn-sm" @click="handleEmailChange">{{ t('update_email') }}</button>
       </div>
 
-      <!-- Age & Gender -->
+      <!-- Birth Date & Gender -->
       <hr style="margin:var(--space-md) 0;border-color:var(--color-border)" />
-      <p class="text-secondary mb-sm" style="font-size:0.8125rem">Età e genere aiutano a personalizzare il report con riferimenti clinici adeguati.</p>
+      <p class="text-secondary mb-sm" style="font-size:0.8125rem">Data di nascita e genere aiutano a personalizzare il report con riferimenti clinici adeguati.</p>
       <div class="flex gap-sm mb-sm">
         <div class="form-group" style="flex:1">
-          <label class="form-label">Età</label>
-          <input v-model="profileAge" type="number" class="form-input" placeholder="Es. 45" min="1" max="120" inputmode="numeric" />
+          <label class="form-label">Data di nascita</label>
+          <input v-model="profileBirthDate" type="date" class="form-input" />
+          <span v-if="profileBirthDate" class="text-secondary" style="font-size:0.75rem">
+            Età: {{ computeAge(profileBirthDate) }} anni
+          </span>
         </div>
         <div class="form-group" style="flex:1">
           <label class="form-label">Genere</label>

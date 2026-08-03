@@ -72,7 +72,7 @@ export async function loginWithTable({ username, password }) {
         username: user.username,
         email: user.email,
         role: user.role,
-        age: user.age || null,
+        birthDate: user.birth_date || null,
         gender: user.gender || null,
         profileCompleted: user.profile_completed || false,
         skipProfilePrompt: user.skip_profile_prompt || false
@@ -200,7 +200,7 @@ export async function adminResetPassword(adminUsername, targetUsername, newPassw
  * Update user profile (age, gender, flags).
  * Stores in settings table to avoid PostgREST schema cache issues.
  */
-export async function updateProfile(username, { age, gender, profileCompleted, skipProfilePrompt }) {
+export async function updateProfile(username, { birthDate, gender, profileCompleted, skipProfilePrompt }) {
     if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
 
     // First, get existing profile
@@ -212,7 +212,7 @@ export async function updateProfile(username, { age, gender, profileCompleted, s
 
     const profile = existing ? JSON.parse(existing.value) : {}
 
-    if (age !== undefined) profile.age = age
+    if (birthDate !== undefined) profile.birthDate = birthDate
     if (gender !== undefined) profile.gender = gender
     if (profileCompleted !== undefined) profile.profileCompleted = profileCompleted
     if (skipProfilePrompt !== undefined) profile.skipProfilePrompt = skipProfilePrompt
@@ -228,7 +228,7 @@ export async function updateProfile(username, { age, gender, profileCompleted, s
     // Also try to update users table (best effort — may fail due to PostgREST cache)
     try {
         const userUpdates = { updated_at: new Date().toISOString() }
-        if (age !== undefined) userUpdates.age = age
+        if (birthDate !== undefined) userUpdates.birth_date = birthDate
         if (gender !== undefined) userUpdates.gender = gender
         if (profileCompleted !== undefined) userUpdates.profile_completed = profileCompleted
         if (skipProfilePrompt !== undefined) userUpdates.skip_profile_prompt = skipProfilePrompt
