@@ -367,11 +367,21 @@ async function revokeLink(token) {
       await supabase.from('settings').upsert({ username: user.value.username, key, value: JSON.stringify(v), updated_at: new Date().toISOString() })
     }
     activeLinks.value = activeLinks.value.filter(l => l.token !== token)
+    // Clear the link text if it was the revoked one
+    shareLink.value = null
+    showPin.value = ''
     linkMessage.value = 'Link revocato.'
     setTimeout(() => linkMessage.value = '', 3000)
   } catch (e) {
     linkMessage.value = 'Errore: ' + e.message
   }
+}
+
+function copyActiveLink(token) {
+  const url = `https://vgrazian.github.io/pressione/#/share/${token}`
+  navigator.clipboard.writeText(url)
+  linkMessage.value = 'Link copiato!'
+  setTimeout(() => linkMessage.value = '', 2000)
 }
 </script>
 
@@ -596,7 +606,10 @@ async function revokeLink(token) {
             <span style="font-size:0.6875rem;color:var(--color-text-tertiary)">
               Scade {{ new Date(link.expiresAt).toLocaleString('it-IT') }}
             </span>
-            <button class="btn btn-sm btn-error" @click="revokeLink(link.token)" style="font-size:0.6875rem;padding:2px 8px;min-height:24px">Revoca</button>
+            <div class="flex gap-sm">
+              <button class="btn btn-sm btn-ghost" @click="copyActiveLink(link.token)" style="font-size:0.6875rem;padding:2px 8px;min-height:24px">Copia</button>
+              <button class="btn btn-sm btn-error" @click="revokeLink(link.token)" style="font-size:0.6875rem;padding:2px 8px;min-height:24px">Revoca</button>
+            </div>
           </div>
         </div>
       </div>
@@ -658,4 +671,8 @@ async function revokeLink(token) {
 /* Interactive chart wrapper */
 .chart-wrap { position: relative; height: 260px; width: 100%; }
 @media (max-width: 480px) { .chart-wrap { height: 200px; } }
+
+/* Active links */
+.active-link-row { display: flex; align-items: center; gap: var(--space-sm); padding: 4px 0; flex-wrap: wrap; }
+.active-link-row code { flex: 1; min-width: 100px; }
 </style>
