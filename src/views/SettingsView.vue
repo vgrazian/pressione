@@ -110,8 +110,13 @@ async function handlePasswordChange() {
 async function handleEmailChange() {
   emailError.value = ''; emailSuccess.value = ''
   if (!newEmail.value || !newEmail.value.includes('@')) { emailError.value = 'Email non valida'; return }
-  try { await updateUserEmail(newEmail.value); emailSuccess.value = 'Email aggiornata!'; newEmail.value = '' }
-  catch (e) { emailError.value = e.message }
+  try {
+    await updateUserEmail(newEmail.value)
+    emailSuccess.value = 'Email aggiornata!'
+    newEmail.value = ''
+    showEmailForm.value = false
+    setTimeout(() => emailSuccess.value = '', 3000)
+  } catch (e) { emailError.value = e.message }
 }
 
 // --- Data Management ---
@@ -257,9 +262,9 @@ async function handleInstall() {
       <div v-if="showEmailForm" class="mt-sm">
         <div class="form-group"><label class="form-label">{{ t('new_email') }}</label><input v-model="newEmail" type="email" class="form-input" /></div>
         <div v-if="emailError" class="form-error mb-sm">{{ emailError }}</div>
-        <div v-if="emailSuccess" class="form-success mb-sm">{{ emailSuccess }}</div>
         <button class="btn btn-primary btn-sm" @click="handleEmailChange">{{ t('update_email') }}</button>
       </div>
+      <div v-if="emailSuccess" class="form-success mt-sm">{{ emailSuccess }}</div>
 
       <!-- Birth Date & Gender -->
       <hr style="margin:var(--space-md) 0;border-color:var(--color-border)" />
