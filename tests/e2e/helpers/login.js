@@ -6,16 +6,20 @@ export async function loginAsBot(page) {
     username: BOT_USER.username,
     email: BOT_USER.email,
     role: BOT_USER.role,
+    birthDate: null,
+    gender: null,
+    profileCompleted: true,
+    skipProfilePrompt: true,
     expiresAt
   }
   const sessionJson = JSON.stringify(session)
 
-  // Use addInitScript to set localStorage BEFORE any page JS runs
-  await page.addInitScript((json) => {
+  // Navigate first, then inject session, then reload so initAuth picks it up
+  await page.goto('/#/')
+  await page.evaluate((json) => {
     localStorage.setItem('pressione_session', json)
   }, sessionJson)
-
-  await page.goto('/#/')
+  await page.reload()
   await page.waitForTimeout(2000)
   return page
 }

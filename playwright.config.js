@@ -18,6 +18,6 @@ export default defineConfig({
     webServer: {
         command: 'VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= npx vite --port 5173',
         port: 5173,
-        reuseExistingServer: true
+        reuseExistingServer: false
     }
 })
