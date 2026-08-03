@@ -29,9 +29,10 @@ vite.config.js  →  legge package.json  →  __APP_VERSION__
 ## Release Checklist
 
 1. Modifiche al codice committate e pushate su `main`
-2. **Se ci sono migrazioni DB**: applicate via Supabase MCP (`apply_migration`) prima o insieme al push
-3. **Se la versione cambia**: aggiornare `package.json` → `version`
-4. **Build e deploy su GitHub Pages**:
+2. **⚠️ Verificare che `.env` esista con credenziali reali** (`VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`). Se manca → "Supabase non configurato" in produzione.
+3. **Se ci sono migrazioni DB**: applicate via Supabase MCP (`apply_migration`) prima o insieme al push
+4. **Se la versione cambia**: aggiornare `package.json` → `version`
+5. **Build e deploy su GitHub Pages**:
 
    ```bash
    npm run build
@@ -45,8 +46,8 @@ vite.config.js  →  legge package.json  →  __APP_VERSION__
    rm -rf /tmp/pressione-dist
    ```
 
-5. Attendere ~1-2 min per propagazione CDN (GitHub Pages)
-6. Verificare con hard refresh (`Cmd+Shift+R`) o "Forza aggiornamento" in Impostazioni
+6. Attendere ~1-2 min per propagazione CDN (GitHub Pages)
+7. Verificare con hard refresh (`Cmd+Shift+R`) o "Forza aggiornamento" in Impostazioni
 
 ---
 

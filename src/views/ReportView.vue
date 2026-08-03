@@ -1,10 +1,14 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics, computeMorningSurge, computeHypertensiveLoad, computeDerivatives, computeHRV } from '@/services/statistics.js'
-import { getCategoryLabel } from '@/services/categories.js'
+import { getCategoryLabel, classifyReading } from '@/services/categories.js'
 import { getUserBands, getDefaultBands, getBandForHour, groupReadingsByDayAndBand } from '@/services/timeBands.js'
+import { Chart, registerables } from 'chart.js'
+import annotationPlugin from 'chartjs-plugin-annotation'
+
+Chart.register(...registerables, annotationPlugin)
 
 function catColor(category) {
   const map = { 'NORMAL': '#006C4C', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
@@ -32,6 +36,8 @@ const activeLinks = ref([])
 const generatingPDF = ref(false)
 const viewMode = ref('list') // 'list' or 'grouped'
 const userBands = ref(getDefaultBands())
+const bpChartEl = ref(null)
+let bpChart = null
 
 const periods = [
   { value: '7', label: '7 Giorni' },
@@ -107,6 +113,44 @@ const readingsByTimeOfDay = computed(() => {
 const groupedReadings = computed(() => {
   return groupReadingsByDayAndBand(filteredReadings.value, userBands.value)
 })
+
+// Interactive BP chart
+function renderBPChart() {
+  if (bpChart) { bpChart.destroy(); bpChart = null }
+  if (!bpChartEl.value) return
+  const data = filteredReadings.value
+  if (!data.length) return
+  const labels = data.map(r => new Date(r.timestamp).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
+  bpChart = new Chart(bpChartEl.value, {
+    type: 'line', data: { labels, datasets: [
+      { label: 'Sistolica', data: data.map(r => r.systolic), borderColor: '#E63946', backgroundColor: 'rgba(230,57,70,0.08)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0.35, fill: false },
+      { label: 'Diastolica', data: data.map(r => r.diastolic), borderColor: '#457B9D', backgroundColor: 'rgba(69,123,157,0.08)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0.35, fill: false },
+      { label: 'BPM', data: data.map(r => r.heartRate), borderColor: '#6C757D', borderWidth: 1, pointRadius: 1, borderDash: [4, 3], tension: 0.35, fill: false, yAxisID: 'y1' }
+    ] },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 } } },
+        annotation: { annotations: {
+          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: 'rgba(0,108,76,0.05)', borderColor: 'rgba(0,108,76,0.15)', borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: 'rgba(255,255,255,0.85)', color: '#006C4C' } },
+          sys140: { type: 'line', yMin: 140, yMax: 140, borderColor: 'rgba(186,26,26,0.4)', borderWidth: 1, borderDash: [5, 5] }
+        } },
+        tooltip: { callbacks: {
+          title: (ctx) => data[ctx[0].dataIndex] ? new Date(data[ctx[0].dataIndex].timestamp).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+          label: (ctx) => { const r = data[ctx.dataIndex]; if (!r) return ''; if (ctx.datasetIndex === 0) return `Sistolica: ${r.systolic} mmHg`; if (ctx.datasetIndex === 1) return `Diastolica: ${r.diastolic} mmHg`; return `BPM: ${r.heartRate}` },
+          afterLabel: (ctx) => { const r = data[ctx.dataIndex]; if (!r || ctx.datasetIndex > 1) return ''; return `Categoria: ${getCategoryLabel(r.category || classifyReading(r.systolic, r.diastolic))}` }
+        } }
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 14, font: { size: 10 } }, grid: { display: false } },
+        y: { type: 'linear', position: 'left', min: 40, max: 200, ticks: { stepSize: 20, font: { size: 10 } }, title: { display: true, text: 'mmHg', font: { size: 10 } } },
+        y1: { type: 'linear', position: 'right', min: 40, max: 140, ticks: { stepSize: 20, font: { size: 10 } }, title: { display: true, text: 'BPM', font: { size: 10 } }, grid: { drawOnChartArea: false } }
+      }
+    }
+  })
+}
+
+watch(filteredReadings, async () => { await nextTick(); renderBPChart() }, { deep: false })
 
 const titleSuffix = computed(() => anonymize.value ? '' : ` - ${user.value?.username}`)
 
@@ -428,6 +472,13 @@ async function revokeLink(token) {
         </div>
       </div>
 
+      <!-- Interactive BP Chart -->
+      <div v-if="filteredReadings.length >= 2" class="card mb-md">
+        <h3 class="mb-sm">Andamento Pressione</h3>
+        <div class="chart-wrap"><canvas ref="bpChartEl"></canvas></div>
+        <p class="text-secondary mt-sm" style="font-size:0.6875rem">Zona verde: target ESC/ESH (&lt;140/90 mmHg). Passa il mouse sui punti.</p>
+      </div>
+
       <!-- History table with view mode toggle -->
       <div v-if="includeHistory" class="card mb-md">
         <div class="flex justify-between items-center mb-sm">
@@ -593,4 +644,8 @@ async function revokeLink(token) {
 /* Chip toggle (reused for view mode) */
 .chip { padding: 4px 12px; border-radius: 16px; border: 1px solid var(--color-border); background: var(--color-surface-raised); font-size: 0.75rem; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
 .chip--active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
+
+/* Interactive chart wrapper */
+.chart-wrap { position: relative; height: 260px; width: 100%; }
+@media (max-width: 480px) { .chart-wrap { height: 200px; } }
 </style>
