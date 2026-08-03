@@ -4,7 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 import { execSync } from 'child_process'
 
-// Build info
+// Build info — version from package.json, git hash for build number
+const pkg = JSON.parse(require('fs').readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
+const appVersion = pkg.version
 const buildTime = new Date().toISOString()
 const buildNumber = (() => {
     try { return execSync('git rev-parse --short HEAD').toString().trim() }
@@ -14,7 +16,7 @@ const buildNumber = (() => {
 export default defineConfig({
     base: '/pressione/',
     define: {
-        __APP_VERSION__: JSON.stringify('1.1.0'),
+        __APP_VERSION__: JSON.stringify(appVersion),
         __BUILD_TIME__: JSON.stringify(buildTime),
         __BUILD_NUMBER__: JSON.stringify(buildNumber)
     },
