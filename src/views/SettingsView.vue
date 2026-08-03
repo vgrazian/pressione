@@ -8,6 +8,7 @@ import { useI18n } from '@/services/i18n.js'
 import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, getStorageInfo, formatBytes } from '@/services/keepAlive.js'
 import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/services/pwaInstall.js'
 import { useSWUpdate } from '@/services/swUpdate.js'
+import { APP_VERSION, BUILD_NUMBER, BUILD_TIME } from '@/services/version.js'
 
 const router = useRouter()
 const { user, changePassword, updateUserEmail, updateUserProfile } = useAuth()
@@ -395,7 +396,9 @@ async function handleInstall() {
       <button class="btn btn-error btn-sm" @click="handleDeleteAll">{{ t('delete_all_data') }}</button>
     </div>
 
-    <p class="text-center" style="color:var(--color-text-secondary);font-size:0.75rem;padding:var(--space-lg)">{{ t('version') }}</p>
+    <p class="text-center" style="color:var(--color-text-secondary);font-size:0.75rem;padding:var(--space-lg)">
+      Pressione v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}
+    </p>
   </div>
 </template>
 

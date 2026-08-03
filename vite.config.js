@@ -14,7 +14,7 @@ const buildNumber = (() => {
 export default defineConfig({
     base: '/pressione/',
     define: {
-        __APP_VERSION__: JSON.stringify('1.0.0'),
+        __APP_VERSION__: JSON.stringify('1.1.0'),
         __BUILD_TIME__: JSON.stringify(buildTime),
         __BUILD_NUMBER__: JSON.stringify(buildNumber)
     },
