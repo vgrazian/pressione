@@ -24,19 +24,19 @@ test.describe('Regression: Navigation', () => {
     })
 
     test('R-03: Navigate to Report', async ({ page }) => {
-        await page.locator('nav a[href*="report"]').click()
+        await page.locator('nav a:has-text("Report")').click()
         await expect(page).toHaveURL(/\/#\/report/)
         await expect(page.locator('h1')).toContainText('Report')
     })
 
     test('R-04: Navigate to Statistics', async ({ page }) => {
-        await page.locator('nav a[href*="stats"]').click()
-        await expect(page).toHaveURL(/\/#\/stats/)
+        await page.locator('nav a:has-text("Stats")').click()
+        await expect(page).toHaveURL(/\/#\/statistics/)
         await expect(page.locator('h1')).toContainText('Statistiche')
     })
 
     test('R-05: Navigate to Settings', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await expect(page).toHaveURL(/\/#\/settings/)
         await expect(page.locator('h1')).toContainText('Impostazioni')
     })
@@ -97,24 +97,24 @@ test.describe('Regression: Report View', () => {
     })
 
     test('R-11: Report page loads with stats summary', async ({ page }) => {
-        await page.locator('nav a[href*="report"]').click()
+        await page.locator('nav a:has-text("Report")').click()
         await expect(page.locator('h1')).toContainText('Report', { timeout: 5000 })
     })
 
     test('R-12: Report has period filters (7/30/custom days)', async ({ page }) => {
-        await page.locator('nav a[href*="report"]').click()
+        await page.locator('nav a:has-text("Report")').click()
         await expect(page.locator('button:has-text("7 Giorni")')).toBeVisible({ timeout: 5000 })
         await expect(page.locator('button:has-text("30 Giorni")')).toBeVisible()
     })
 
     test('R-13: Report has share/link section', async ({ page }) => {
-        await page.locator('nav a[href*="report"]').click()
+        await page.locator('nav a:has-text("Report")').click()
         await expect(page.locator('h3:has-text("Condividi")')).toBeVisible({ timeout: 5000 })
-        await expect(page.locator('h3:has-text("Link")')).toBeVisible()
+        await expect(page.locator('h3:has-text("Link Temporaneo")')).toBeVisible()
     })
 
     test('R-14: Report history toggle works (Lista / Per fascia)', async ({ page }) => {
-        await page.locator('nav a[href*="report"]').click()
+        await page.locator('nav a:has-text("Report")').click()
         await page.waitForTimeout(2000)
         const groupedBtn = page.locator('button:has-text("Per fascia")')
         if (await groupedBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -124,7 +124,7 @@ test.describe('Regression: Report View', () => {
     })
 
     test('R-15: Generate temporary link', async ({ page }) => {
-        await page.locator('nav a[href*="report"]').click()
+        await page.locator('nav a:has-text("Report")').click()
         await page.waitForTimeout(2000)
         const genBtn = page.locator('button:has-text("Genera Link")')
         if (await genBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -144,12 +144,12 @@ test.describe('Regression: Statistics View', () => {
     })
 
     test('R-16: Statistics page loads', async ({ page }) => {
-        await page.locator('nav a[href*="stats"]').click()
+        await page.locator('nav a:has-text("Stats")').click()
         await expect(page.locator('h1')).toContainText('Statistiche', { timeout: 5000 })
     })
 
     test('R-17: Statistics shows KPI cards or empty state', async ({ page }) => {
-        await page.locator('nav a[href*="stats"]').click()
+        await page.locator('nav a:has-text("Stats")').click()
         await page.waitForTimeout(2000)
         const hasKpi = await page.locator('.kpi-card, .kpi-grid').isVisible({ timeout: 2000 }).catch(() => false)
         const hasEmpty = await page.locator('.empty-state').isVisible({ timeout: 2000 }).catch(() => false)
@@ -157,7 +157,7 @@ test.describe('Regression: Statistics View', () => {
     })
 
     test('R-18: Statistics period selector works', async ({ page }) => {
-        await page.locator('nav a[href*="stats"]').click()
+        await page.locator('nav a:has-text("Stats")').click()
         await page.waitForTimeout(2000)
         const btn7 = page.locator('button:has-text("7 Giorni")')
         const btn30 = page.locator('button:has-text("30 Giorni")')
@@ -178,13 +178,13 @@ test.describe('Regression: Settings', () => {
     })
 
     test('R-19: Settings page loads with all sections', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await expect(page.locator('h1')).toContainText('Impostazioni', { timeout: 5000 })
         await expect(page.locator('h3:has-text("Lingua")')).toBeVisible({ timeout: 3000 })
     })
 
     test('R-20: Language toggle switches between IT and EN', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await page.waitForTimeout(1000)
         const enBtn = page.locator('button:has-text("English")')
         if (await enBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -200,7 +200,7 @@ test.describe('Regression: Settings', () => {
     })
 
     test('R-21: Profile section shows birth date input', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await page.waitForTimeout(1000)
         const birthDateInput = page.locator('input[type="date"]')
         if (await birthDateInput.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -209,7 +209,7 @@ test.describe('Regression: Settings', () => {
     })
 
     test('R-22: Time bands section is configurable', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await page.waitForTimeout(1000)
         const timeBandsHeader = page.locator('h3:has-text("Fasce Orarie")')
         if (await timeBandsHeader.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -218,7 +218,7 @@ test.describe('Regression: Settings', () => {
     })
 
     test('R-23: Cache force update button exists', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await page.waitForTimeout(1000)
         const forceBtn = page.locator('button:has-text("Forza aggiornamento")')
         if (await forceBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -227,7 +227,7 @@ test.describe('Regression: Settings', () => {
     })
 
     test('R-24: Keep-alive toggle exists', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await page.waitForTimeout(1000)
         const kaHeader = page.locator('h3:has-text("Keep-Alive")')
         if (await kaHeader.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -236,7 +236,7 @@ test.describe('Regression: Settings', () => {
     })
 
     test('R-25: Version info displayed at bottom', async ({ page }) => {
-        await page.locator('nav a[href*="settings"]').click()
+        await page.locator('nav a:has-text("Altro")').click()
         await page.waitForTimeout(1000)
         // Version text should contain "Pressione v"
         const versionText = page.locator('text=/Pressione v\\d/')
@@ -250,7 +250,7 @@ test.describe('Regression: List View', () => {
     })
 
     test('R-26: Reading list loads', async ({ page }) => {
-        await page.locator('nav a[href*="list"]').click()
+        await page.locator('nav a:has-text("Lista")').click()
         await page.waitForTimeout(2000)
         const hasReadings = await page.locator('.reading-card, .card').first().isVisible({ timeout: 3000 }).catch(() => false)
         const hasEmpty = await page.locator('.empty-state').isVisible({ timeout: 2000 }).catch(() => false)
@@ -258,7 +258,7 @@ test.describe('Regression: List View', () => {
     })
 
     test('R-27: Category filter chips work', async ({ page }) => {
-        await page.locator('nav a[href*="list"]').click()
+        await page.locator('nav a:has-text("Lista")').click()
         await page.waitForTimeout(2000)
         const chips = page.locator('[class*="chip"], button:has-text("Normale"), button:has-text("Elevata")')
         const count = await chips.count().catch(() => 0)
