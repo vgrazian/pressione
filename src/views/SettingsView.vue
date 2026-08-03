@@ -249,10 +249,12 @@ async function handleInstall() {
     <div class="card mb-md">
       <h3 class="mb-sm">{{ t('account') }}</h3>
       <p><strong>{{ t('username') }}:</strong> {{ user?.username }}</p>
-      <p><strong>{{ t('email') }}:</strong> {{ user?.email || t('email_not_set') }}</p>
+      <div class="flex items-center gap-sm">
+        <span><strong>{{ t('email') }}:</strong> {{ user?.email || t('email_not_set') }}</span>
+        <button class="btn btn-sm btn-ghost" @click="showEmailForm = !showEmailForm">{{ showEmailForm ? t('cancel') : t('change_email') }}</button>
+      </div>
       <p><strong>Ruolo:</strong> {{ user?.role === 'admin' ? t('role_admin') : t('role_user') }}</p>
-      <button class="btn btn-sm btn-ghost mt-sm" @click="showEmailForm = !showEmailForm">{{ showEmailForm ? t('cancel') : t('change_email') }}</button>
-      <div v-if="showEmailForm" class="mt-md">
+      <div v-if="showEmailForm" class="mt-sm">
         <div class="form-group"><label class="form-label">{{ t('new_email') }}</label><input v-model="newEmail" type="email" class="form-input" /></div>
         <div v-if="emailError" class="form-error mb-sm">{{ emailError }}</div>
         <div v-if="emailSuccess" class="form-success mb-sm">{{ emailSuccess }}</div>
