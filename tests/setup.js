@@ -14,6 +14,6 @@ if (typeof localStorage === 'undefined' || !localStorage) {
     }
 }
 
-// Mock Vite env variables for tests
+// Mock Vite env variables for unit tests
 process.env.VITE_SUPABASE_URL = 'https://test.supabase.co'
 process.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'test-key'

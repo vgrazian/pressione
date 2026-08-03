@@ -5,7 +5,7 @@ export default defineConfig({
     timeout: 30000,
     retries: 0,
     use: {
-        baseURL: 'http://localhost:5173',
+        baseURL: 'http://localhost:5173/pressione',
         trace: 'on-first-retry',
         screenshot: 'only-on-failure'
     },
@@ -16,7 +16,7 @@ export default defineConfig({
         }
     ],
     webServer: {
-        command: 'npx vite --port 5173',
+        command: 'VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= npx vite --port 5173',
         port: 5173,
         reuseExistingServer: true
     }
