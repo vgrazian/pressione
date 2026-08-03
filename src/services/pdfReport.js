@@ -82,14 +82,14 @@ function makeLineChart(readings) {
 
 function makeDoughnutChart(stats) {
     const dist = stats.categoryDistribution || {}
-    const keys = ['Normale', 'Elevata', 'Ipertensione Grado 1', 'Ipertensione Grado 2', 'Crisi Ipertensiva', 'Ipotensione']
+    const keys = ['NORMAL', 'ELEVATED', 'HYPERTENSION_STAGE_1', 'HYPERTENSION_STAGE_2', 'HYPERTENSIVE_CRISIS', 'HYPOTENSION']
     const colors = ['#006C4C', '#F9A825', '#EF6C00', '#D32F2F', '#7B1FA2', '#1976D2']
     const data = keys.map(k => dist[k] || 0)
     const total = data.reduce((a, b) => a + b, 0)
     return {
         type: 'doughnut',
         data: {
-            labels: keys.map((k, i) => total ? `${k} (${Math.round(data[i] / total * 100)}%)` : k),
+            labels: keys.map((k, i) => total ? `${getCategoryLabel(k)} (${Math.round(data[i] / total * 100)}%)` : getCategoryLabel(k)),
             datasets: [{ data, backgroundColor: colors, borderWidth: 1, borderColor: '#fff' }]
         },
         options: {
@@ -136,6 +136,7 @@ function addClinicalSummary(doc, y, stats, readings, opts) {
     const avgSys = stats.avgSystolic
     const avgDia = stats.avgDiastolic
     const classification = classifyReading(avgSys, avgDia)
+    const classLabel = getCategoryLabel(classification)
 
     doc.setFontSize(T.h2)
     doc.setTextColor(...C.brand)
@@ -143,18 +144,20 @@ function addClinicalSummary(doc, y, stats, readings, opts) {
     y += S.in + 2
 
     // Classification badge
-    const badgeW = 50
     const badgeColors = {
-        'Normale': [0, 108, 76], 'Elevata': [249, 168, 37],
-        'Ipertensione Grado 1': [239, 108, 0], 'Ipertensione Grado 2': [211, 47, 47],
-        'Crisi Ipertensiva': [123, 31, 162], 'Ipotensione': [25, 118, 210]
+        'NORMAL': C.ok, 'ELEVATED': C.warning,
+        'HYPERTENSION_STAGE_1': C.warning, 'HYPERTENSION_STAGE_2': C.error,
+        'HYPERTENSIVE_CRISIS': C.critical, 'HYPOTENSION': [25, 118, 210],
+        'UNCLASSIFIED': C.muted
     }
     const badgeColor = badgeColors[classification] || C.brand
+    doc.setFontSize(T.sm)
+    const badgeText = `Classificazione: ${classLabel}`
+    const badgeW = doc.getTextWidth(badgeText) + 10
     doc.setFillColor(...badgeColor)
     doc.roundedRect(S.m, y, badgeW, 7, 2, 2, 'F')
-    doc.setFontSize(T.sm)
     doc.setTextColor(...C.white)
-    doc.text(`Classificazione: ${classification}`, S.m + 3, y + 4.8)
+    doc.text(badgeText, S.m + 5, y + 4.8)
 
     // Key vitals cards (3 across)
     const cardW = (doc.internal.pageSize.getWidth() - S.m * 2 - S.in * 2) / 3
@@ -188,8 +191,8 @@ function addClinicalSummary(doc, y, stats, readings, opts) {
     if (surge.alert) risks.push(`⚠ Picco mattutino elevato: +${surge.delta} mmHg`)
     if (load.percentage > 30) risks.push(`⚠ Carico ipertensivo: ${load.percentage}%`)
     if (hrv !== null && hrv > 15) risks.push(`⚠ HRV elevata: ${hrv} BPM`)
-    if (classification === 'Crisi Ipertensiva') risks.push('⚠ ATTENZIONE: valori in zona crisi ipertensiva')
-    if (classification === 'Ipertensione Grado 2') risks.push('⚠ Valori in ipertensione di grado 2')
+    if (classification === 'HYPERTENSIVE_CRISIS') risks.push('⚠ ATTENZIONE: valori in zona crisi ipertensiva')
+    if (classification === 'HYPERTENSION_STAGE_2') risks.push('⚠ Valori in ipertensione di grado 2')
 
     if (risks.length > 0) {
         risks.forEach(r => {
@@ -242,12 +245,15 @@ function addStatsTable(doc, y, r7, r30, data) {
     doc.text('Periodo selez.', x3, y + 3.8)
     y += S.hh
 
+    const der7 = computeDerivatives(r7), der30 = computeDerivatives(r30), der = computeDerivatives(data)
     const rows = [
         ['Letture (n.)', s7.readingsCount, s30.readingsCount, s.readingsCount],
         ['SYS/DIA media', `${s7.avgSystolic}/${s7.avgDiastolic}`, `${s30.avgSystolic}/${s30.avgDiastolic}`, `${s.avgSystolic}/${s.avgDiastolic}`],
         ['Freq. cardiaca', `${s7.avgHeartRate} BPM`, `${s30.avgHeartRate} BPM`, `${s.avgHeartRate} BPM`],
         ['SYS min – max', `${s7.minSystolic} – ${s7.maxSystolic}`, `${s30.minSystolic} – ${s30.maxSystolic}`, `${s.minSystolic} – ${s.maxSystolic}`],
         ['DIA min – max', `${s7.minDiastolic} – ${s7.maxDiastolic}`, `${s30.minDiastolic} – ${s30.maxDiastolic}`, `${s.minDiastolic} – ${s.maxDiastolic}`],
+        ['dP/dt max', `${Math.round(der7.maxRate)} mmHg/h`, `${Math.round(der30.maxRate)} mmHg/h`, `${Math.round(der.maxRate)} mmHg/h`],
+        ['Allarmi dP/dt', String(der7.alarmSegments.length), String(der30.alarmSegments.length), String(der.alarmSegments.length)],
         ['Carico ipertensivo', `${computeHypertensiveLoad(r7).percentage}%`, `${computeHypertensiveLoad(r30).percentage}%`, `${computeHypertensiveLoad(data).percentage}%`],
         ['Picco mattutino', morningSurgeStr(r7), morningSurgeStr(r30), morningSurgeStr(data)]
     ]
@@ -260,7 +266,9 @@ function addStatsTable(doc, y, r7, r30, data) {
         doc.setTextColor(...C.body)
         for (let j = 1; j <= 3; j++) {
             const cx = [x1, x2, x3][j - 1]
-            const align = typeof rows[i][j] === 'number' ? 'right' : 'left'
+            // Numeric rows: 0 (Letture), 5 (dP/dt), 6 (Allarmi), 7 (Carico)
+            const isNumeric = i === 0 || i === 5 || i === 6 || i === 7
+            const align = isNumeric ? 'right' : 'left'
             doc.text(String(rows[i][j]), align === 'right' ? cx + cw - 1 : cx + 1, y + 3.2, align === 'right' ? { align: 'right' } : undefined)
         }
         y += S.rh
@@ -305,7 +313,8 @@ async function addCharts(doc, y, readings, stats) {
     const dist = stats.categoryDistribution || {}
     const entries = Object.entries(dist).sort((a, b) => b[1] - a[1])
     const topCat = entries[0]
-    const insight = topCat ? `${topCat[0]}: ${topCat[1]} misurazioni (${Math.round(topCat[1] / stats.readingsCount * 100)}%)` : ''
+    const topLabel = topCat ? getCategoryLabel(topCat[0]) : ''
+    const insight = topCat ? `${topLabel}: ${topCat[1]} misurazioni (${Math.round(topCat[1] / stats.readingsCount * 100)}%)` : ''
     doc.text(`Distribuzione categorie ESC/ESH  —  ${insight}`, S.m, y)
     y += 2.5
 
