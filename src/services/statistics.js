@@ -1,9 +1,14 @@
 // Statistics computation utilities
+import { getDefaultBands, getBandForHour } from './timeBands.js'
 
 /**
- * Compute statistics for a set of readings
+ * Compute statistics for a set of readings.
+ * @param {Array} readings
+ * @param {Array} [bands] - Optional configured time bands (uses defaults if omitted)
  */
-export function computeStatistics(readings) {
+export function computeStatistics(readings, bands) {
+    bands = bands || getDefaultBands()
+
     if (!readings || readings.length === 0) {
         return {
             avgSystolic: 0, avgDiastolic: 0, avgHeartRate: 0,
@@ -33,20 +38,16 @@ export function computeStatistics(readings) {
         catDist[cat] = (catDist[cat] || 0) + 1
     })
 
-    // Time of day distribution
-    const todDist = { MORNING: 0, AFTERNOON: 0, EVENING: 0, NIGHT: 0 }
-    const todSystolic = { MORNING: [], AFTERNOON: [], EVENING: [], NIGHT: [] }
+    // Time of day distribution (configurable bands)
+    const todDist = {}
+    const todSystolic = {}
+    for (const b of bands) { todDist[b.key] = 0; todSystolic[b.key] = [] }
 
     readings.forEach(r => {
         const hour = new Date(r.timestamp).getHours()
-        let tod
-        if (hour >= 6 && hour < 12) tod = 'MORNING'
-        else if (hour >= 12 && hour < 17) tod = 'AFTERNOON'
-        else if (hour >= 17 && hour < 22) tod = 'EVENING'
-        else tod = 'NIGHT'
-
-        todDist[tod] = (todDist[tod] || 0) + 1
-        todSystolic[tod].push(r.systolic)
+        const band = getBandForHour(hour, bands)
+        todDist[band.key] = (todDist[band.key] || 0) + 1
+        todSystolic[band.key].push(r.systolic)
     })
 
     return {
@@ -62,10 +63,10 @@ export function computeStatistics(readings) {
         readingsCount: readings.length,
         categoryDistribution: catDist,
         timeOfDayDistribution: todDist,
-        averageMorningSystolic: todSystolic.MORNING.length ? Math.round(avg(todSystolic.MORNING) * 10) / 10 : null,
-        averageAfternoonSystolic: todSystolic.AFTERNOON.length ? Math.round(avg(todSystolic.AFTERNOON) * 10) / 10 : null,
-        averageEveningSystolic: todSystolic.EVENING.length ? Math.round(avg(todSystolic.EVENING) * 10) / 10 : null,
-        averageNightSystolic: todSystolic.NIGHT.length ? Math.round(avg(todSystolic.NIGHT) * 10) / 10 : null
+        averageMorningSystolic: todSystolic.MORNING ? (todSystolic.MORNING.length ? Math.round(avg(todSystolic.MORNING) * 10) / 10 : null) : null,
+        averageAfternoonSystolic: todSystolic.AFTERNOON ? (todSystolic.AFTERNOON.length ? Math.round(avg(todSystolic.AFTERNOON) * 10) / 10 : null) : null,
+        averageEveningSystolic: todSystolic.EVENING ? (todSystolic.EVENING.length ? Math.round(avg(todSystolic.EVENING) * 10) / 10 : null) : null,
+        averageNightSystolic: todSystolic.NIGHT ? (todSystolic.NIGHT.length ? Math.round(avg(todSystolic.NIGHT) * 10) / 10 : null) : null
     }
 }
 
@@ -154,16 +155,23 @@ export function computeDerivatives(readings) {
 }
 
 /**
- * Morning surge: compare 06:00-09:00 vs 20:00-23:00
+ * Morning surge: compare first band (morning) vs third band (evening).
+ * Uses configured bands when provided; otherwise defaults.
  */
-export function computeMorningSurge(readings) {
+export function computeMorningSurge(readings, bands) {
+    bands = bands || getDefaultBands()
+    const morningBand = bands.find(b => b.key === 'MORNING') || bands[0]
+    const eveningBand = bands.find(b => b.key === 'EVENING') || bands[2]
+
     const morning = readings.filter(r => {
         const h = new Date(r.timestamp).getHours()
-        return h >= 6 && h < 9
+        const b = getBandForHour(h, bands)
+        return b.key === morningBand.key
     })
     const evening = readings.filter(r => {
         const h = new Date(r.timestamp).getHours()
-        return h >= 20 && h < 23
+        const b = getBandForHour(h, bands)
+        return b.key === eveningBand.key
     })
 
     const avg = arr => arr.length ? arr.reduce((a, b) => a + b.systolic, 0) / arr.length : null

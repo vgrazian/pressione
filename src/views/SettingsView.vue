@@ -9,6 +9,7 @@ import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, g
 import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/services/pwaInstall.js'
 import { useSWUpdate } from '@/services/swUpdate.js'
 import { APP_VERSION, BUILD_NUMBER, BUILD_TIME } from '@/services/version.js'
+import { getUserBands, saveUserBands, getDefaultBands } from '@/services/timeBands.js'
 
 const router = useRouter()
 const { user, changePassword, updateUserEmail, updateUserProfile } = useAuth()
@@ -56,7 +57,20 @@ onMounted(async () => {
   }
   profileBirthDate.value = user.value?.birthDate || ''
   profileGender.value = user.value?.gender || ''
+  timeBands.value = await getUserBands(user.value.username)
 })
+
+// --- Time Bands ---
+async function handleSaveBands() {
+  timeBandsMessage.value = ''
+  await saveUserBands(user.value.username, timeBands.value)
+  timeBandsMessage.value = 'Fasce orarie salvate!'
+  setTimeout(() => timeBandsMessage.value = '', 3000)
+}
+
+function resetBands() {
+  timeBands.value = getDefaultBands()
+}
 
 // --- Language ---
 function changeLanguage(lang) { setLang(lang) }
@@ -195,6 +209,8 @@ const installAvailable = ref(isInstallPromptAvailable())
 const appInstalled = ref(isStandalone())
 const installMessage = ref('')
 const cacheClearing = ref(false)
+const timeBands = ref(getDefaultBands())
+const timeBandsMessage = ref('')
 
 async function handleForceClearCache() {
   cacheClearing.value = true
@@ -377,6 +393,30 @@ async function handleInstall() {
     <div v-if="isAdmin(user)" class="card mb-md">
       <h3 class="mb-sm">{{ t('admin') }}</h3>
       <router-link to="/operators" class="btn btn-ghost btn-sm">{{ t('user_management') }}</router-link>
+    </div>
+
+    <!-- Time Bands Configuration -->
+    <div class="card mb-md">
+      <h3 class="mb-sm">⏰ Fasce Orarie</h3>
+      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
+        Configura gli orari per mattina, pomeriggio, sera e notte. Le fasce vengono usate nei report e nelle statistiche.
+      </p>
+      <div class="flex gap-sm mb-sm flex-wrap">
+        <div v-for="(band, i) in timeBands" :key="band.key" class="form-group" style="flex:1;min-width:140px">
+          <label class="form-label">{{ band.icon }} {{ band.label }}</label>
+          <div class="flex gap-sm items-center">
+            <input v-model.number="band.start" type="number" min="0" max="23" class="form-input" style="width:56px" />
+            <span class="text-secondary" style="font-size:0.75rem">–</span>
+            <input v-model.number="band.end" type="number" min="0" max="23" class="form-input" style="width:56px" />
+            <span class="text-secondary" style="font-size:0.75rem">ore</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-sm">
+        <button class="btn btn-sm btn-primary" @click="handleSaveBands">Salva fasce</button>
+        <button class="btn btn-sm btn-ghost" @click="resetBands">Ripristina default</button>
+      </div>
+      <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
     </div>
 
     <!-- Cache & Updates -->

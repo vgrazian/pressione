@@ -4,6 +4,7 @@ import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics, computeMorningSurge, computeHypertensiveLoad, computeDerivatives, computeHRV } from '@/services/statistics.js'
 import { getCategoryLabel } from '@/services/categories.js'
+import { getUserBands, getDefaultBands, getBandForHour, groupReadingsByDayAndBand } from '@/services/timeBands.js'
 
 function catColor(category) {
   const map = { 'NORMAL': '#006C4C', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
@@ -29,6 +30,8 @@ const showPin = ref('')
 const linkMessage = ref('')
 const activeLinks = ref([])
 const generatingPDF = ref(false)
+const viewMode = ref('list') // 'list' or 'grouped'
+const userBands = ref(getDefaultBands())
 
 const periods = [
   { value: '7', label: '7 Giorni' },
@@ -41,6 +44,7 @@ onMounted(async () => {
   try {
     await refreshFromServer(user.value.username)
     readings.value = await getReadings(user.value.username)
+    userBands.value = await getUserBands(user.value.username)
     await loadActiveLinks()
   } finally { isLoading.value = false }
 })
@@ -63,8 +67,8 @@ const filteredReadings = computed(() => {
   return result
 })
 
-const stats = computed(() => computeStatistics(filteredReadings.value))
-const morningSurge = computed(() => computeMorningSurge(filteredReadings.value))
+const stats = computed(() => computeStatistics(filteredReadings.value, userBands.value))
+const morningSurge = computed(() => computeMorningSurge(filteredReadings.value, userBands.value))
 const htnLoad = computed(() => computeHypertensiveLoad(filteredReadings.value))
 const derivatives = computed(() => computeDerivatives(filteredReadings.value))
 const hrv = computed(() => computeHRV(filteredReadings.value))
@@ -72,30 +76,36 @@ const hrv = computed(() => computeHRV(filteredReadings.value))
 // Derivatives for multi-period comparison
 const derivatives7 = computed(() => computeDerivatives(readings7.value))
 const derivatives30 = computed(() => computeDerivatives(readings30.value))
-const stats7 = computed(() => computeStatistics(readings7.value))
-const stats30 = computed(() => computeStatistics(readings30.value))
+const stats7 = computed(() => computeStatistics(readings7.value, userBands.value))
+const stats30 = computed(() => computeStatistics(readings30.value, userBands.value))
 const htnLoad7 = computed(() => computeHypertensiveLoad(readings7.value))
 const htnLoad30 = computed(() => computeHypertensiveLoad(readings30.value))
-const surge7 = computed(() => computeMorningSurge(readings7.value))
-const surge30 = computed(() => computeMorningSurge(readings30.value))
+const surge7 = computed(() => computeMorningSurge(readings7.value, userBands.value))
+const surge30 = computed(() => computeMorningSurge(readings30.value, userBands.value))
 
 // Readings grouped by time of day
 const readingsByTimeOfDay = computed(() => {
-  const bands = { MORNING: { label: 'Mattina (06-09)', readings: [], icon: '☀️' }, AFTERNOON: { label: 'Pomeriggio (12-15)', readings: [], icon: '🌤️' }, EVENING: { label: 'Sera (18-22)', readings: [], icon: '🌅' }, NIGHT: { label: 'Notte (23-05)', readings: [], icon: '🌙' } }
-  for (const r of filteredReadings.value) {
-    const h = new Date(r.timestamp).getHours()
-    if (h >= 6 && h < 9) bands.MORNING.readings.push(r)
-    else if (h >= 12 && h < 15) bands.AFTERNOON.readings.push(r)
-    else if (h >= 18 && h < 22) bands.EVENING.readings.push(r)
-    else bands.NIGHT.readings.push(r)
+  const bandMap = {}
+  for (const b of userBands.value) {
+    bandMap[b.key] = { label: `${b.label} (${String(b.start).padStart(2, '0')}:00-${String(b.end).padStart(2, '0')}:00)`, readings: [], icon: b.icon, key: b.key }
   }
-  return Object.entries(bands).map(([key, b]) => ({
-    key, label: b.label, icon: b.icon, readings: b.readings,
+  for (const r of filteredReadings.value) {
+    const hour = new Date(r.timestamp).getHours()
+    const band = getBandForHour(hour, userBands.value)
+    if (bandMap[band.key]) bandMap[band.key].readings.push(r)
+  }
+  return Object.values(bandMap).map(b => ({
+    ...b,
     count: b.readings.length,
     avgSys: b.readings.length ? Math.round(b.readings.reduce((s, r) => s + r.systolic, 0) / b.readings.length) : null,
     avgDia: b.readings.length ? Math.round(b.readings.reduce((s, r) => s + r.diastolic, 0) / b.readings.length) : null,
     avgHR: b.readings.length ? Math.round(b.readings.reduce((s, r) => s + r.heartRate, 0) / b.readings.length) : null
   }))
+})
+
+// Grouped readings: by day, then by time band
+const groupedReadings = computed(() => {
+  return groupReadingsByDayAndBand(filteredReadings.value, userBands.value)
 })
 
 const titleSuffix = computed(() => anonymize.value ? '' : ` - ${user.value?.username}`)
@@ -418,10 +428,18 @@ async function revokeLink(token) {
         </div>
       </div>
 
-      <!-- History table -->
+      <!-- History table with view mode toggle -->
       <div v-if="includeHistory" class="card mb-md">
-        <h3 class="mb-sm">Storico</h3>
-        <table class="preview-table">
+        <div class="flex justify-between items-center mb-sm">
+          <h3>Storico</h3>
+          <div class="flex gap-sm">
+            <button class="chip" :class="{ 'chip--active': viewMode === 'list' }" @click="viewMode = 'list'">Lista</button>
+            <button class="chip" :class="{ 'chip--active': viewMode === 'grouped' }" @click="viewMode = 'grouped'">Per fascia</button>
+          </div>
+        </div>
+
+        <!-- List view -->
+        <table v-if="viewMode === 'list'" class="preview-table">
           <thead><tr><th>Data</th><th>Ora</th><th>SYS</th><th>DIA</th><th>BPM</th><th>Categoria</th></tr></thead>
           <tbody>
             <tr v-for="r in filteredReadings.slice(0, 30)" :key="r.id"
@@ -435,9 +453,41 @@ async function revokeLink(token) {
             </tr>
           </tbody>
         </table>
-        <p v-if="filteredReadings.length > 30" class="text-secondary mt-sm" style="font-size:0.75rem">
+        <p v-if="viewMode === 'list' && filteredReadings.length > 30" class="text-secondary mt-sm" style="font-size:0.75rem">
           ...e altre {{ filteredReadings.length - 30 }} misurazioni (scarica il PDF per lo storico completo)
         </p>
+
+        <!-- Grouped by time band view -->
+        <div v-if="viewMode === 'grouped'" class="banded-table-wrapper">
+          <table class="banded-table" v-for="day of groupedReadings.slice(0, 14)" :key="day.date">
+            <thead>
+              <tr><th colspan="6" class="banded-date">{{ day.date }}</th></tr>
+            </thead>
+            <tbody>
+              <template v-for="band of userBands" :key="band.key">
+                <template v-if="day.bands[band.key] && day.bands[band.key].length">
+                  <tr class="band-label-row">
+                    <td colspan="6">
+                      <span class="band-label">{{ band.icon }} {{ band.label }} ({{ day.bands[band.key].length }} letture)</span>
+                    </td>
+                  </tr>
+                  <tr v-for="r in day.bands[band.key]" :key="r.id"
+                    :style="{ borderLeft: '3px solid ' + catColor(r.category) }">
+                    <td></td>
+                    <td>{{ new Date(r.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}</td>
+                    <td :class="{ 'text-error': r.systolic >= 140, 'text-warning': r.systolic >= 130 && r.systolic < 140 }">{{ r.systolic }}</td>
+                    <td :class="{ 'text-error': r.diastolic >= 90, 'text-warning': r.diastolic >= 85 && r.diastolic < 90 }">{{ r.diastolic }}</td>
+                    <td>{{ r.heartRate }}</td>
+                    <td><small>{{ getCategoryLabel(r.category) }}</small></td>
+                  </tr>
+                </template>
+              </template>
+            </tbody>
+          </table>
+          <p v-if="groupedReadings.length > 14" class="text-secondary mt-sm" style="font-size:0.75rem">
+            ...e altri {{ groupedReadings.length - 14 }} giorni (scarica il PDF per lo storico completo)
+          </p>
+        </div>
       </div>
 
       <!-- Share Actions -->
@@ -527,4 +577,20 @@ async function revokeLink(token) {
   .timeofday-grid { grid-template-columns: repeat(2, 1fr); }
   .comparison-table table { font-size: 0.75rem; }
 }
+
+/* Banded (grouped by time band) table */
+.banded-table-wrapper { max-height: 60vh; overflow-y: auto; }
+.banded-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-bottom: var(--space-md); }
+.banded-date {
+  text-align: left; padding: 6px 8px; background: var(--color-accent-muted);
+  color: var(--color-accent); font-weight: 600; font-size: 0.8125rem;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.band-label-row td { padding: 3px 8px; background: var(--color-surface-raised); border-bottom: 1px solid var(--color-border); }
+.band-label { font-size: 0.6875rem; color: var(--color-text-secondary); font-weight: 500; }
+.banded-table tbody tr td { padding: 4px 8px; border-bottom: 1px solid var(--color-border); font-size: 0.75rem; }
+
+/* Chip toggle (reused for view mode) */
+.chip { padding: 4px 12px; border-radius: 16px; border: 1px solid var(--color-border); background: var(--color-surface-raised); font-size: 0.75rem; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+.chip--active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
 </style>

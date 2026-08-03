@@ -1,17 +1,19 @@
 <script setup>
 import { computed } from 'vue'
 import AppIcon from './AppIcon.vue'
+import { getDefaultBands, getBandForHour } from '@/services/timeBands.js'
 
 const props = defineProps({
-  timestamp: { type: String, required: true }
+  timestamp: { type: String, required: true },
+  bands: { type: Array, default: null }
 })
 
 const timeOfDay = computed(() => {
   const hour = new Date(props.timestamp).getHours()
-  if (hour >= 6 && hour < 12) return { icon: 'sun', label: 'Mattina' }
-  if (hour >= 12 && hour < 17) return { icon: 'sun', label: 'Pomeriggio' }
-  if (hour >= 17 && hour < 22) return { icon: 'sun', label: 'Sera' }
-  return { icon: 'moon', label: 'Notte' }
+  const bands = props.bands || getDefaultBands()
+  const band = getBandForHour(hour, bands)
+  const isNight = band.key === 'NIGHT'
+  return { icon: isNight ? 'moon' : 'sun', label: band.label }
 })
 </script>
 
