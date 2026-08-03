@@ -13,7 +13,8 @@ import {
     createRecoveryToken,
     resetPasswordWithToken,
     adminResetPassword,
-    updateProfile
+    updateProfile,
+    getProfile
 } from './supabaseTableAuth'
 
 const SESSION_KEY = 'pressione_session'
@@ -66,6 +67,16 @@ export async function initAuth() {
                     skipProfilePrompt: session.skipProfilePrompt || false
                 }
                 state.isAuthenticated = true
+                // Refresh profile from settings (bypasses PostgREST cache)
+                getProfile(session.username).then(p => {
+                    if (p) Object.assign(state.user, {
+                        age: p.age ?? state.user.age,
+                        gender: p.gender ?? state.user.gender,
+                        profileCompleted: p.profileCompleted ?? state.user.profileCompleted,
+                        skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt
+                    })
+                    refreshSession()
+                }).catch(() => { })
             } else {
                 localStorage.removeItem(SESSION_KEY)
             }
@@ -89,6 +100,15 @@ export async function initAuth() {
                     }
                     state.isAuthenticated = true
                     localStorage.setItem(SESSION_KEY, dbSession)
+                    getProfile(session.username).then(p => {
+                        if (p) Object.assign(state.user, {
+                            age: p.age ?? state.user.age,
+                            gender: p.gender ?? state.user.gender,
+                            profileCompleted: p.profileCompleted ?? state.user.profileCompleted,
+                            skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt
+                        })
+                        refreshSession()
+                    }).catch(() => { })
                 }
             }
         }
@@ -164,6 +184,17 @@ function createSession(userData) {
         skipProfilePrompt: userData.skipProfilePrompt || false
     }
     state.isAuthenticated = true
+
+    // Async: fetch profile from settings table (bypasses PostgREST cache)
+    getProfile(userData.username).then(profile => {
+        if (profile && Object.keys(profile).length > 0) {
+            if (profile.age !== undefined) state.user.age = profile.age
+            if (profile.gender !== undefined) state.user.gender = profile.gender
+            if (profile.profileCompleted !== undefined) state.user.profileCompleted = profile.profileCompleted
+            if (profile.skipProfilePrompt !== undefined) state.user.skipProfilePrompt = profile.skipProfilePrompt
+            refreshSession()
+        }
+    }).catch(() => { /* best effort */ })
 
     return state.user
 }
