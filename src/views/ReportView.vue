@@ -9,7 +9,7 @@ function catColor(category) {
   const map = { 'NORMAL': '#006C4C', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
   return map[category] || '#999'
 }
-import { generatePDF as generatePDFReport } from '@/services/pdfReport.js'
+import { generatePDF as generatePDFReport, generatePDFBlob } from '@/services/pdfReport.js'
 import { supabase } from '@/services/supabaseClient.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import AppIcon from '@/components/AppIcon.vue'
@@ -132,39 +132,88 @@ async function generatePDF() {
   }
 }
 
-// --- Sharing ---
-function sharePDF() {
+// --- Sharing (with PDF attachment via Web Share API) ---
+async function getPDFFile() {
+  return await generatePDFBlob({
+    data: filteredReadings.value,
+    readings7: readings7.value,
+    readings30: readings30.value,
+    username: user.value?.username,
+    birthDate: user.value?.birthDate || null,
+    gender: user.value?.gender || null,
+    anonymize: anonymize.value,
+    includeCharts: includeCharts.value,
+    includeHistory: includeHistory.value
+  })
+}
+
+async function sharePDF() {
   generatePDF()
 }
 
 async function shareViaEmail() {
-  const s = stats.value
-  const body = `REPORT PRESSIONE ARTERIOSA${titleSuffix.value}\n\n` +
-    `Media: ${s.avgSystolic}/${s.avgDiastolic} mmHg\n` +
-    `BPM medio: ${s.avgHeartRate}\n` +
-    `Misurazioni: ${s.readingsCount}\n\n` +
-    `Generato da Pressione App`
-  window.open(`mailto:?subject=Report Pressione${titleSuffix.value}&body=${encodeURIComponent(body)}`, '_blank')
+  generatingPDF.value = true
+  try {
+    const file = await getPDFFile()
+    const s = stats.value
+    const text = `Report Pressione Arteriosa${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Report Pressione', text })
+    } else {
+      // Fallback: mailto link (no attachment — browser limitation)
+      const body = `REPORT PRESSIONE ARTERIOSA${titleSuffix.value}\n\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg\nBPM medio: ${s.avgHeartRate}\nMisurazioni: ${s.readingsCount}\n\nGenerato da Pressione App`
+      window.open(`mailto:?subject=Report Pressione${titleSuffix.value}&body=${encodeURIComponent(body)}`, '_blank')
+    }
+  } catch (e) {
+    linkMessage.value = 'Condivisione non supportata su questo browser'
+    setTimeout(() => linkMessage.value = '', 3000)
+  } finally {
+    generatingPDF.value = false
+  }
 }
 
-function shareViaWhatsApp() {
-  const s = stats.value
-  const text = `📊 *Report Pressione Arteriosa*${titleSuffix.value.replace(/-/g, '')}\n\n` +
-    `Media: ${s.avgSystolic}/${s.avgDiastolic} mmHg\n` +
-    `BPM medio: ${s.avgHeartRate}\n` +
-    `Misurazioni: ${s.readingsCount}`
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+async function shareViaWhatsApp() {
+  generatingPDF.value = true
+  try {
+    const file = await getPDFFile()
+    const s = stats.value
+    const text = `📊 Report Pressione Arteriosa${titleSuffix.value.replace(/-/g, '')}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Report Pressione', text })
+    } else {
+      // Fallback: wa.me link (no attachment — browser limitation)
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    }
+  } catch (e) {
+    linkMessage.value = 'Condivisione non supportata su questo browser'
+    setTimeout(() => linkMessage.value = '', 3000)
+  } finally {
+    generatingPDF.value = false
+  }
 }
 
 async function shareNative() {
-  const s = stats.value
-  const text = `Report Pressione Arteriosa${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
-  if (navigator.share) {
-    await navigator.share({ title: 'Report Pressione', text })
-  } else {
-    await navigator.clipboard.writeText(text)
-    linkMessage.value = 'Report copiato negli appunti!'
-    setTimeout(() => linkMessage.value = '', 3000)
+  generatingPDF.value = true
+  try {
+    const file = await getPDFFile()
+    const s = stats.value
+    const text = `Report Pressione Arteriosa${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Report Pressione', text })
+    } else if (navigator.share) {
+      await navigator.share({ title: 'Report Pressione', text })
+    } else {
+      await navigator.clipboard.writeText(text)
+      linkMessage.value = 'Report copiato negli appunti!'
+      setTimeout(() => linkMessage.value = '', 3000)
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      linkMessage.value = 'Condivisione non supportata'
+      setTimeout(() => linkMessage.value = '', 3000)
+    }
+  } finally {
+    generatingPDF.value = false
   }
 }
 
@@ -398,14 +447,14 @@ async function revokeLink(token) {
           <button class="btn btn-primary" @click="generatePDF" :disabled="generatingPDF">
             <AppIcon name="copy" :size="16" /> {{ generatingPDF ? 'Generazione...' : 'Scarica PDF' }}
           </button>
-          <button class="btn btn-ghost" @click="shareViaEmail">
-            <AppIcon name="share" :size="16" /> Email
+          <button class="btn btn-ghost" @click="shareViaEmail" :disabled="generatingPDF">
+            <AppIcon name="share" :size="16" /> {{ generatingPDF ? 'Preparo PDF...' : 'Email' }}
           </button>
-          <button class="btn btn-ghost" @click="shareViaWhatsApp">
-            <AppIcon name="share" :size="16" /> WhatsApp
+          <button class="btn btn-ghost" @click="shareViaWhatsApp" :disabled="generatingPDF">
+            <AppIcon name="share" :size="16" /> {{ generatingPDF ? 'Preparo PDF...' : 'WhatsApp' }}
           </button>
-          <button class="btn btn-ghost" @click="shareNative">
-            <AppIcon name="share" :size="16" /> Condividi
+          <button class="btn btn-ghost" @click="shareNative" :disabled="generatingPDF">
+            <AppIcon name="share" :size="16" /> {{ generatingPDF ? 'Preparo PDF...' : 'Condividi' }}
           </button>
         </div>
       </div>

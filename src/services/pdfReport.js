@@ -475,11 +475,11 @@ function addFooter(doc, pageNum, totalPages) {
     doc.text(`Pagina ${pageNum} di ${totalPages}`, pw - S.m, 290, { align: 'right' })
 }
 
-// ── Main ───────────────────────────────────────────────────────
-export async function generatePDF({ data, readings7, readings30, username, age, gender, anonymize, includeCharts, includeHistory }) {
+// ── Shared PDF builder ──────────────────────────────────────────
+async function buildPDF({ data, readings7, readings30, username, birthDate, gender, anonymize, includeCharts, includeHistory }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
     const stats = computeStatistics(data)
-    const opts = { data, username, age, gender, anonymize }
+    const opts = { data, username, birthDate, gender, anonymize }
 
     let y = addHeader(doc, opts)
     y = addClinicalSummary(doc, y, stats, data, opts)
@@ -506,5 +506,19 @@ export async function generatePDF({ data, readings7, readings30, username, age, 
         addFooter(doc, i, total)
     }
 
+    return doc
+}
+
+// ── Main: Download PDF ─────────────────────────────────────────
+export async function generatePDF(opts) {
+    const doc = await buildPDF(opts)
     doc.save(`pressione_report_${new Date().toISOString().slice(0, 10)}.pdf`)
+}
+
+// ── Main: Generate PDF as File (for sharing) ───────────────────
+export async function generatePDFBlob(opts) {
+    const doc = await buildPDF(opts)
+    const filename = `pressione_report_${new Date().toISOString().slice(0, 10)}.pdf`
+    const blob = doc.output('blob')
+    return new File([blob], filename, { type: 'application/pdf' })
 }
