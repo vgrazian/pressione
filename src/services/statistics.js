@@ -125,6 +125,8 @@ export function computeDerivatives(readings) {
     const diastolic = []
     const timestamps = []
     let maxRate = 0
+    let maxPositiveRate = 0
+    let maxNegativeRate = 0
     const alarmSegments = []
 
     for (let i = 1; i < sorted.length; i++) {
@@ -138,6 +140,8 @@ export function computeDerivatives(readings) {
         diastolic.push(Math.round(dd * 10) / 10)
         timestamps.push(sorted[i].timestamp)
         maxRate = Math.max(maxRate, Math.abs(ds), Math.abs(dd))
+        if (ds > 0) maxPositiveRate = Math.max(maxPositiveRate, ds)
+        if (ds < 0) maxNegativeRate = Math.min(maxNegativeRate, ds)
 
         // Alarm: systolic rate > 10 mmHg/hour
         if (Math.abs(ds) > 10) {
@@ -151,7 +155,7 @@ export function computeDerivatives(readings) {
         }
     }
 
-    return { systolic, diastolic, timestamps, maxRate, alarmSegments }
+    return { systolic, diastolic, timestamps, maxRate, maxPositiveRate, maxNegativeRate, alarmSegments }
 }
 
 /**

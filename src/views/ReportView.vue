@@ -452,7 +452,8 @@ function copyActiveLink(token) {
               <tr><td>Letture</td><td>{{ stats7.readingsCount }}</td><td>{{ stats30.readingsCount }}</td></tr>
               <tr><td>SYS/DIA media</td><td>{{ stats7.avgSystolic }}/{{ stats7.avgDiastolic }}</td><td>{{ stats30.avgSystolic }}/{{ stats30.avgDiastolic }}</td></tr>
               <tr><td>BPM medio</td><td>{{ stats7.avgHeartRate }}</td><td>{{ stats30.avgHeartRate }}</td></tr>
-              <tr><td>dP/dt max</td><td>{{ Math.round(derivatives7.maxRate) }} mmHg/h</td><td>{{ Math.round(derivatives30.maxRate) }} mmHg/h</td></tr>
+              <tr><td>Variazione max ↑</td><td class="text-error">{{ derivatives7.maxPositiveRate > 0 ? '+' + Math.round(derivatives7.maxPositiveRate) : '0' }} mmHg/h</td><td class="text-error">{{ derivatives30.maxPositiveRate > 0 ? '+' + Math.round(derivatives30.maxPositiveRate) : '0' }} mmHg/h</td></tr>
+              <tr><td>Variazione max ↓</td><td class="text-warning">{{ derivatives7.maxNegativeRate < 0 ? Math.round(derivatives7.maxNegativeRate) : '0' }} mmHg/h</td><td class="text-warning">{{ derivatives30.maxNegativeRate < 0 ? Math.round(derivatives30.maxNegativeRate) : '0' }} mmHg/h</td></tr>
               <tr><td>Allarmi dP/dt</td><td :class="{ 'text-error': derivatives7.alarmSegments.length > 0 }">{{ derivatives7.alarmSegments.length }}</td><td :class="{ 'text-error': derivatives30.alarmSegments.length > 0 }">{{ derivatives30.alarmSegments.length }}</td></tr>
               <tr><td>Carico ipertensivo</td><td :class="{ 'text-error': htnLoad7.percentage > 30 }">{{ htnLoad7.percentage }}%</td><td :class="{ 'text-error': htnLoad30.percentage > 30 }">{{ htnLoad30.percentage }}%</td></tr>
               <tr><td>Picco mattutino</td><td>{{ surge7.delta !== null ? (surge7.delta > 0 ? '+' : '') + surge7.delta + ' mmHg' : 'N/D' }}</td><td>{{ surge30.delta !== null ? (surge30.delta > 0 ? '+' : '') + surge30.delta + ' mmHg' : 'N/D' }}</td></tr>

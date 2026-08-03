@@ -269,7 +269,8 @@ function addStatsTable(doc, y, r7, r30, data) {
         ['Freq. cardiaca', `${s7.avgHeartRate} BPM`, `${s30.avgHeartRate} BPM`, `${s.avgHeartRate} BPM`],
         ['SYS min – max', `${s7.minSystolic} – ${s7.maxSystolic}`, `${s30.minSystolic} – ${s30.maxSystolic}`, `${s.minSystolic} – ${s.maxSystolic}`],
         ['DIA min – max', `${s7.minDiastolic} – ${s7.maxDiastolic}`, `${s30.minDiastolic} – ${s30.maxDiastolic}`, `${s.minDiastolic} – ${s.maxDiastolic}`],
-        ['dP/dt max', `${Math.round(der7.maxRate)} mmHg/h`, `${Math.round(der30.maxRate)} mmHg/h`, `${Math.round(der.maxRate)} mmHg/h`],
+        ['Variazione max ↑', `${Math.round(der7.maxPositiveRate) > 0 ? '+' : ''}${Math.round(der7.maxPositiveRate)} mmHg/h`, `${Math.round(der30.maxPositiveRate) > 0 ? '+' : ''}${Math.round(der30.maxPositiveRate)} mmHg/h`, `${Math.round(der.maxPositiveRate) > 0 ? '+' : ''}${Math.round(der.maxPositiveRate)} mmHg/h`],
+        ['Variazione max ↓', `${Math.round(der7.maxNegativeRate) < 0 ? '' : ''}${Math.round(der7.maxNegativeRate)} mmHg/h`, `${Math.round(der30.maxNegativeRate) < 0 ? '' : ''}${Math.round(der30.maxNegativeRate)} mmHg/h`, `${Math.round(der.maxNegativeRate) < 0 ? '' : ''}${Math.round(der.maxNegativeRate)} mmHg/h`],
         ['Allarmi dP/dt', String(der7.alarmSegments.length), String(der30.alarmSegments.length), String(der.alarmSegments.length)],
         ['Carico ipertensivo', `${computeHypertensiveLoad(r7).percentage}%`, `${computeHypertensiveLoad(r30).percentage}%`, `${computeHypertensiveLoad(data).percentage}%`],
         ['Picco mattutino', morningSurgeStr(r7), morningSurgeStr(r30), morningSurgeStr(data)]
