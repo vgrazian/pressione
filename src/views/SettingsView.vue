@@ -405,10 +405,10 @@ async function handleInstall() {
         <div v-for="(band, i) in timeBands" :key="band.key" class="form-group" style="flex:1;min-width:130px">
           <label class="form-label">{{ band.icon }} {{ band.label }}</label>
           <div class="flex gap-sm items-center">
-            <input v-model.number="band.start" type="number" min="0" max="23" class="form-input" style="width:48px;text-align:center" />
-            <span class="text-secondary" style="font-size:0.875rem;width:12px;text-align:center">–</span>
-            <input v-model.number="band.end" type="number" min="0" max="23" class="form-input" style="width:48px;text-align:center" />
-            <span class="text-secondary" style="font-size:0.75rem;margin-left:2px">h</span>
+            <input v-model.number="band.start" type="number" min="0" max="23" class="form-input" style="width:52px;text-align:center;padding:4px" />
+            <span class="text-secondary" style="font-size:0.875rem;width:8px;text-align:center;flex-shrink:0">–</span>
+            <input v-model.number="band.end" type="number" min="0" max="23" class="form-input" style="width:52px;text-align:center;padding:4px" />
+            <span class="text-secondary" style="font-size:0.6875rem;flex-shrink:0">h</span>
           </div>
         </div>
       </div>
