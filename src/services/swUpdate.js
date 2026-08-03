@@ -5,25 +5,51 @@ import { ref } from 'vue'
  * Detects when a new version is waiting and provides applyUpdate() to activate it.
  */
 const updateAvailable = ref(false)
+const updateFailed = ref(false)
 
 export function useSWUpdate() {
-    return { updateAvailable, applyUpdate, forceClearCache }
+    return { updateAvailable, updateFailed, applyUpdate, forceClearCache }
 }
 
-function applyUpdate() {
+async function applyUpdate() {
+    updateFailed.value = false
+
+    // 1. Try SKIP_WAITING on waiting workers (standard SW update)
     if (navigator.serviceWorker) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-            regs.forEach(reg => {
+        try {
+            const registrations = await navigator.serviceWorker.getRegistrations()
+            for (const reg of registrations) {
                 if (reg.waiting) {
                     reg.waiting.postMessage({ type: 'SKIP_WAITING' })
                 }
-            })
-        })
-        // Reload after SW takes over
+                // Also check for installing workers
+                if (reg.installing) {
+                    reg.installing.postMessage({ type: 'SKIP_WAITING' })
+                }
+                // Force update check
+                await reg.update()
+            }
+        } catch { /* continue to fallback */ }
+    }
+
+    // 2. Listen for controller change (SW takes over) — reload
+    let reloaded = false
+    if (navigator.serviceWorker) {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            window.location.reload()
+            if (!reloaded) {
+                reloaded = true
+                window.location.reload()
+            }
         }, { once: true })
     }
+
+    // 3. Fallback: if no reload after 3s, force-clear and reload
+    setTimeout(async () => {
+        if (!reloaded) {
+            updateFailed.value = true
+            await forceClearCache()
+        }
+    }, 3000)
 }
 
 /**

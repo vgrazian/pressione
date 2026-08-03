@@ -19,7 +19,7 @@ const isInitializing = ref(true)
 const error = ref(null)
 const confirm = inject('confirm-dialog', null)
 const showProfilePrompt = ref(false)
-const { updateAvailable, applyUpdate } = useSWUpdate()
+const { updateAvailable, updateFailed, applyUpdate } = useSWUpdate()
 
 onMounted(async () => {
   initPWAInstall()
@@ -93,8 +93,13 @@ async function handleLogout() {
 
       <!-- Update available banner -->
       <div v-if="isAuthenticated && updateAvailable" class="update-banner">
-        <span>Nuova versione disponibile</span>
-        <button class="btn btn-sm btn-primary" @click="applyUpdate">Aggiorna ora</button>
+        <template v-if="!updateFailed">
+          <span>Nuova versione disponibile</span>
+          <button class="btn btn-sm btn-primary" @click="applyUpdate">Aggiorna ora</button>
+        </template>
+        <template v-else>
+          <span>⚠️ Aggiornamento automatico non riuscito. Prova da Impostazioni → Forza aggiornamento.</span>
+        </template>
       </div>
 
       <OfflineBanner v-if="isAuthenticated" />
