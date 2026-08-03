@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/services/supabaseClient.js'
 import { computeStatistics, computeDerivatives, computeMorningSurge, computeHypertensiveLoad } from '@/services/statistics.js'
@@ -68,10 +68,12 @@ async function loadReport(pinHash = null) {
       if (pinHash !== stored.pinHash) throw new Error('wrong pin')
     }
     report.value = stored.reportData
+  } catch (e) { error.value = 'Link non valido, scaduto o revocato.' }
+  finally {
+    isLoading.value = false
     await nextTick()
     renderCharts()
-  } catch (e) { error.value = 'Link non valido, scaduto o revocato.' }
-  finally { isLoading.value = false }
+  }
 }
 
 async function submitPin() {
@@ -81,6 +83,9 @@ async function submitPin() {
 }
 
 onMounted(() => loadReport())
+
+// Re-render charts when date filter changes
+watch(dateFilter, async () => { await nextTick(); renderCharts() })
 
 function renderCharts() { renderBPChart(); renderDerivChart(); renderPieChart() }
 
