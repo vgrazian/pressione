@@ -1,9 +1,8 @@
 -- Pressione: RPC functions for auth, email, password recovery, and test data
--- Migration 004
--- These were previously created manually in the SQL editor.
+-- Migration 004 — All tables use fully qualified names (public.users, etc.)
 -- 1. Update user email
-CREATE OR REPLACE FUNCTION public.update_email(p_username TEXT, p_new_email TEXT) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN
-UPDATE users
+CREATE OR REPLACE FUNCTION public.update_user_email(p_username TEXT, p_new_email TEXT) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN
+UPDATE public.users
 SET email = p_new_email,
     updated_at = now()
 WHERE username = p_username;
@@ -13,7 +12,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.create_recovery_token(p_username TEXT) RETURNS TEXT LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_token TEXT;
 BEGIN v_token := encode(gen_random_bytes(16), 'hex');
-INSERT INTO settings (username, key, value, updated_at)
+INSERT INTO public.settings (username, key, value, updated_at)
 VALUES (p_username, '_recovery_' || v_token, '{}', now());
 RETURN v_token;
 END;
@@ -23,17 +22,17 @@ CREATE OR REPLACE FUNCTION public.reset_password_with_token(p_token TEXT, p_new_
 DECLARE v_username TEXT;
 BEGIN
 SELECT username INTO v_username
-FROM settings
+FROM public.settings
 WHERE key = '_recovery_' || p_token
     AND updated_at > now() - interval '1 hour'
 LIMIT 1;
 IF v_username IS NULL THEN RAISE EXCEPTION 'Token non valido o scaduto';
 END IF;
-UPDATE users
+UPDATE public.users
 SET password_hash = p_new_password,
     updated_at = now()
 WHERE username = v_username;
-DELETE FROM settings
+DELETE FROM public.settings
 WHERE key = '_recovery_' || p_token;
 END;
 $$;
@@ -44,12 +43,12 @@ CREATE OR REPLACE FUNCTION public.admin_reset_password(
         p_new_password TEXT
     ) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN IF NOT EXISTS (
         SELECT 1
-        FROM users
+        FROM public.users
         WHERE username = p_admin_username
             AND role = 'admin'
     ) THEN RAISE EXCEPTION 'Accesso non autorizzato';
 END IF;
-UPDATE users
+UPDATE public.users
 SET password_hash = p_new_password,
     updated_at = now()
 WHERE username = p_target_username;
@@ -66,7 +65,7 @@ BEGIN FOR i IN 1..p_count LOOP v_sys := 110 + floor(random() * 50)::INTEGER;
 v_dia := 65 + floor(random() * 30)::INTEGER;
 v_hr := 60 + floor(random() * 30)::INTEGER;
 v_ts := now() - (random() * interval '30 days');
-INSERT INTO readings (
+INSERT INTO public.readings (
         username,
         systolic,
         diastolic,
