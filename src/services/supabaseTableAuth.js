@@ -148,14 +148,14 @@ export async function getAllUsers() {
 }
 
 /**
- * Update email
+ * Update email — uses direct REST update, no RPC needed
  */
 export async function updateEmail({ username, newEmail }) {
     if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
-    const { error } = await supabase.rpc('update_user_email', {
-        p_username: username,
-        p_new_email: newEmail
-    })
+    const { error } = await supabase
+        .from('users')
+        .update({ email: newEmail, updated_at: new Date().toISOString() })
+        .eq('username', username)
     if (error) throw new Error('Errore aggiornamento email: ' + error.message)
 }
 
