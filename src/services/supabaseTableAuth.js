@@ -152,7 +152,7 @@ export async function getAllUsers() {
  */
 export async function updateEmail({ username, newEmail }) {
     if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
-    const { error } = await supabase.rpc('update_email', {
+    const { error } = await supabase.rpc('update_user_email', {
         p_username: username,
         p_new_email: newEmail
     })
