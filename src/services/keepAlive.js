@@ -15,7 +15,7 @@ const PING_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
  * Check if keep-alive is enabled for a user
  */
 export async function isKeepAliveEnabled(username) {
-    return await getSetting(username, '_system_' + KEEP_ALIVE_KEY, false)
+    return await getSetting(username, '_system_' + KEEP_ALIVE_KEY, true)
 }
 
 /**
