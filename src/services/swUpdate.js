@@ -7,7 +7,7 @@ import { ref } from 'vue'
 const updateAvailable = ref(false)
 
 export function useSWUpdate() {
-    return { updateAvailable, applyUpdate }
+    return { updateAvailable, applyUpdate, forceClearCache }
 }
 
 function applyUpdate() {
@@ -24,6 +24,31 @@ function applyUpdate() {
             window.location.reload()
         }, { once: true })
     }
+}
+
+/**
+ * Force-clear all service workers and caches, then hard-reload.
+ * Use when the app is stuck on an old cached version.
+ */
+async function forceClearCache() {
+    // 1. Unregister all service workers
+    if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        for (const reg of registrations) {
+            await reg.unregister()
+        }
+    }
+
+    // 2. Delete all cache storage
+    if ('caches' in window) {
+        const keys = await caches.keys()
+        for (const key of keys) {
+            await caches.delete(key)
+        }
+    }
+
+    // 3. Hard reload (bypass browser cache)
+    window.location.reload(true)
 }
 
 if ('serviceWorker' in navigator) {

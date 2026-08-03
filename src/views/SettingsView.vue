@@ -7,10 +7,12 @@ import { isAdmin } from '@/services/rbac.js'
 import { useI18n } from '@/services/i18n.js'
 import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, getStorageInfo, formatBytes } from '@/services/keepAlive.js'
 import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/services/pwaInstall.js'
+import { useSWUpdate } from '@/services/swUpdate.js'
 
 const router = useRouter()
 const { user, changePassword, updateUserEmail, updateUserProfile } = useAuth()
 const { t, setLang, currentLang, availableLangs } = useI18n()
+const { forceClearCache } = useSWUpdate()
 
 const confirm = inject('confirm-dialog')
 const reminders = ref([])
@@ -191,6 +193,12 @@ async function toggleKeepAlive() {
 const installAvailable = ref(isInstallPromptAvailable())
 const appInstalled = ref(isStandalone())
 const installMessage = ref('')
+const cacheClearing = ref(false)
+
+async function handleForceClearCache() {
+  cacheClearing.value = true
+  await forceClearCache()
+}
 
 async function handleInstall() {
   installMessage.value = ''
@@ -368,6 +376,17 @@ async function handleInstall() {
     <div v-if="isAdmin(user)" class="card mb-md">
       <h3 class="mb-sm">{{ t('admin') }}</h3>
       <router-link to="/operators" class="btn btn-ghost btn-sm">{{ t('user_management') }}</router-link>
+    </div>
+
+    <!-- Cache & Updates -->
+    <div class="card mb-md">
+      <h3 class="mb-sm">🔄 Cache & Aggiornamenti</h3>
+      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
+        Se l'app mostra una versione vecchia, svuota la cache per forzare il caricamento dell'ultima versione.
+      </p>
+      <button class="btn btn-sm btn-secondary" @click="handleForceClearCache" :disabled="cacheClearing">
+        {{ cacheClearing ? 'Aggiornamento...' : 'Forza aggiornamento' }}
+      </button>
     </div>
 
     <!-- Danger Zone -->
