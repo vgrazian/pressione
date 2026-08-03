@@ -67,9 +67,12 @@ export async function initAuth() {
                     skipProfilePrompt: session.skipProfilePrompt || false
                 }
                 state.isAuthenticated = true
-                // Refresh profile from settings (bypasses PostgREST cache) — await so state is ready
+                // Refresh profile from settings (bypasses PostgREST cache) — with 5s timeout
                 try {
-                    const p = await getProfile(session.username)
+                    const p = await Promise.race([
+                        getProfile(session.username),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                    ])
                     if (p) Object.assign(state.user, {
                         birthDate: p.birthDate ?? state.user.birthDate,
                         gender: p.gender ?? state.user.gender,
@@ -102,7 +105,10 @@ export async function initAuth() {
                     state.isAuthenticated = true
                     localStorage.setItem(SESSION_KEY, dbSession)
                     try {
-                        const p = await getProfile(session.username)
+                        const p = await Promise.race([
+                            getProfile(session.username),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                        ])
                         if (p) Object.assign(state.user, {
                             birthDate: p.birthDate ?? state.user.birthDate,
                             gender: p.gender ?? state.user.gender,

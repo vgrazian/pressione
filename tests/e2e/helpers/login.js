@@ -14,13 +14,14 @@ export async function loginAsBot(page) {
   }
   const sessionJson = JSON.stringify(session)
 
-  // Navigate first, then inject session, then reload so initAuth picks it up
-  await page.goto('/#/')
-  await page.evaluate((json) => {
+  // Inject session via addInitScript BEFORE any page JS runs
+  await page.addInitScript((json) => {
     localStorage.setItem('pressione_session', json)
   }, sessionJson)
-  await page.reload()
-  await page.waitForTimeout(2000)
+
+  await page.goto('/#/')
+  // Wait for initAuth to complete (async getProfile call)
+  await page.waitForTimeout(3000)
   return page
 }
 
