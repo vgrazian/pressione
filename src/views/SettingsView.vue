@@ -402,13 +402,13 @@ async function handleInstall() {
         Configura gli orari per mattina, pomeriggio, sera e notte. Le fasce vengono usate nei report e nelle statistiche.
       </p>
       <div class="flex gap-sm mb-sm flex-wrap">
-        <div v-for="(band, i) in timeBands" :key="band.key" class="form-group" style="flex:1;min-width:140px">
+        <div v-for="(band, i) in timeBands" :key="band.key" class="form-group" style="flex:1;min-width:130px">
           <label class="form-label">{{ band.icon }} {{ band.label }}</label>
           <div class="flex gap-sm items-center">
-            <input v-model.number="band.start" type="number" min="0" max="23" class="form-input" style="width:56px" />
-            <span class="text-secondary" style="font-size:0.75rem">–</span>
-            <input v-model.number="band.end" type="number" min="0" max="23" class="form-input" style="width:56px" />
-            <span class="text-secondary" style="font-size:0.75rem">ore</span>
+            <input v-model.number="band.start" type="number" min="0" max="23" class="form-input" style="width:48px;text-align:center" />
+            <span class="text-secondary" style="font-size:0.875rem;width:12px;text-align:center">–</span>
+            <input v-model.number="band.end" type="number" min="0" max="23" class="form-input" style="width:48px;text-align:center" />
+            <span class="text-secondary" style="font-size:0.75rem;margin-left:2px">h</span>
           </div>
         </div>
       </div>
