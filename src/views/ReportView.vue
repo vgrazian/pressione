@@ -47,12 +47,19 @@ const periods = [
 
 onMounted(async () => {
   isLoading.value = true
+  shareLink.value = null
+  showPin.value = ''
+  linkMessage.value = ''
   try {
     await refreshFromServer(user.value.username)
     readings.value = await getReadings(user.value.username)
     userBands.value = await getUserBands(user.value.username)
     await loadActiveLinks()
-  } finally { isLoading.value = false }
+  } finally {
+    isLoading.value = false
+    await nextTick()
+    renderBPChart()
+  }
 })
 
 const filteredReadings = computed(() => {
@@ -150,7 +157,10 @@ function renderBPChart() {
   })
 }
 
-watch(filteredReadings, async () => { await nextTick(); renderBPChart() }, { deep: false })
+watch(filteredReadings, () => { renderBPChart() }, { flush: 'post' })
+
+// Also render chart after bands load
+watch(userBands, () => { renderBPChart() }, { flush: 'post' })
 
 const titleSuffix = computed(() => anonymize.value ? '' : ` - ${user.value?.username}`)
 
