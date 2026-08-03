@@ -31,8 +31,22 @@ vite.config.js  →  legge package.json  →  __APP_VERSION__
 1. Modifiche al codice committate e pushate su `main`
 2. **Se ci sono migrazioni DB**: applicate via Supabase MCP (`apply_migration`) prima o insieme al push
 3. **Se la versione cambia**: aggiornare `package.json` → `version`
-4. Attendere ~2 min per propagazione CDN
-5. Verificare con hard refresh (`Cmd+Shift+R`) o usando "Forza aggiornamento" in Impostazioni
+4. **Build e deploy su GitHub Pages**:
+
+   ```bash
+   npm run build
+   cp -r dist /tmp/pressione-dist
+   git checkout gh-pages
+   find . -maxdepth 1 -not -name '.git' -not -name '.' -not -name '..' -exec rm -rf {} \;
+   cp -r /tmp/pressione-dist/* .
+   git add -A && git commit -m "deploy: v$(node -p "require('./package.json').version")"
+   git push origin gh-pages
+   git checkout main
+   rm -rf /tmp/pressione-dist
+   ```
+
+5. Attendere ~1-2 min per propagazione CDN (GitHub Pages)
+6. Verificare con hard refresh (`Cmd+Shift+R`) o "Forza aggiornamento" in Impostazioni
 
 ---
 
