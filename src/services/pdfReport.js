@@ -192,9 +192,11 @@ function addClinicalSummary(doc, y, stats, readings, opts) {
         const alertColor = c.alert ? C.error : C.text
         doc.setTextColor(...alertColor)
         doc.text(c.value, cx + 3, cardY + 12)
-        doc.setFontSize(6)
+        // Measure value width at T.h1 before switching to smaller font for unit
+        const valueWidth = doc.getTextWidth(c.value)
+        doc.setFontSize(6.5)
         doc.setTextColor(...C.muted)
-        doc.text(c.unit, cx + 3 + doc.getTextWidth(c.value) + 2, cardY + 11)
+        doc.text(c.unit, cx + 3 + valueWidth + 1.5, cardY + 11)
     })
     y = cardY + 19
 
