@@ -77,20 +77,17 @@ fi
 
 git checkout gh-pages --quiet 2>/dev/null || git checkout -b gh-pages origin/gh-pages --quiet
 
-# Remove ONLY tracked files (git rm respects .gitignore — NEVER touches ignored files)
-git rm -rf . --quiet 2>/dev/null || true
+# Remove ONLY tracked files — list them explicitly and remove one by one.
+# This is safe because it only touches files known to git, never gitignored files.
+echo "   🧹 Pulizia file tracciati su gh-pages..."
+git ls-files -z | xargs -0 git rm --quiet -- 2>/dev/null || true
 
 # Copy new build
 cp -r "$TMPDIR"/* .
 touch .nojekyll
 
-# CRITICAL: restore .gitignore BEFORE git add to protect gitignored files
-# .gitignore is tracked on gh-pages but git rm -rf removes it; restore it now
-if [ -f .gitignore ]; then
-    echo "   ✅ .gitignore già presente su gh-pages"
-else
-    git show main:.gitignore > .gitignore 2>/dev/null || true
-fi
+# Restore .gitignore from main (it was tracked, so git rm removed it from index)
+git show main:.gitignore > .gitignore 2>/dev/null || true
 
 # Safety: if .gitignore is missing, create a minimal one that at least protects .env
 if [ ! -f .gitignore ]; then
