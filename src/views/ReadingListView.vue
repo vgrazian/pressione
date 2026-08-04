@@ -7,6 +7,7 @@ import { ALL_CATEGORIES, getCategoryLabel } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import CollapsibleSection from '@/components/CollapsibleSection.vue'
 
 const router = useRouter()
 const { user } = useAuth()
@@ -124,26 +125,18 @@ function onTouchEnd(id, reading) {
     <div class="filters mb-md">
       <input v-model="searchQuery" type="search" class="form-input"
         placeholder="Cerca per note o valori..." />
-      <!-- Date filter -->
-      <div class="flex gap-sm mt-sm flex-wrap">
-        <button v-for="p in [{v:'all',l:'Tutte'},{v:'7',l:'7gg'},{v:'30',l:'30gg'}]" :key="p.v"
-          class="chip" :class="{ 'chip--active': dateFilter === p.v }" @click="setDateFilter(p.v)">{{ p.l }}</button>
-      </div>
-      <!-- Category filter -->
-      <div class="filter-chips flex gap-sm mt-sm" style="flex-wrap: wrap;">
-        <button
-          class="chip"
-          :class="{ 'chip--active': !categoryFilter }"
-          @click="categoryFilter = ''"
-        >Tutte</button>
-        <button
-          v-for="cat in ALL_CATEGORIES"
-          :key="cat"
-          class="chip"
-          :class="{ 'chip--active': categoryFilter === cat }"
-          @click="categoryFilter = categoryFilter === cat ? '' : cat"
-        >{{ getCategoryLabel(cat) }}</button>
-      </div>
+      <CollapsibleSection title="Filtri" class="mt-sm">
+        <div class="flex gap-sm flex-wrap">
+          <button v-for="p in [{v:'all',l:'Tutte'},{v:'7',l:'7gg'},{v:'30',l:'30gg'}]" :key="p.v"
+            class="chip" :class="{ 'chip--active': dateFilter === p.v }" @click="setDateFilter(p.v)">{{ p.l }}</button>
+        </div>
+        <div class="filter-chips flex gap-sm mt-sm" style="flex-wrap: wrap;">
+          <button class="chip" :class="{ 'chip--active': !categoryFilter }" @click="categoryFilter = ''">Tutte</button>
+          <button v-for="cat in ALL_CATEGORIES" :key="cat" class="chip"
+            :class="{ 'chip--active': categoryFilter === cat }"
+            @click="categoryFilter = categoryFilter === cat ? '' : cat">{{ getCategoryLabel(cat) }}</button>
+        </div>
+      </CollapsibleSection>
     </div>
 
     <!-- Readings List -->

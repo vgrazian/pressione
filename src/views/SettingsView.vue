@@ -64,6 +64,7 @@ onMounted(async () => {
 async function handleSaveBands() {
   timeBandsMessage.value = ''
   await saveUserBands(user.value.username, timeBands.value)
+  savedBands.value = JSON.parse(JSON.stringify(timeBands.value))
   timeBandsMessage.value = 'Fasce orarie salvate!'
   setTimeout(() => timeBandsMessage.value = '', 3000)
 }
@@ -89,7 +90,9 @@ async function saveReminder(r) {
 }
 async function removeReminder(r) {
   const ok = await confirm({ title: t('remove') + ' ' + t('reminders').toLowerCase(), message: t('remove') + '?', confirmText: t('remove'), variant: 'danger' })
-  if (ok) { await deleteReminder(r.id, user.value.username); reminders.value = reminders.value.filter(x => x.id !== r.id) }
+  if (!ok) return
+  if (r.id) { await deleteReminder(r.id, user.value.username) }
+  reminders.value = reminders.value.filter(x => x !== r)
 }
 function toggleDay(r, day) {
   const idx = r.daysOfWeek.indexOf(day)
@@ -168,6 +171,25 @@ async function handleRestore(e) {
   e.target.value = ''
 }
 
+function triggerImportCsv() { importCsvInput.value?.click() }
+
+async function handleImportCsv(e) {
+  message.value = ''
+  const file = e.target.files?.[0]
+  if (!file) return
+  const ok = await confirm({ title: 'Importa CSV', message: 'I dati verranno aggiunti a quelli esistenti. Continuare?', confirmText: 'Importa' })
+  if (!ok) { e.target.value = ''; return }
+  try {
+    const result = await importCSV(user.value.username, file)
+    await refreshFromServer(user.value.username)
+    message.value = `Importate ${result.imported} misurazioni`
+    if (result.errors.length > 0) {
+      message.value += ` (${result.errors.length} errori)`
+    }
+  } catch (err) { message.value = err.message }
+  e.target.value = ''
+}
+
 // --- Profile ---
 async function handleSaveProfile() {
   profileMessage.value = ''
@@ -189,6 +211,8 @@ async function handleSaveProfile() {
       gender: profileGender.value || null,
       profileCompleted: true
     })
+    savedBirthDate.value = profileBirthDate.value
+    savedGender.value = profileGender.value
     profileMessage.value = 'Profilo aggiornato!'
     setTimeout(() => profileMessage.value = '', 3000)
   } catch (e) {
@@ -216,6 +240,12 @@ const installMessage = ref('')
 const cacheClearing = ref(false)
 const timeBands = ref(getDefaultBands())
 const timeBandsMessage = ref('')
+const savedBands = ref([])
+
+const bandsDirty = computed(() => {
+  if (savedBands.value.length === 0) return false
+  return JSON.stringify(timeBands.value) !== JSON.stringify(savedBands.value)
+})
 
 async function handleForceClearCache() {
   cacheClearing.value = true
@@ -269,15 +299,15 @@ async function handleInstall() {
       <!-- Birth Date & Gender -->
       <hr style="margin:var(--space-md) 0;border-color:var(--color-border)" />
       <p class="text-secondary mb-sm" style="font-size:0.8125rem">Data di nascita e genere aiutano a personalizzare il report con riferimenti clinici adeguati.</p>
-      <div class="flex gap-sm mb-sm">
-        <div class="form-group" style="flex:1">
+      <div class="profile-row mb-sm">
+        <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Data di nascita</label>
           <input v-model="profileBirthDate" type="date" class="form-input" />
           <span v-if="profileBirthDate" class="text-secondary" style="font-size:0.75rem">
             Età: {{ computeAge(profileBirthDate) }} anni
           </span>
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Genere</label>
           <select v-model="profileGender" class="form-input">
             <option value="">Non specificato</option>
@@ -287,7 +317,7 @@ async function handleInstall() {
           </select>
         </div>
       </div>
-      <button class="btn btn-sm btn-primary" @click="handleSaveProfile">Salva profilo</button>
+      <button class="btn btn-sm" :class="profileDirty ? 'btn-primary' : 'btn-primary-disabled'" @click="handleSaveProfile" :disabled="!profileDirty">Salva profilo</button>
       <div v-if="profileMessage" class="form-success mt-sm">{{ profileMessage }}</div>
     </div>
 
@@ -322,7 +352,9 @@ async function handleInstall() {
         </div>
         <div class="flex gap-sm">
           <button class="btn btn-sm btn-primary" @click="saveReminder(r)">{{ t('save') }}</button>
-          <button v-if="!r.isNew" class="btn btn-sm btn-secondary" @click="removeReminder(r)">{{ t('remove') }}</button>
+          <button class="btn btn-sm btn-error btn--icon" @click="removeReminder(r)" :title="t('remove')">
+            <AppIcon name="trash" :size="16" color="currentColor" />
+          </button>
         </div>
         <hr v-if="i < reminders.length - 1" style="margin:var(--space-md) 0;border-color:var(--color-surface-overlay)" />
       </div>
@@ -336,6 +368,8 @@ async function handleInstall() {
         <button class="btn btn-sm btn-ghost" @click="handleBackup">Backup (JSON)</button>
         <button class="btn btn-sm btn-ghost" @click="triggerRestore">Ripristina Backup</button>
         <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
+        <button class="btn btn-sm btn-ghost" @click="triggerImportCsv">Importa CSV (bp-tracker)</button>
+        <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsv" />
         <button class="btn btn-sm btn-ghost" @click="handleGenerateTestData">{{ t('generate_test_data') }}</button>
       </div>
       <div v-if="message" class="form-success mt-sm">{{ message }}</div>
@@ -354,7 +388,10 @@ async function handleInstall() {
         Mantiene il database attivo con ping periodici a Supabase e richiede archiviazione persistente per evitare che i dati vengano eliminati dal browser.
       </p>
       <div v-if="keepAliveOn && storageInfo" class="mt-sm" style="font-size:0.875rem">
-        <p><strong>Stato archiviazione:</strong> {{ storageInfo.persisted ? '✅ Persistente' : '⚠️ Non persistente (i dati potrebbero essere rimossi)' }}</p>
+        <p><strong>Stato archiviazione:</strong> {{ storageInfo.persisted ? '✅ Persistente' : 'ℹ️ Non persistente' }}</p>
+        <p v-if="!storageInfo.persisted" class="text-secondary" style="font-size:0.75rem">
+          Normale in browser: installa l'app sulla Home per archiviazione permanente.
+        </p>
         <p><strong>Spazio usato:</strong> {{ formatBytes(storageInfo.usage) }} / {{ formatBytes(storageInfo.quota) }}
           <span v-if="storageInfo.percent !== null">({{ storageInfo.percent }}%)</span>
         </p>
@@ -406,21 +443,11 @@ async function handleInstall() {
     <div class="card mb-md">
       <h3 class="mb-sm">⏰ Fasce Orarie</h3>
       <p class="text-secondary mb-sm" style="font-size:0.8125rem">
-        Configura gli orari per mattina, pomeriggio, sera e notte. Le fasce vengono usate nei report e nelle statistiche.
+        Trascina i separatori per regolare le fasce. Le fasce non possono sovrapporsi.
       </p>
-      <div class="flex gap-sm mb-sm flex-wrap">
-        <div v-for="(band, i) in timeBands" :key="band.key" class="form-group" style="flex:1;min-width:130px">
-          <label class="form-label">{{ band.icon }} {{ band.label }}</label>
-          <div class="flex gap-sm items-center">
-            <input v-model.number="band.start" type="number" min="0" max="23" class="form-input" style="width:52px;text-align:center;padding:4px" />
-            <span class="text-secondary" style="font-size:0.875rem;width:8px;text-align:center;flex-shrink:0">–</span>
-            <input v-model.number="band.end" type="number" min="0" max="23" class="form-input" style="width:52px;text-align:center;padding:4px" />
-            <span class="text-secondary" style="font-size:0.6875rem;flex-shrink:0">h</span>
-          </div>
-        </div>
-      </div>
+      <TimeBandSlider :bands="timeBands" @update:bands="timeBands = $event" />
       <div class="flex gap-sm">
-        <button class="btn btn-sm btn-primary" @click="handleSaveBands">Salva fasce</button>
+        <button class="btn btn-sm" :class="bandsDirty ? 'btn-primary' : 'btn-primary-disabled'" @click="handleSaveBands" :disabled="!bandsDirty">Salva fasce</button>
         <button class="btn btn-sm btn-ghost" @click="resetBands">Ripristina default</button>
       </div>
       <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
@@ -450,6 +477,13 @@ async function handleInstall() {
 </template>
 
 <style scoped>
+.profile-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: start;
+}
+.profile-row .form-input { min-width: 0; width: 100%; }
 .form-success { color: var(--color-accent); font-size: 0.875rem; font-weight: 500; }
 .reminder-item { padding: var(--space-sm) 0; }
 .day-chip {
