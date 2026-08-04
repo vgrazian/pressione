@@ -38,11 +38,25 @@ watch(() => user.value?.username, (username) => {
 }, { immediate: true })
 
 // Show profile prompt only if ALL of: auth ready, user exists, profile not completed,
-// user hasn't skipped, AND no profile data is already present (birthDate or gender)
+// user hasn't skipped, AND no profile data is already present (birthDate or gender).
+// Uses a short delay to let async profile data (from settings table) arrive first.
+let profilePromptTimer = null
 watch([() => user.value, () => isAuthReady.value], ([u, ready]) => {
     if (ready && u && u.username && !u.profileCompleted && !u.skipProfilePrompt
         && !u.birthDate && !u.gender) {
-        showProfilePrompt.value = true
+        // Delay showing the prompt to allow async profile fetch to complete
+        clearTimeout(profilePromptTimer)
+        profilePromptTimer = setTimeout(() => {
+            // Re-check conditions after delay — profile data may have arrived
+            const currentUser = user.value
+            if (currentUser && !currentUser.profileCompleted && !currentUser.skipProfilePrompt
+                && !currentUser.birthDate && !currentUser.gender) {
+                showProfilePrompt.value = true
+            }
+        }, 1500)
+    } else if (u && (u.profileCompleted || u.skipProfilePrompt || u.birthDate || u.gender)) {
+        clearTimeout(profilePromptTimer)
+        showProfilePrompt.value = false
     }
 }, { immediate: true })
 

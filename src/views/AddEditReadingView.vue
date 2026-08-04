@@ -226,6 +226,13 @@ function goBack() {
   align-items: start;
 }
 
+@media (max-width: 380px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+}
+
 .form-row .form-group {
   margin-bottom: 0;
   min-width: 0;

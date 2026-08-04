@@ -150,7 +150,7 @@ const latestCategoryColor = computed(() => {
         </div>
       </div>
       <div v-if="weeklyTrend.alarmCount > 0" class="trend-alert mt-sm">
-        ⚠️ {{ weeklyTrend.alarmCount }} picco{{ weeklyTrend.alarmCount > 1 ? 'i' : '' }} pressori{{ weeklyTrend.alarmCount > 1 ? 'o' : 'o' }} nella settimana
+        ⚠️ {{ weeklyTrend.alarmCount }} {{ weeklyTrend.alarmCount === 1 ? 'picco pressorio' : 'picchi pressori' }} nella settimana
       </div>
       <p v-else class="trend-stable mt-sm">✅ Andamento stabile</p>
     </div>

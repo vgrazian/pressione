@@ -5,7 +5,7 @@ import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const { user, fetchUsers, updateUserRole, deactivateUser, adminResetUserPassword } = useAuth()
 
-const confirm = inject('confirm-dialog')
+const confirm = inject('confirm-dialog', null)
 const users = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -46,19 +46,22 @@ async function handleDeactivate(targetUser) {
     errorMessage.value = 'Non puoi disattivare il tuo account'
     return
   }
-  const confirmed = await confirm({
-    title: 'Disattiva utente',
-    message: `Disattivare l'utente "${targetUser.username}"?`,
-    confirmText: 'Disattiva',
-    variant: 'danger'
-  })
-  if (confirmed) {
-    try {
-      await deactivateUser(targetUser.username)
-      targetUser.disabled = true
-    } catch (e) {
-      errorMessage.value = e.message
-    }
+  if (!confirm) {
+    if (!window.confirm(`Disattivare l'utente "${targetUser.username}"?`)) return
+  } else {
+    const confirmed = await confirm({
+      title: 'Disattiva utente',
+      message: `Disattivare l'utente "${targetUser.username}"?`,
+      confirmText: 'Disattiva',
+      variant: 'danger'
+    })
+    if (!confirmed) return
+  }
+  try {
+    await deactivateUser(targetUser.username)
+    targetUser.disabled = true
+  } catch (e) {
+    errorMessage.value = e.message
   }
 }
 

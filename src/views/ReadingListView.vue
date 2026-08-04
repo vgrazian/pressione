@@ -12,7 +12,7 @@ import CollapsibleSection from '@/components/CollapsibleSection.vue'
 const router = useRouter()
 const { user } = useAuth()
 
-const confirm = inject('confirm-dialog')
+const confirm = inject('confirm-dialog', null)
 const allReadings = ref([])
 const isLoading = ref(true)
 const searchQuery = ref('')
@@ -77,16 +77,20 @@ function editReading(reading) {
 }
 
 async function handleDelete(reading) {
-  const confirmed = await confirm({
-    title: 'Elimina misurazione',
-    message: `Eliminare la misurazione di ${new Date(reading.timestamp).toLocaleDateString('it-IT')}?`,
-    confirmText: 'Elimina',
-    variant: 'danger'
-  })
-  if (confirmed) {
-    await deleteReading(reading.id, user.value.username)
-    allReadings.value = allReadings.value.filter(r => r.id !== reading.id)
+  if (!confirm) {
+    // Fallback: use native confirm
+    if (!window.confirm(`Eliminare la misurazione di ${new Date(reading.timestamp).toLocaleDateString('it-IT')}?`)) return
+  } else {
+    const confirmed = await confirm({
+      title: 'Elimina misurazione',
+      message: `Eliminare la misurazione di ${new Date(reading.timestamp).toLocaleDateString('it-IT')}?`,
+      confirmText: 'Elimina',
+      variant: 'danger'
+    })
+    if (!confirmed) return
   }
+  await deleteReading(reading.id, user.value.username)
+  allReadings.value = allReadings.value.filter(r => r.id !== reading.id)
 }
 
 function goToAdd() {

@@ -27,14 +27,23 @@ async function withRetry(fn, retries = MAX_RETRIES) {
 let lastOnlineCheck = 0
 let lastOnlineStatus = true
 export async function isOnline() {
+    // Trust browser's online status for fast response
+    if (!navigator.onLine) {
+        lastOnlineStatus = false
+        lastOnlineCheck = Date.now()
+        return false
+    }
+    // Debounce: reuse last result if checked recently
     if (Date.now() - lastOnlineCheck < 30000) return lastOnlineStatus
     if (!isSupabaseConfigured) { lastOnlineStatus = false; lastOnlineCheck = Date.now(); return false }
     try {
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 3000)
-        const { error } = await supabase.from('users').select('username').limit(1).abortSignal(controller.signal)
+        // Use a lightweight health check — just ping the REST API
+        const { error } = await supabase.from('readings').select('id').limit(1).abortSignal(controller.signal)
         clearTimeout(timeout)
-        lastOnlineStatus = !error
+        // Accept both success and empty-result as "online"
+        lastOnlineStatus = !error || error.code === 'PGRST116'
     } catch { lastOnlineStatus = false }
     lastOnlineCheck = Date.now()
     return lastOnlineStatus
@@ -412,16 +421,59 @@ export async function importCSV(username, file) {
 }
 
 /**
- * Generate test data via Supabase RPC
+ * Generate test data — tries RPC, falls back to client-side generation
  */
 export async function generateTestData(username, count = 30) {
     if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
 
-    const { error } = await supabase.rpc('generate_test_data', {
-        p_username: username,
-        p_count: count
-    })
+    // Try RPC first
+    try {
+        const { error } = await supabase.rpc('generate_test_data', {
+            p_username: username,
+            p_count: count
+        })
+        if (!error) return count
+    } catch { /* fall back to client-side */ }
 
-    if (error) throw new Error('Errore generazione dati: ' + error.message)
+    // Client-side fallback: generate readings locally
+    const now = new Date().toISOString()
+    const readings = []
+    for (let i = 0; i < count; i++) {
+        const systolic = 110 + Math.floor(Math.random() * 50)
+        const diastolic = 65 + Math.floor(Math.random() * 30)
+        const heartRate = 60 + Math.floor(Math.random() * 30)
+        const ts = new Date(Date.now() - Math.random() * 30 * 86400000).toISOString()
+        const category = classifyReading(systolic, diastolic)
+        const id = generateId()
+
+        readings.push({
+            id,
+            username,
+            systolic,
+            diastolic,
+            heart_rate: heartRate,
+            timestamp: ts,
+            notes: 'Dato test auto-generato',
+            category,
+            created_at: ts,
+            updated_at: now
+        })
+
+        // Save to IndexedDB
+        await db.readings.put({
+            id, username, timestamp: ts, systolic, diastolic,
+            heartRate, notes: 'Dato test auto-generato', category, updatedAt: now
+        })
+    }
+
+    // Batch sync to Supabase
+    if (isSupabaseConfigured) {
+        try {
+            await supabase.from('readings').upsert(readings)
+        } catch (e) {
+            console.warn('Test data sync to Supabase failed, saved locally:', e)
+        }
+    }
+
     return count
 }

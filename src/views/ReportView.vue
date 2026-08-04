@@ -14,6 +14,11 @@ function catColor(category) {
   const map = { 'NORMAL': '#006C4C', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
   return map[category] || '#999'
 }
+// Short date format: dd/mm instead of dd/mm/yyyy to save table space
+function fmtDateShort(ts) {
+  const d = new Date(ts)
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+}
 import { generatePDF as generatePDFReport, generatePDFBlob } from '@/services/pdfReport.js'
 import { supabase } from '@/services/supabaseClient.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
@@ -33,7 +38,7 @@ const sharePin = ref('')
 const showPin = ref('')
 const linkMessage = ref('')
 const activeLinks = ref([])
-const generatingPDF = ref(false)
+const generatingAction = ref(null) // 'pdf' | 'email' | 'whatsapp' | 'native' | null
 const viewMode = ref('list') // 'list' or 'grouped'
 const userBands = ref(getDefaultBands())
 const bpChartEl = ref(null)
@@ -176,7 +181,7 @@ const readings30 = computed(() => {
 
 // --- PDF Generation ---
 async function generatePDF() {
-  generatingPDF.value = true
+  generatingAction.value = 'pdf'
   try {
     await generatePDFReport({
       data: filteredReadings.value,
@@ -192,7 +197,7 @@ async function generatePDF() {
   } catch (e) {
     linkMessage.value = 'Errore nella generazione PDF: ' + e.message
   } finally {
-    generatingPDF.value = false
+    generatingAction.value = null
   }
 }
 
@@ -216,7 +221,7 @@ async function sharePDF() {
 }
 
 async function shareViaEmail() {
-  generatingPDF.value = true
+  generatingAction.value = 'email'
   try {
     const file = await getPDFFile()
     const s = stats.value
@@ -232,12 +237,12 @@ async function shareViaEmail() {
     linkMessage.value = 'Condivisione non supportata su questo browser'
     setTimeout(() => linkMessage.value = '', 3000)
   } finally {
-    generatingPDF.value = false
+    generatingAction.value = null
   }
 }
 
 async function shareViaWhatsApp() {
-  generatingPDF.value = true
+  generatingAction.value = 'whatsapp'
   try {
     const file = await getPDFFile()
     const s = stats.value
@@ -252,12 +257,12 @@ async function shareViaWhatsApp() {
     linkMessage.value = 'Condivisione non supportata su questo browser'
     setTimeout(() => linkMessage.value = '', 3000)
   } finally {
-    generatingPDF.value = false
+    generatingAction.value = null
   }
 }
 
 async function shareNative() {
-  generatingPDF.value = true
+  generatingAction.value = 'native'
   try {
     const file = await getPDFFile()
     const s = stats.value
@@ -277,7 +282,7 @@ async function shareNative() {
       setTimeout(() => linkMessage.value = '', 3000)
     }
   } finally {
-    generatingPDF.value = false
+    generatingAction.value = null
   }
 }
 
@@ -511,20 +516,22 @@ function copyActiveLink(token) {
         </div>
 
         <!-- List view -->
-        <table v-if="viewMode === 'list'" class="preview-table">
-          <thead><tr><th>Data</th><th>Ora</th><th>SYS</th><th>DIA</th><th>BPM</th><th>Categoria</th></tr></thead>
+        <div v-if="viewMode === 'list'" class="table-scroll">
+        <table class="preview-table">
+          <thead><tr><th>Data</th><th>Ora</th><th>SYS</th><th>DIA</th><th>BPM</th><th class="col-category">Categoria</th></tr></thead>
           <tbody>
             <tr v-for="r in filteredReadings.slice(0, 30)" :key="r.id"
               :style="{ borderLeft: '3px solid ' + catColor(r.category) }">
-              <td>{{ new Date(r.timestamp).toLocaleDateString('it-IT') }}</td>
+              <td class="col-date">{{ fmtDateShort(r.timestamp) }}</td>
               <td>{{ new Date(r.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}</td>
               <td :class="{ 'text-error': r.systolic >= 140, 'text-warning': r.systolic >= 130 && r.systolic < 140 }">{{ r.systolic }}</td>
               <td :class="{ 'text-error': r.diastolic >= 90, 'text-warning': r.diastolic >= 85 && r.diastolic < 90 }">{{ r.diastolic }}</td>
               <td>{{ r.heartRate }}</td>
-              <td><small>{{ getCategoryLabel(r.category) }}</small></td>
+              <td class="col-category"><small>{{ getCategoryLabel(r.category) }}</small></td>
             </tr>
           </tbody>
         </table>
+        </div>
         <p v-if="viewMode === 'list' && filteredReadings.length > 30" class="text-secondary mt-sm" style="font-size:0.75rem">
           ...e altre {{ filteredReadings.length - 30 }} misurazioni (scarica il PDF per lo storico completo)
         </p>
@@ -565,20 +572,9 @@ function copyActiveLink(token) {
       <!-- Share Actions -->
       <div class="card mb-md">
         <h3 class="mb-sm">Condividi</h3>
-        <div class="flex gap-sm flex-wrap">
-          <button class="btn btn-primary" @click="generatePDF" :disabled="generatingPDF">
-            <AppIcon name="copy" :size="16" /> {{ generatingPDF ? 'Generazione...' : 'Scarica PDF' }}
-          </button>
-          <button class="btn btn-ghost" @click="shareViaEmail" :disabled="generatingPDF">
-            <AppIcon name="share" :size="16" /> {{ generatingPDF ? 'Preparo PDF...' : 'Email' }}
-          </button>
-          <button class="btn btn-ghost" @click="shareViaWhatsApp" :disabled="generatingPDF">
-            <AppIcon name="share" :size="16" /> {{ generatingPDF ? 'Preparo PDF...' : 'WhatsApp' }}
-          </button>
-          <button class="btn btn-ghost" @click="shareNative" :disabled="generatingPDF">
-            <AppIcon name="share" :size="16" /> {{ generatingPDF ? 'Preparo PDF...' : 'Condividi' }}
-          </button>
-        </div>
+        <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
+          <AppIcon name="copy" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
+        </button>
       </div>
 
       <!-- Temporary Link -->
@@ -620,10 +616,15 @@ function copyActiveLink(token) {
 
 <style scoped>
 .preview-stats { display: flex; gap: var(--space-lg); font-size: 0.875rem; flex-wrap: wrap; }
-.preview-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.preview-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; white-space: nowrap; }
 .preview-table th, .preview-table td { padding: 5px 8px; text-align: left; border-bottom: 1px solid var(--color-border); }
 .preview-table th { color: var(--color-text-secondary); font-weight: 600; font-size: 0.6875rem; }
 .preview-table td { font-size: 0.75rem; }
+.col-date { white-space: nowrap; }
+@media (max-width: 400px) {
+  .col-category { display: none; }
+}
 .share-link-box { display: flex; align-items: center; gap: var(--space-sm); background: var(--color-surface-overlay); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); }
 .share-link-box code { font-size: 0.75rem; word-break: break-all; flex: 1; }
 .form-success { color: var(--color-accent); font-size: 0.8125rem; font-weight: 500; }

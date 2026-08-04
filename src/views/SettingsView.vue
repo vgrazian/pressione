@@ -18,7 +18,7 @@ const { user, changePassword, updateUserEmail, updateUserProfile } = useAuth()
 const { t, setLang, currentLang, availableLangs } = useI18n()
 const { forceClearCache } = useSWUpdate()
 
-const confirm = inject('confirm-dialog')
+const confirm = inject('confirm-dialog', null)
 const reminders = ref([])
 const showPasswordForm = ref(false)
 const showEmailForm = ref(false)
@@ -101,9 +101,17 @@ async function saveReminder(r) {
   reminders.value = await getReminders(user.value.username)
 }
 async function removeReminder(r) {
-  const ok = await confirm({ title: t('remove') + ' ' + t('reminders').toLowerCase(), message: t('remove') + '?', confirmText: t('remove'), variant: 'danger' })
-  if (!ok) return
-  if (r.id) { await deleteReminder(r.id, user.value.username) }
+  // For unsaved reminders, remove directly without confirmation
+  if (!r.id) {
+    reminders.value = reminders.value.filter(x => x !== r)
+    return
+  }
+  // For saved reminders, confirm before deleting
+  if (confirm) {
+    const ok = await confirm({ title: t('remove') + ' ' + t('reminders').toLowerCase(), message: t('remove') + '?', confirmText: t('remove'), variant: 'danger' })
+    if (!ok) return
+  }
+  await deleteReminder(r.id, user.value.username)
   reminders.value = reminders.value.filter(x => x !== r)
 }
 function toggleDay(r, day) {
@@ -136,8 +144,14 @@ async function handleEmailChange() {
 
 // --- Data Management ---
 async function handleDeleteAll() {
-  const ok = await confirm({ title: t('delete_all_data'), message: t('delete_all_confirm'), confirmText: t('delete_all_btn'), variant: 'danger' })
-  if (ok) { await deleteAllReadings(user.value.username); router.push('/') }
+  if (!confirm) {
+    if (!window.confirm('Eliminare TUTTE le misurazioni? Operazione irreversibile.')) return
+  } else {
+    const ok = await confirm({ title: t('delete_all_data'), message: t('delete_all_confirm'), confirmText: t('delete_all_btn'), variant: 'danger' })
+    if (!ok) return
+  }
+  await deleteAllReadings(user.value.username)
+  router.push('/')
 }
 
 async function handleExportCSV() {
@@ -173,8 +187,12 @@ async function handleRestore(e) {
   message.value = ''
   const file = e.target.files?.[0]
   if (!file) return
-  const ok = await confirm({ title: 'Ripristina dati', message: 'I dati esistenti verranno uniti al backup. Continuare?', confirmText: 'Ripristina' })
-  if (!ok) { e.target.value = ''; return }
+  if (!confirm) {
+    if (!window.confirm('I dati esistenti verranno uniti al backup. Continuare?')) { e.target.value = ''; return }
+  } else {
+    const ok = await confirm({ title: 'Ripristina dati', message: 'I dati esistenti verranno uniti al backup. Continuare?', confirmText: 'Ripristina' })
+    if (!ok) { e.target.value = ''; return }
+  }
   try {
     const count = await restoreData(user.value.username, file)
     await refreshFromServer(user.value.username)
@@ -189,8 +207,12 @@ async function handleImportCsv(e) {
   message.value = ''
   const file = e.target.files?.[0]
   if (!file) return
-  const ok = await confirm({ title: 'Importa CSV', message: 'I dati verranno aggiunti a quelli esistenti. Continuare?', confirmText: 'Importa' })
-  if (!ok) { e.target.value = ''; return }
+  if (!confirm) {
+    if (!window.confirm('I dati verranno aggiunti a quelli esistenti. Continuare?')) { e.target.value = ''; return }
+  } else {
+    const ok = await confirm({ title: 'Importa CSV', message: 'I dati verranno aggiunti a quelli esistenti. Continuare?', confirmText: 'Importa' })
+    if (!ok) { e.target.value = ''; return }
+  }
   try {
     const result = await importCSV(user.value.username, file)
     await refreshFromServer(user.value.username)
@@ -282,16 +304,6 @@ async function handleInstall() {
       <h1>{{ t('settings') }}</h1>
     </div>
 
-    <!-- Language -->
-    <div class="card mb-md">
-      <h3 class="mb-sm">🌐 Lingua / Language</h3>
-      <div class="flex gap-sm">
-        <button v-for="lang in availableLangs" :key="lang" class="chip" :class="{ 'chip--active': currentLang === lang }" @click="changeLanguage(lang)">
-          {{ lang === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English' }}
-        </button>
-      </div>
-    </div>
-
     <!-- Account -->
     <div class="card mb-md">
       <h3 class="mb-sm">{{ t('account') }}</h3>
@@ -329,7 +341,7 @@ async function handleInstall() {
           </select>
         </div>
       </div>
-      <button class="btn btn-sm" :class="profileDirty ? 'btn-primary' : 'btn-primary-disabled'" @click="handleSaveProfile" :disabled="!profileDirty">Salva profilo</button>
+      <button class="btn btn-sm btn-primary" @click="handleSaveProfile" :disabled="!profileDirty">Salva profilo</button>
       <div v-if="profileMessage" class="form-success mt-sm">{{ profileMessage }}</div>
     </div>
 
@@ -364,12 +376,26 @@ async function handleInstall() {
         </div>
         <div class="flex gap-sm">
           <button class="btn btn-sm btn-primary" @click="saveReminder(r)">{{ t('save') }}</button>
-          <button class="btn btn-sm btn-error btn--icon" @click="removeReminder(r)" :title="t('remove')">
+          <button class="btn btn-sm btn-error btn-icon" @click="removeReminder(r)" :title="t('remove')">
             <AppIcon name="trash" :size="16" color="currentColor" />
           </button>
         </div>
         <hr v-if="i < reminders.length - 1" style="margin:var(--space-md) 0;border-color:var(--color-surface-overlay)" />
       </div>
+    </div>
+
+    <!-- Time Bands Configuration -->
+    <div class="card mb-md">
+      <h3 class="mb-sm">⏰ Fasce Orarie</h3>
+      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
+        Trascina i separatori per regolare le fasce. Le fasce non possono sovrapporsi.
+      </p>
+      <TimeBandSlider :bands="timeBands" @update:bands="timeBands = $event" />
+      <div class="flex gap-sm">
+        <button class="btn btn-sm btn-primary" @click="handleSaveBands" :disabled="!bandsDirty">Salva fasce</button>
+        <button class="btn btn-sm btn-ghost" @click="resetBands">Ripristina default</button>
+      </div>
+      <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
     </div>
 
     <!-- Data Management -->
@@ -382,7 +408,7 @@ async function handleInstall() {
         <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
         <button class="btn btn-sm btn-secondary" @click="triggerImportCsv">📥 Importa CSV (bp-tracker)</button>
         <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsv" />
-        <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData">{{ t('generate_test_data') }}</button>
+        <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData"><AppIcon name="robot" :size="16" /> {{ t('generate_test_data') }}</button>
       </div>
       <div v-if="message" class="form-success mt-sm">{{ message }}</div>
     </div>
@@ -451,18 +477,14 @@ async function handleInstall() {
       <router-link to="/operators" class="btn btn-ghost btn-sm">{{ t('user_management') }}</router-link>
     </div>
 
-    <!-- Time Bands Configuration -->
+    <!-- Language -->
     <div class="card mb-md">
-      <h3 class="mb-sm">⏰ Fasce Orarie</h3>
-      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
-        Trascina i separatori per regolare le fasce. Le fasce non possono sovrapporsi.
-      </p>
-      <TimeBandSlider :bands="timeBands" @update:bands="timeBands = $event" />
+      <h3 class="mb-sm">🌐 Lingua / Language</h3>
       <div class="flex gap-sm">
-        <button class="btn btn-sm" :class="bandsDirty ? 'btn-primary' : 'btn-primary-disabled'" @click="handleSaveBands" :disabled="!bandsDirty">Salva fasce</button>
-        <button class="btn btn-sm btn-ghost" @click="resetBands">Ripristina default</button>
+        <button v-for="lang in availableLangs" :key="lang" class="chip" :class="{ 'chip--active': currentLang === lang }" @click="changeLanguage(lang)">
+          {{ lang === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English' }}
+        </button>
       </div>
-      <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
     </div>
 
     <!-- Cache & Updates -->
