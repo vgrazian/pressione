@@ -477,10 +477,10 @@ function addFooter(doc, pageNum, totalPages) {
 }
 
 // ── Shared PDF builder ──────────────────────────────────────────
-async function buildPDF({ data, readings7, readings30, username, birthDate, gender, anonymize, includeCharts, includeHistory }) {
+async function buildPDF({ data, readings7, readings30, username, displayName, birthDate, gender, anonymize, includeCharts, includeHistory }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
     const stats = computeStatistics(data)
-    const opts = { data, username, birthDate, gender, anonymize }
+    const opts = { data, username, displayName, birthDate, gender, anonymize }
 
     let y = addHeader(doc, opts)
     y = addClinicalSummary(doc, y, stats, data, opts)
