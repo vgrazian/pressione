@@ -84,20 +84,29 @@ git rm -rf . --quiet 2>/dev/null || true
 cp -r "$TMPDIR"/* .
 touch .nojekyll
 
-# CRITICAL: Restore .gitignore from main BEFORE git add.
-# Without .gitignore, git add -A would stage gitignored files (like .env)! 
-git show main:.gitignore > .gitignore 2>/dev/null || {
-    echo "⚠️  Impossibile ripristinare .gitignore da main"
-}
+# CRITICAL: restore .gitignore BEFORE git add to protect gitignored files
+# .gitignore is tracked on gh-pages but git rm -rf removes it; restore it now
+if [ -f .gitignore ]; then
+    echo "   ✅ .gitignore già presente su gh-pages"
+else
+    git show main:.gitignore > .gitignore 2>/dev/null || true
+fi
 
-# Verify .gitignore exists before staging
+# Safety: if .gitignore is missing, create a minimal one that at least protects .env
 if [ ! -f .gitignore ]; then
-    echo "❌ ERRORE: .gitignore assente! Non posso fare git add in sicurezza."
-    echo "   Creane uno minimale con: echo '.env' > .gitignore"
-    exit 1
+    echo "⚠️  .gitignore assente, creo protezione minima per .env"
+    printf '.env\n.env.local\nnode_modules/\n' > .gitignore
 fi
 
 git add -A
+
+# FINAL SAFETY: verify .env was NOT staged (would mean .gitignore failed)
+if git diff --cached --name-only | grep -q '^.env$'; then
+    echo "❌ ERRORE CRITICO: .env sta per essere committato!"
+    echo "   Qualcosa non va con .gitignore. Deploy ANNULLATO."
+    git reset --quiet HEAD .env 2>/dev/null || true
+    exit 1
+fi
 git commit -m "$COMMIT_MSG" --quiet
 git push origin gh-pages --quiet
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, generateTestData, refreshFromServer, backupData, restoreData } from '@/services/dataService.js'
@@ -34,6 +34,13 @@ const storageInfo = ref(null)
 const profileBirthDate = ref('')
 const profileGender = ref('')
 const profileMessage = ref('')
+const savedBirthDate = ref('')
+const savedGender = ref('')
+const importCsvInput = ref(null)
+
+const profileDirty = computed(() => {
+  return profileBirthDate.value !== savedBirthDate.value || profileGender.value !== savedGender.value
+})
 
 function computeAge(birthDateStr) {
   if (!birthDateStr) return null
@@ -57,7 +64,10 @@ onMounted(async () => {
   }
   profileBirthDate.value = user.value?.birthDate || ''
   profileGender.value = user.value?.gender || ''
+  savedBirthDate.value = profileBirthDate.value
+  savedGender.value = profileGender.value
   timeBands.value = await getUserBands(user.value.username)
+  savedBands.value = JSON.parse(JSON.stringify(timeBands.value))
 })
 
 // --- Time Bands ---
