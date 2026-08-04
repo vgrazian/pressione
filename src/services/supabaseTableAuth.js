@@ -200,7 +200,7 @@ export async function adminResetPassword(adminUsername, targetUsername, newPassw
  * Update user profile (age, gender, flags).
  * Stores in settings table to avoid PostgREST schema cache issues.
  */
-export async function updateProfile(username, { birthDate, gender, profileCompleted, skipProfilePrompt }) {
+export async function updateProfile(username, { birthDate, gender, profileCompleted, skipProfilePrompt, firstName, lastName, fiscalCode, phone, street, streetNumber, city, postalCode }) {
     if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
 
     // First, get existing profile
@@ -216,6 +216,14 @@ export async function updateProfile(username, { birthDate, gender, profileComple
     if (gender !== undefined) profile.gender = gender
     if (profileCompleted !== undefined) profile.profileCompleted = profileCompleted
     if (skipProfilePrompt !== undefined) profile.skipProfilePrompt = skipProfilePrompt
+    if (firstName !== undefined) profile.firstName = firstName
+    if (lastName !== undefined) profile.lastName = lastName
+    if (fiscalCode !== undefined) profile.fiscalCode = fiscalCode
+    if (phone !== undefined) profile.phone = phone
+    if (street !== undefined) profile.street = street
+    if (streetNumber !== undefined) profile.streetNumber = streetNumber
+    if (city !== undefined) profile.city = city
+    if (postalCode !== undefined) profile.postalCode = postalCode
 
     const { error } = await supabase.from('settings').upsert({
         username,

@@ -64,7 +64,15 @@ export async function initAuth() {
                     birthDate: session.birthDate || null,
                     gender: session.gender || null,
                     profileCompleted: session.profileCompleted || false,
-                    skipProfilePrompt: session.skipProfilePrompt || false
+                    skipProfilePrompt: session.skipProfilePrompt || false,
+                    firstName: session.firstName || '',
+                    lastName: session.lastName || '',
+                    fiscalCode: session.fiscalCode || '',
+                    phone: session.phone || '',
+                    street: session.street || '',
+                    streetNumber: session.streetNumber || '',
+                    city: session.city || '',
+                    postalCode: session.postalCode || ''
                 }
                 state.isAuthenticated = true
                 // Refresh profile from settings (bypasses PostgREST cache) — with 5s timeout
@@ -77,7 +85,15 @@ export async function initAuth() {
                         birthDate: p.birthDate ?? state.user.birthDate,
                         gender: p.gender ?? state.user.gender,
                         profileCompleted: p.profileCompleted ?? state.user.profileCompleted,
-                        skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt
+                        skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt,
+                        firstName: p.firstName ?? state.user.firstName,
+                        lastName: p.lastName ?? state.user.lastName,
+                        fiscalCode: p.fiscalCode ?? state.user.fiscalCode,
+                        phone: p.phone ?? state.user.phone,
+                        street: p.street ?? state.user.street,
+                        streetNumber: p.streetNumber ?? state.user.streetNumber,
+                        city: p.city ?? state.user.city,
+                        postalCode: p.postalCode ?? state.user.postalCode
                     })
                     refreshSession()
                 } catch { /* best effort */ }
@@ -100,7 +116,15 @@ export async function initAuth() {
                         birthDate: session.birthDate || null,
                         gender: session.gender || null,
                         profileCompleted: session.profileCompleted || false,
-                        skipProfilePrompt: session.skipProfilePrompt || false
+                        skipProfilePrompt: session.skipProfilePrompt || false,
+                        firstName: session.firstName || '',
+                        lastName: session.lastName || '',
+                        fiscalCode: session.fiscalCode || '',
+                        phone: session.phone || '',
+                        street: session.street || '',
+                        streetNumber: session.streetNumber || '',
+                        city: session.city || '',
+                        postalCode: session.postalCode || ''
                     }
                     state.isAuthenticated = true
                     localStorage.setItem(SESSION_KEY, dbSession)
@@ -113,7 +137,15 @@ export async function initAuth() {
                             birthDate: p.birthDate ?? state.user.birthDate,
                             gender: p.gender ?? state.user.gender,
                             profileCompleted: p.profileCompleted ?? state.user.profileCompleted,
-                            skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt
+                            skipProfilePrompt: p.skipProfilePrompt ?? state.user.skipProfilePrompt,
+                            firstName: p.firstName ?? state.user.firstName,
+                            lastName: p.lastName ?? state.user.lastName,
+                            fiscalCode: p.fiscalCode ?? state.user.fiscalCode,
+                            phone: p.phone ?? state.user.phone,
+                            street: p.street ?? state.user.street,
+                            streetNumber: p.streetNumber ?? state.user.streetNumber,
+                            city: p.city ?? state.user.city,
+                            postalCode: p.postalCode ?? state.user.postalCode
                         })
                         refreshSession()
                     } catch { /* best effort */ }
@@ -175,6 +207,14 @@ function createSession(userData) {
         gender: userData.gender || null,
         profileCompleted: userData.profileCompleted || false,
         skipProfilePrompt: userData.skipProfilePrompt || false,
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        fiscalCode: userData.fiscalCode || '',
+        phone: userData.phone || '',
+        street: userData.street || '',
+        streetNumber: userData.streetNumber || '',
+        city: userData.city || '',
+        postalCode: userData.postalCode || '',
         expiresAt: expiresAt.toISOString()
     }
 
@@ -189,7 +229,15 @@ function createSession(userData) {
         birthDate: userData.birthDate || null,
         gender: userData.gender || null,
         profileCompleted: userData.profileCompleted || false,
-        skipProfilePrompt: userData.skipProfilePrompt || false
+        skipProfilePrompt: userData.skipProfilePrompt || false,
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        fiscalCode: userData.fiscalCode || '',
+        phone: userData.phone || '',
+        street: userData.street || '',
+        streetNumber: userData.streetNumber || '',
+        city: userData.city || '',
+        postalCode: userData.postalCode || ''
     }
     state.isAuthenticated = true
 
@@ -200,6 +248,14 @@ function createSession(userData) {
             if (profile.gender !== undefined) state.user.gender = profile.gender
             if (profile.profileCompleted !== undefined) state.user.profileCompleted = profile.profileCompleted
             if (profile.skipProfilePrompt !== undefined) state.user.skipProfilePrompt = profile.skipProfilePrompt
+            if (profile.firstName !== undefined) state.user.firstName = profile.firstName
+            if (profile.lastName !== undefined) state.user.lastName = profile.lastName
+            if (profile.fiscalCode !== undefined) state.user.fiscalCode = profile.fiscalCode
+            if (profile.phone !== undefined) state.user.phone = profile.phone
+            if (profile.street !== undefined) state.user.street = profile.street
+            if (profile.streetNumber !== undefined) state.user.streetNumber = profile.streetNumber
+            if (profile.city !== undefined) state.user.city = profile.city
+            if (profile.postalCode !== undefined) state.user.postalCode = profile.postalCode
             refreshSession()
         }
     }).catch(() => { /* best effort */ })
@@ -241,6 +297,14 @@ function refreshSession() {
     session.gender = state.user.gender || null
     session.profileCompleted = state.user.profileCompleted || false
     session.skipProfilePrompt = state.user.skipProfilePrompt || false
+    session.firstName = state.user.firstName || ''
+    session.lastName = state.user.lastName || ''
+    session.fiscalCode = state.user.fiscalCode || ''
+    session.phone = state.user.phone || ''
+    session.street = state.user.street || ''
+    session.streetNumber = state.user.streetNumber || ''
+    session.city = state.user.city || ''
+    session.postalCode = state.user.postalCode || ''
     const sessionJson = JSON.stringify(session)
     localStorage.setItem(SESSION_KEY, sessionJson)
     setSetting('_system', 'session', sessionJson).catch(() => { })
@@ -286,13 +350,21 @@ async function updateUserEmail(newEmail) {
 /**
  * Update current user's profile (age, gender, flags)
  */
-async function updateUserProfile({ birthDate, gender, profileCompleted, skipProfilePrompt }) {
+async function updateUserProfile({ birthDate, gender, profileCompleted, skipProfilePrompt, firstName, lastName, fiscalCode, phone, street, streetNumber, city, postalCode }) {
     if (!state.user) throw new Error('Non autenticato')
-    await updateProfile(state.user.username, { birthDate, gender, profileCompleted, skipProfilePrompt })
+    await updateProfile(state.user.username, { birthDate, gender, profileCompleted, skipProfilePrompt, firstName, lastName, fiscalCode, phone, street, streetNumber, city, postalCode })
     if (birthDate !== undefined) state.user.birthDate = birthDate
     if (gender !== undefined) state.user.gender = gender
     if (profileCompleted !== undefined) state.user.profileCompleted = profileCompleted
     if (skipProfilePrompt !== undefined) state.user.skipProfilePrompt = skipProfilePrompt
+    if (firstName !== undefined) state.user.firstName = firstName
+    if (lastName !== undefined) state.user.lastName = lastName
+    if (fiscalCode !== undefined) state.user.fiscalCode = fiscalCode
+    if (phone !== undefined) state.user.phone = phone
+    if (street !== undefined) state.user.street = street
+    if (streetNumber !== undefined) state.user.streetNumber = streetNumber
+    if (city !== undefined) state.user.city = city
+    if (postalCode !== undefined) state.user.postalCode = postalCode
     refreshSession()
 }
 

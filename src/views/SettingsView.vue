@@ -35,13 +35,38 @@ const keepAliveOn = ref(false)
 const storageInfo = ref(null)
 const profileBirthDate = ref('')
 const profileGender = ref('')
+const profileFirstName = ref('')
+const profileLastName = ref('')
+const profileFiscalCode = ref('')
+const profilePhone = ref('')
+const profileStreet = ref('')
+const profileStreetNumber = ref('')
+const profileCity = ref('')
+const profilePostalCode = ref('')
 const profileMessage = ref('')
 const savedBirthDate = ref('')
 const savedGender = ref('')
+const savedFirstName = ref('')
+const savedLastName = ref('')
+const savedFiscalCode = ref('')
+const savedPhone = ref('')
+const savedStreet = ref('')
+const savedStreetNumber = ref('')
+const savedCity = ref('')
+const savedPostalCode = ref('')
 const importCsvInput = ref(null)
 
 const profileDirty = computed(() => {
-  return profileBirthDate.value !== savedBirthDate.value || profileGender.value !== savedGender.value
+  return profileBirthDate.value !== savedBirthDate.value ||
+    profileGender.value !== savedGender.value ||
+    profileFirstName.value !== savedFirstName.value ||
+    profileLastName.value !== savedLastName.value ||
+    profileFiscalCode.value !== savedFiscalCode.value ||
+    profilePhone.value !== savedPhone.value ||
+    profileStreet.value !== savedStreet.value ||
+    profileStreetNumber.value !== savedStreetNumber.value ||
+    profileCity.value !== savedCity.value ||
+    profilePostalCode.value !== savedPostalCode.value
 })
 
 function computeAge(birthDateStr) {
@@ -66,8 +91,24 @@ onMounted(async () => {
   }
   profileBirthDate.value = user.value?.birthDate || ''
   profileGender.value = user.value?.gender || ''
+  profileFirstName.value = user.value?.firstName || ''
+  profileLastName.value = user.value?.lastName || ''
+  profileFiscalCode.value = user.value?.fiscalCode || ''
+  profilePhone.value = user.value?.phone || ''
+  profileStreet.value = user.value?.street || ''
+  profileStreetNumber.value = user.value?.streetNumber || ''
+  profileCity.value = user.value?.city || ''
+  profilePostalCode.value = user.value?.postalCode || ''
   savedBirthDate.value = profileBirthDate.value
   savedGender.value = profileGender.value
+  savedFirstName.value = profileFirstName.value
+  savedLastName.value = profileLastName.value
+  savedFiscalCode.value = profileFiscalCode.value
+  savedPhone.value = profilePhone.value
+  savedStreet.value = profileStreet.value
+  savedStreetNumber.value = profileStreetNumber.value
+  savedCity.value = profileCity.value
+  savedPostalCode.value = profilePostalCode.value
   timeBands.value = await getUserBands(user.value.username)
   savedBands.value = JSON.parse(JSON.stringify(timeBands.value))
 })
@@ -243,10 +284,26 @@ async function handleSaveProfile() {
     await updateUserProfile({
       birthDate: bd,
       gender: profileGender.value || null,
-      profileCompleted: true
+      profileCompleted: true,
+      firstName: profileFirstName.value.trim() || null,
+      lastName: profileLastName.value.trim() || null,
+      fiscalCode: profileFiscalCode.value.trim() || null,
+      phone: profilePhone.value.trim() || null,
+      street: profileStreet.value.trim() || null,
+      streetNumber: profileStreetNumber.value.trim() || null,
+      city: profileCity.value.trim() || null,
+      postalCode: profilePostalCode.value.trim() || null
     })
     savedBirthDate.value = profileBirthDate.value
     savedGender.value = profileGender.value
+    savedFirstName.value = profileFirstName.value
+    savedLastName.value = profileLastName.value
+    savedFiscalCode.value = profileFiscalCode.value
+    savedPhone.value = profilePhone.value
+    savedStreet.value = profileStreet.value
+    savedStreetNumber.value = profileStreetNumber.value
+    savedCity.value = profileCity.value
+    savedPostalCode.value = profilePostalCode.value
     profileMessage.value = 'Profilo aggiornato!'
     setTimeout(() => profileMessage.value = '', 3000)
   } catch (e) {
@@ -341,6 +398,50 @@ async function handleInstall() {
           </select>
         </div>
       </div>
+
+      <!-- Anagrafica completa (per report) -->
+      <p class="text-secondary mb-sm mt-md" style="font-size:0.75rem">Dati anagrafici per il report (opzionali). Se compilati, sostituiscono il nome utente nel PDF.</p>
+      <div class="profile-row mb-sm">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Nome</label>
+          <input v-model="profileFirstName" type="text" class="form-input" placeholder="Mario" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Cognome</label>
+          <input v-model="profileLastName" type="text" class="form-input" placeholder="Rossi" />
+        </div>
+      </div>
+      <div class="profile-row mb-sm">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Codice Fiscale</label>
+          <input v-model="profileFiscalCode" type="text" class="form-input" placeholder="RSSMRA80A01H501U" maxlength="16" style="text-transform:uppercase" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Telefono</label>
+          <input v-model="profilePhone" type="tel" class="form-input" placeholder="+39 333 1234567" />
+        </div>
+      </div>
+      <div class="profile-row mb-sm">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Indirizzo (via/piazza)</label>
+          <input v-model="profileStreet" type="text" class="form-input" placeholder="Via Roma" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">N. civico</label>
+          <input v-model="profileStreetNumber" type="text" class="form-input" placeholder="42" style="max-width:100px" />
+        </div>
+      </div>
+      <div class="profile-row mb-sm">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Città</label>
+          <input v-model="profileCity" type="text" class="form-input" placeholder="Milano" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">CAP</label>
+          <input v-model="profilePostalCode" type="text" class="form-input" placeholder="20100" maxlength="5" style="max-width:100px" inputmode="numeric" />
+        </div>
+      </div>
+
       <button class="btn btn-sm btn-primary" @click="handleSaveProfile" :disabled="!profileDirty">Salva profilo</button>
       <div v-if="profileMessage" class="form-success mt-sm">{{ profileMessage }}</div>
     </div>
@@ -528,6 +629,7 @@ async function handleInstall() {
 .day-chip {
   width: 32px; height: 32px; border-radius: 50%;
   border: 1px solid var(--color-border-strong); background: var(--color-surface-raised);
+  color: var(--color-accent);
   font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .day-chip.active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }

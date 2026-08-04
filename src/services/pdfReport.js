@@ -131,7 +131,7 @@ function addHeader(doc, opts) {
     doc.setTextColor(...C.muted)
     const from = opts.data.length ? new Date(opts.data[opts.data.length - 1].timestamp).toLocaleDateString('it-IT') : 'N/D'
     const to = opts.data.length ? new Date(opts.data[0].timestamp).toLocaleDateString('it-IT') : 'N/D'
-    const patient = opts.anonymize ? 'Anonimo' : (opts.username || '—')
+    const patient = opts.anonymize ? 'Anonimo' : (opts.displayName || opts.username || '—')
     const age = computeAge(opts.birthDate)
     const ageStr = !opts.anonymize && age ? `, ${age} anni` : ''
     const genderStr = !opts.anonymize && opts.gender ? `, ${genderLabel(opts.gender)}` : ''

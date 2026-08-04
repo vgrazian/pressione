@@ -33,6 +33,7 @@ const customTo = ref('')
 const includeCharts = ref(true)
 const includeHistory = ref(true)
 const anonymize = ref(false)
+const anonymizeReportLink = ref(false)
 const shareLink = ref(null)
 const sharePin = ref('')
 const showPin = ref('')
@@ -169,6 +170,15 @@ watch(userBands, () => { renderBPChart() }, { flush: 'post' })
 
 const titleSuffix = computed(() => anonymize.value ? '' : ` - ${user.value?.username}`)
 
+// Build display name for PDF: "Nome Cognome" if available, else username
+const displayName = computed(() => {
+  const u = user.value
+  if (!u) return ''
+  const first = (u.firstName || '').trim()
+  const last = (u.lastName || '').trim()
+  return first && last ? `${first} ${last}` : (first || last || u.username)
+})
+
 // Subsets for multi-period comparison
 const readings7 = computed(() => {
   const cutoff = new Date(Date.now() - 7 * 86400000)
@@ -188,6 +198,7 @@ async function generatePDF() {
       readings7: readings7.value,
       readings30: readings30.value,
       username: user.value?.username,
+      displayName: displayName.value,
       birthDate: user.value?.birthDate || null,
       gender: user.value?.gender || null,
       anonymize: anonymize.value,
@@ -321,7 +332,11 @@ async function generateShareLink() {
       readings: readingsData.slice(0, 100).map(r => ({
         systolic: r.systolic, diastolic: r.diastolic, heartRate: r.heartRate,
         timestamp: r.timestamp, notes: r.notes, category: r.category
-      }))
+      })),
+      anonymize: anonymizeReportLink.value,
+      displayName: anonymizeReportLink.value ? null : displayName.value,
+      birthDate: anonymizeReportLink.value ? null : (user.value?.birthDate || null),
+      gender: anonymizeReportLink.value ? null : (user.value?.gender || null)
     }
     // Generate random token and optional PIN
     const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('')
@@ -583,9 +598,12 @@ function copyActiveLink(token) {
         <p class="text-secondary mb-sm" style="font-size:0.8125rem">
           Genera un link web per il medico. Con PIN opzionale per maggiore privacy.
         </p>
-        <div class="flex gap-sm mb-sm items-center">
+        <div class="flex gap-sm mb-sm items-center flex-wrap">
           <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
             <input type="checkbox" v-model="sharePin" /> Proteggi con PIN
+          </label>
+          <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
+            <input type="checkbox" v-model="anonymizeReportLink" /> Anonimizza dati
           </label>
           <button class="btn btn-primary btn-sm" @click="generateShareLink">Genera Link</button>
         </div>
