@@ -1,6 +1,24 @@
 # Pressione — Progress & Conventions
 
-> Ultimo aggiornamento: 2026-08-03
+> Ultimo aggiornamento: 2026-08-04
+
+---
+
+## ⚠️ Regola Fondamentale: Mai Cancellare File in .gitignore
+
+**Qualsiasi script, comando git, o operazione automatica NON deve mai eliminare file listati in `.gitignore`.**
+
+In particolare:
+- `.env` contiene credenziali Supabase reali ed è in `.gitignore`
+- `scripts/deploy.sh` usa `git rm -rf .` (NON `find -exec rm`) per pulire gh-pages — tocca solo file tracciati
+- Dopo `git rm -rf .`, lo script ripristina SEMPRE `.gitignore` da `main` PRIMA di `git add -A`
+- Senza `.gitignore`, `git add -A` stage-rebbe file gitignorati come `.env`, rompendo il deploy e cancellando `.env` al prossimo checkout
+
+**Lezioni apprese (2026-08-04):**
+- `find . -exec rm -rf` è **distruttivo** — cancella TUTTO, inclusi file gitignorati → **BANNED**
+- `.gitignore` deve esistere su ogni branch, specialmente `gh-pages`
+- Dopo ogni operazione distruttiva su un branch, verificare che `.gitignore` sia presente
+- `.env` è stato accidentalmente committato su `gh-pages` in passato → rimosso con `git rm --cached`
 
 ---
 
@@ -39,7 +57,9 @@ Lo script fa: verifica `.env` → `npm install` → build → verifica Supabase 
 **Requisiti prima del deploy:**
 
 1. `.env` presente con `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` reali
-2. Se la versione cambia: aggiornare `package.json` → `version`
+2. Verificare che `.env` sia in `.gitignore`: `grep '^.env$' .gitignore`
+3. **MAI** committare `.env` — se appare in `git status`, risolvere subito
+4. Se la versione cambia: aggiornare `package.json` → `version`
 3. Migrazioni DB applicate via Supabase MCP (`apply_migration`) se presenti
 4. Attendere ~1-2 min per propagazione CDN, poi hard refresh (`Cmd+Shift+R`) o "Forza aggiornamento"
 

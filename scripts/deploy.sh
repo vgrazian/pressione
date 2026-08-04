@@ -32,6 +32,13 @@ if ! grep -q "sb_publishable_" .env 2>/dev/null; then
     echo "❌ ERRORE: .env non contiene una chiave Supabase valida"
     exit 1
 fi
+
+# Safety: ensure .env is in .gitignore (prevents tracking)
+if [ -f .gitignore ] && ! grep -q '^\.env$' .gitignore 2>/dev/null; then
+    echo "⚠️  .env NON è in .gitignore! Aggiungilo prima di deployare."
+    echo '.env' >> .gitignore
+    echo "   ✅ .env aggiunto a .gitignore"
+fi
 echo "   ✅ .env presente con credenziali Supabase"
 
 # ── 2. Install & Build ─────────────────────────────────────────
@@ -70,12 +77,25 @@ fi
 
 git checkout gh-pages --quiet 2>/dev/null || git checkout -b gh-pages origin/gh-pages --quiet
 
-# Clean everything except .git and node_modules
-find . -maxdepth 1 -not -name '.git' -not -name '.' -not -name '..' -not -name 'node_modules' -exec rm -rf {} \; 2>/dev/null || true
+# Remove ONLY tracked files (git rm respects .gitignore — NEVER touches ignored files)
+git rm -rf . --quiet 2>/dev/null || true
 
 # Copy new build
 cp -r "$TMPDIR"/* .
 touch .nojekyll
+
+# CRITICAL: Restore .gitignore from main BEFORE git add.
+# Without .gitignore, git add -A would stage gitignored files (like .env)! 
+git show main:.gitignore > .gitignore 2>/dev/null || {
+    echo "⚠️  Impossibile ripristinare .gitignore da main"
+}
+
+# Verify .gitignore exists before staging
+if [ ! -f .gitignore ]; then
+    echo "❌ ERRORE: .gitignore assente! Non posso fare git add in sicurezza."
+    echo "   Creane uno minimale con: echo '.env' > .gitignore"
+    exit 1
+fi
 
 git add -A
 git commit -m "$COMMIT_MSG" --quiet
