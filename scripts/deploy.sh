@@ -66,6 +66,8 @@ echo ""
 echo "🚀 [4/5] Deploy su gh-pages..."
 
 TMPDIR=$(mktemp -d /tmp/pressione-gh-pages.XXXXXX)
+# Ensure temp dir is always cleaned up, even on error
+trap "rm -rf '$TMPDIR' .temp .tmp 2>/dev/null; git checkout main --quiet 2>/dev/null" EXIT
 cp -r dist/* "$TMPDIR"/
 
 # Stash local changes before switching branch
@@ -116,6 +118,9 @@ if [ "$STASHED" = true ]; then
     git stash pop --quiet 2>/dev/null || true
 fi
 rm -rf "$TMPDIR"
+
+# Clean up any accidental .temp or .tmp directories
+rm -rf .temp .tmp 2>/dev/null || true
 
 # ── Done ───────────────────────────────────────────────────────
 echo ""
