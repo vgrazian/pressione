@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
-import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, generateTestData, refreshFromServer, backupData, restoreData } from '@/services/dataService.js'
+import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, importCSV, generateTestData, refreshFromServer, backupData, restoreData } from '@/services/dataService.js'
 import { isAdmin } from '@/services/rbac.js'
 import { useI18n } from '@/services/i18n.js'
 import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, getStorageInfo, formatBytes } from '@/services/keepAlive.js'
@@ -10,6 +10,8 @@ import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/
 import { useSWUpdate } from '@/services/swUpdate.js'
 import { APP_VERSION, BUILD_NUMBER, BUILD_TIME } from '@/services/version.js'
 import { getUserBands, saveUserBands, getDefaultBands } from '@/services/timeBands.js'
+import AppIcon from '@/components/AppIcon.vue'
+import TimeBandSlider from '@/components/TimeBandSlider.vue'
 
 const router = useRouter()
 const { user, changePassword, updateUserEmail, updateUserProfile } = useAuth()

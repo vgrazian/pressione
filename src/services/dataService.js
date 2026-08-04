@@ -359,6 +359,59 @@ export async function exportCSV(readings) {
 }
 
 /**
+ * Import CSV data (compatible with Pressione and bp-tracker formats)
+ */
+export async function importCSV(username, file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = async (e) => {
+            try {
+                const text = e.target.result
+                const lines = text.split(/\r?\n/).filter(l => l.trim())
+                if (lines.length < 2) throw new Error('CSV vuoto')
+                const header = lines[0].toLowerCase()
+                const isPressione = header.includes('sistolica')
+                let imported = 0
+                const errors = []
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''))
+                    if (cols.length < 3) continue
+                    try {
+                        let date, time, sys, dia, hr, notes = ''
+                        if (isPressione) {
+                            date = cols[0]; time = cols[1]; sys = parseInt(cols[2])
+                            dia = parseInt(cols[3]); hr = parseInt(cols[4]); notes = cols[6] || ''
+                        } else {
+                            if (cols[0].includes('/') || cols[0].includes('-')) {
+                                date = cols[0]; time = cols[1] || '12:00'
+                                sys = parseInt(cols[2]); dia = parseInt(cols[3]); hr = parseInt(cols[4])
+                                notes = cols[5] || ''
+                            } else {
+                                const ts = new Date(cols[0])
+                                if (isNaN(ts.getTime())) throw new Error('Formato data non riconosciuto')
+                                date = ts.toISOString().split('T')[0]
+                                time = ts.toTimeString().slice(0, 5)
+                                sys = parseInt(cols[1]); dia = parseInt(cols[2]); hr = parseInt(cols[3])
+                                notes = cols[4] || ''
+                            }
+                        }
+                        if (isNaN(sys) || isNaN(dia) || isNaN(hr)) throw new Error('Valori non validi')
+                        if (sys < 1 || sys > 300 || dia < 1 || dia > 200 || hr < 1 || hr > 300)
+                            throw new Error(`Fuori range: ${sys}/${dia} ${hr}`)
+                        const timestamp = new Date(`${date}T${time}`).toISOString()
+                        await upsertReading({ systolic: sys, diastolic: dia, heartRate: hr, timestamp, notes }, username)
+                        imported++
+                    } catch (err) { errors.push(`Riga ${i}: ${err.message}`) }
+                }
+                resolve({ imported, errors })
+            } catch (err) { reject(err) }
+        }
+        reader.onerror = () => reject(new Error('Errore lettura file'))
+        reader.readAsText(file)
+    })
+}
+
+/**
  * Generate test data via Supabase RPC
  */
 export async function generateTestData(username, count = 30) {
