@@ -376,13 +376,13 @@ async function handleInstall() {
     <div class="card mb-md">
       <h3 class="mb-sm">Dati</h3>
       <div class="flex flex-col gap-sm">
-        <button class="btn btn-sm btn-ghost" @click="handleExportCSV">{{ t('export_csv') }}</button>
-        <button class="btn btn-sm btn-ghost" @click="handleBackup">Backup (JSON)</button>
-        <button class="btn btn-sm btn-ghost" @click="triggerRestore">Ripristina Backup</button>
+        <button class="btn btn-sm btn-secondary" @click="handleExportCSV">📥 {{ t('export_csv') }}</button>
+        <button class="btn btn-sm btn-secondary" @click="handleBackup">💾 Backup (JSON)</button>
+        <button class="btn btn-sm btn-secondary" @click="triggerRestore">📂 Ripristina Backup</button>
         <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
-        <button class="btn btn-sm btn-ghost" @click="triggerImportCsv">Importa CSV (bp-tracker)</button>
+        <button class="btn btn-sm btn-secondary" @click="triggerImportCsv">📥 Importa CSV (bp-tracker)</button>
         <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsv" />
-        <button class="btn btn-sm btn-ghost" @click="handleGenerateTestData">{{ t('generate_test_data') }}</button>
+        <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData">{{ t('generate_test_data') }}</button>
       </div>
       <div v-if="message" class="form-success mt-sm">{{ message }}</div>
     </div>
@@ -400,9 +400,9 @@ async function handleInstall() {
         Mantiene il database attivo con ping periodici a Supabase e richiede archiviazione persistente per evitare che i dati vengano eliminati dal browser.
       </p>
       <div v-if="keepAliveOn && storageInfo" class="mt-sm" style="font-size:0.875rem">
-        <p><strong>Stato archiviazione:</strong> {{ storageInfo.persisted ? '✅ Persistente' : 'ℹ️ Non persistente' }}</p>
-        <p v-if="!storageInfo.persisted" class="text-secondary" style="font-size:0.75rem">
-          Normale in browser: installa l'app sulla Home per archiviazione permanente.
+        <p><strong>Stato archiviazione:</strong> {{ storageInfo.persisted ? '✅ Persistente' : '☁️ Sincronizzato su Supabase' }}</p>
+        <p class="text-secondary" style="font-size:0.75rem">
+          I dati sono sempre salvati in cloud. La cache locale accelera il caricamento.
         </p>
         <p><strong>Spazio usato:</strong> {{ formatBytes(storageInfo.usage) }} / {{ formatBytes(storageInfo.quota) }}
           <span v-if="storageInfo.percent !== null">({{ storageInfo.percent }}%)</span>
@@ -495,7 +495,12 @@ async function handleInstall() {
   gap: var(--space-sm);
   align-items: start;
 }
-.profile-row .form-input { min-width: 0; width: 100%; }
+@media (max-width: 400px) {
+  .profile-row {
+    grid-template-columns: 1fr;
+  }
+}
+.profile-row .form-input { min-width: 0; width: 100%; -webkit-appearance: none; }
 .form-success { color: var(--color-accent); font-size: 0.875rem; font-weight: 500; }
 .reminder-item { padding: var(--space-sm) 0; }
 .day-chip {

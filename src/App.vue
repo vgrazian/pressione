@@ -37,9 +37,11 @@ watch(() => user.value?.username, (username) => {
   if (username) initKeepAlive(username)
 }, { immediate: true })
 
-// Show profile prompt if incomplete and user hasn't skipped (only after auth is ready)
+// Show profile prompt only if ALL of: auth ready, user exists, profile not completed,
+// user hasn't skipped, AND no profile data is already present (birthDate or gender)
 watch([() => user.value, () => isAuthReady.value], ([u, ready]) => {
-    if (ready && u && u.username && !u.profileCompleted && !u.skipProfilePrompt) {
+    if (ready && u && u.username && !u.profileCompleted && !u.skipProfilePrompt
+        && !u.birthDate && !u.gender) {
         showProfilePrompt.value = true
     }
 }, { immediate: true })
@@ -109,8 +111,8 @@ async function handleLogout() {
         <router-view />
       </main>
 
-      <!-- Global FAB -->
-      <button v-if="isAuthenticated" class="fab" @click="router.push('/add')" title="Nuova misurazione">
+      <!-- Global FAB — hidden on add/edit pages -->
+      <button v-if="isAuthenticated && $route.name !== 'addReading' && $route.name !== 'editReading'" class="fab" @click="router.push('/add')" title="Nuova misurazione">
         <AppIcon name="plus" :size="24" color="var(--color-on-accent)" />
       </button>
       <ConfirmDialog />

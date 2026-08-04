@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   bands: { type: Array, required: true }
 })
@@ -9,12 +11,26 @@ const colors = ['#FFB347', '#87CEEB', '#DDA0DD', '#2C3E50']
 const labels = ['☀️', '🌤️', '🌅', '🌙']
 const totalSlots = 24
 
-function segmentStyle(band) {
-  const start = Math.max(0, band.start)
-  const end = Math.min(totalSlots, band.end)
-  let width = end - start
-  if (width <= 0) width = (end + totalSlots) - start
-  const left = (start / totalSlots) * 100
+// Flatten bands into visual segments: wrap-around bands (start > end) are split
+// into two pieces so they appear at both ends of the 24h bar.
+const flatSegments = computed(() => {
+  const segs = []
+  for (let i = 0; i < props.bands.length; i++) {
+    const b = props.bands[i]
+    if (b.start <= b.end) {
+      segs.push({ bandIdx: i, start: b.start, end: b.end })
+    } else {
+      // Wrap-around: render tail first (0 → end), then head (start → 24)
+      segs.push({ bandIdx: i, start: 0, end: b.end })
+      segs.push({ bandIdx: i, start: b.start, end: totalSlots })
+    }
+  }
+  return segs
+})
+
+function segmentStyle(seg) {
+  const width = seg.end - seg.start
+  const left = (seg.start / totalSlots) * 100
   const w = (width / totalSlots) * 100
   return { left: left + '%', width: w + '%' }
 }
@@ -70,9 +86,9 @@ function onDragStart(idx, side, e) {
         <span v-for="h in [0,6,12,18]" :key="h" class="band-track__hour"
           :style="{ left: (h / totalSlots) * 100 + '%' }">{{ h }}</span>
       </div>
-      <div v-for="(band, i) in bands" :key="band.key" class="band-segment"
-        :style="{ ...segmentStyle(band), backgroundColor: colors[i] }">
-        <span class="band-segment__label">{{ labels[i] }} {{ band.start }}-{{ band.end }}</span>
+      <div v-for="(seg, i) in flatSegments" :key="'seg-' + i" class="band-segment"
+        :style="{ ...segmentStyle(seg), backgroundColor: colors[seg.bandIdx] }">
+        <span v-if="seg.start === 0 || seg.end === totalSlots" class="band-segment__label">{{ labels[seg.bandIdx] }}</span>
       </div>
       <div v-for="(band, i) in bands" :key="'div-' + band.key"
         class="band-divider"
