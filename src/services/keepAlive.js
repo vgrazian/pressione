@@ -9,7 +9,7 @@ import { getSetting, setSetting } from '@/db/index.js'
 let keepAliveInterval = null
 let keepAliveUsername = null
 const KEEP_ALIVE_KEY = 'keepAlive'
-const PING_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
+const PING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour (Supabase free tier pauses after 7 days of inactivity)
 
 /**
  * Check if keep-alive is enabled for a user
