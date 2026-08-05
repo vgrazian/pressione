@@ -9,6 +9,9 @@ describe('useTheme', () => {
     beforeEach(() => {
         resetStorage()
         document.documentElement.removeAttribute('data-theme')
+        // Reset singleton ref to 'system' (default when no localStorage)
+        const { setTheme } = useTheme()
+        setTheme('system')
     })
 
     it('returns default theme "system" when no saved preference', () => {
@@ -36,16 +39,36 @@ describe('useTheme', () => {
         expect(document.documentElement.hasAttribute('data-theme')).toBe(false)
     })
 
-    it('toggle cycles light -> dark -> system -> light', () => {
-        const { theme, setTheme, toggle } = useTheme()
+    it('toggle switches light ↔ dark (system not in cycle)', () => {
+        const { theme, resolvedTheme, setTheme, toggle } = useTheme()
         setTheme('light')
         expect(theme.value).toBe('light')
+        expect(resolvedTheme.value).toBe('light')
         toggle()
         expect(theme.value).toBe('dark')
-        toggle()
-        expect(theme.value).toBe('system')
+        expect(resolvedTheme.value).toBe('dark')
         toggle()
         expect(theme.value).toBe('light')
+    })
+
+    it('toggle from system switches to explicit dark', () => {
+        const { theme, toggle } = useTheme()
+        // theme is already 'system' by default
+        expect(theme.value).toBe('system')
+        toggle()
+        // Should set explicit dark (not stay in system)
+        expect(theme.value).toBe('dark')
+    })
+
+    it('resolvedTheme returns actual light/dark even when set to system', () => {
+        const { resolvedTheme, setTheme } = useTheme()
+        setTheme('dark')
+        expect(resolvedTheme.value).toBe('dark')
+        setTheme('light')
+        expect(resolvedTheme.value).toBe('light')
+        setTheme('system')
+        // In test env (happy-dom), no matchMedia, so defaults to light
+        expect(['light', 'dark']).toContain(resolvedTheme.value)
     })
 
     it('theme ref is a singleton', () => {

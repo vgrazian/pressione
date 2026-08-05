@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const THEME_KEY = 'pressione_theme'
 
@@ -9,6 +9,17 @@ function getStoredTheme() {
 }
 
 const theme = ref(getStoredTheme() || 'system')
+
+// Resolved theme: maps 'system' → actual 'light' or 'dark' based on OS pref
+const resolvedTheme = computed(() => {
+    if (theme.value === 'system') {
+        if (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            return 'dark'
+        }
+        return 'light'
+    }
+    return theme.value
+})
 
 export function useTheme() {
     function apply(mode) {
@@ -29,12 +40,19 @@ export function useTheme() {
     }
 
     function toggle() {
-        const cycle = { light: 'dark', dark: 'system', system: 'light' }
-        setTheme(cycle[theme.value] || 'light')
+        // Direct light ↔ dark toggle. 'system' is settable only from Settings.
+        setTheme(resolvedTheme.value === 'dark' ? 'light' : 'dark')
     }
 
     // Apply on init
     apply(theme.value)
 
-    return { theme, setTheme, toggle }
+    // Re-apply when OS preference changes (only when in 'system' mode)
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (theme.value === 'system') apply('system')
+        })
+    }
+
+    return { theme, resolvedTheme, setTheme, toggle }
 }

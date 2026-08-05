@@ -14,7 +14,7 @@ import { useSWUpdate } from '@/services/swUpdate.js'
 
 const router = useRouter()
 const { isAuthenticated, isAuthReady, user, logout } = useAuth()
-const { theme, toggle: toggleTheme } = useTheme()
+const { theme, resolvedTheme, toggle: toggleTheme } = useTheme()
 const isInitializing = ref(true)
 const error = ref(null)
 const confirm = inject('confirm-dialog', null)
@@ -99,7 +99,7 @@ async function handleLogout() {
         </span>
         <div class="topbar-actions">
           <button class="topbar-btn" @click="toggleTheme" :title="'Tema: ' + theme">
-            <AppIcon :name="theme === 'dark' ? 'moon' : 'sun'" :size="18" />
+            <AppIcon :name="resolvedTheme === 'dark' ? 'moon' : 'sun'" :size="18" />
           </button>
           <button class="topbar-btn" @click="handleLogout" title="Logout">
             <AppIcon name="logout" :size="18" />
