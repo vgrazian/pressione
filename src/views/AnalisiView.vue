@@ -8,6 +8,8 @@ import { getCategoryLabel, classifyReading } from '@/services/categories.js'
 import { getUserBands, getDefaultBands, getBandForHour, groupReadingsByDayAndBand } from '@/services/timeBands.js'
 import { generatePDF as generatePDFReport, generatePDFBlob } from '@/services/pdfReport.js'
 import { supabase } from '@/services/supabaseClient.js'
+import { getChartColors } from '@/services/chartColors.js'
+import { useTheme } from '@/services/theme.js'
 import { Chart, registerables } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
@@ -17,6 +19,7 @@ Chart.register(...registerables, annotationPlugin)
 
 const router = useRouter()
 const { user } = useAuth()
+const { theme } = useTheme()
 const readings = ref([])
 const isLoading = ref(true)
 const dateRange = ref('30')
@@ -53,11 +56,6 @@ const chartTabs = [
   { key: 'deriv', label: 'Variazioni', icon: 'trending-up' },
   { key: 'dist', label: 'Distribuzione', icon: 'pie-chart' }
 ]
-
-function catColor(category) {
-  const map = { 'NORMAL': '#006C4C', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
-  return map[category] || '#999'
-}
 
 function fmtDateShort(ts) {
   const d = new Date(ts)
@@ -158,20 +156,21 @@ function renderBPChart() {
   if (!bpChartEl.value) return
   const data = filteredReadings.value
   if (!data.length) return
+  const C = getChartColors()
   const labels = data.map(r => new Date(r.timestamp).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
   bpChart = new Chart(bpChartEl.value, {
     type: 'line', data: { labels, datasets: [
-      { label: 'Sistolica', data: data.map(r => r.systolic), borderColor: '#E63946', backgroundColor: 'rgba(230,57,70,0.08)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0.35, fill: false },
-      { label: 'Diastolica', data: data.map(r => r.diastolic), borderColor: '#457B9D', backgroundColor: 'rgba(69,123,157,0.08)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0.35, fill: false },
-      { label: 'BPM', data: data.map(r => r.heartRate), borderColor: '#6C757D', borderWidth: 1, pointRadius: 1, borderDash: [4, 3], tension: 0.35, fill: false, yAxisID: 'y1' }
+      { label: 'Sistolica', data: data.map(r => r.systolic), borderColor: C.systolic, backgroundColor: C.systolicBg, borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0.35, fill: false },
+      { label: 'Diastolica', data: data.map(r => r.diastolic), borderColor: C.diastolic, backgroundColor: C.diastolicBg, borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0.35, fill: false },
+      { label: 'BPM', data: data.map(r => r.heartRate), borderColor: C.bpm, borderWidth: 1, pointRadius: 1, borderDash: [4, 3], tension: 0.35, fill: false, yAxisID: 'y1' }
     ] },
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 } } },
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 }, color: C.textSecondary } },
         annotation: { annotations: {
-          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: 'rgba(0,108,76,0.05)', borderColor: 'rgba(0,108,76,0.15)', borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: 'rgba(255,255,255,0.85)', color: '#006C4C' } },
-          sys140: { type: 'line', yMin: 140, yMax: 140, borderColor: 'rgba(186,26,26,0.4)', borderWidth: 1, borderDash: [5, 5] }
+          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: C.targetZoneBg, borderColor: C.targetZoneBorder, borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: C.targetLabelBg, color: C.targetLabelText } },
+          sys140: { type: 'line', yMin: 140, yMax: 140, borderColor: C.sys140Line, borderWidth: 1, borderDash: [5, 5] }
         } },
         tooltip: { callbacks: {
           title: (ctx) => data[ctx[0].dataIndex] ? new Date(data[ctx[0].dataIndex].timestamp).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' }) : '',
@@ -193,10 +192,11 @@ function renderDerivChart() {
   if (!derivChartEl.value) return
   const d = derivatives.value
   if (!d.timestamps.length) return
+  const C = getChartColors()
   const labels = d.timestamps.map(t => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
   derivChart = new Chart(derivChartEl.value, {
     type: 'bar', data: { labels, datasets: [
-      { label: 'dS/dt', data: d.systolic, backgroundColor: d.systolic.map(v => Math.abs(v) > 10 ? '#D90429' : v > 0 ? '#E6394680' : '#457B9D80'), borderWidth: 0, borderRadius: 2 }
+      { label: 'dS/dt', data: d.systolic, backgroundColor: d.systolic.map(v => Math.abs(v) > 10 ? C.derivAlarm : v > 0 ? C.derivPositive : C.derivNegative), borderWidth: 0, borderRadius: 2 }
     ] },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -214,6 +214,7 @@ function renderPieChart() {
   if (!pieChartEl.value) return
   const data = filteredReadings.value
   if (!data.length) return
+  const C = getChartColors()
   const cats = { 'Normale': 0, 'Elevata': 0, 'Stadio 1': 0, 'Stadio 2+': 0 }
   data.forEach(r => {
     if (r.systolic < 120 && r.diastolic < 80) cats['Normale']++
@@ -223,7 +224,7 @@ function renderPieChart() {
     else cats['Stadio 2+']++
   })
   pieChart = new Chart(pieChartEl.value, {
-    type: 'doughnut', data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: ['#006C4C', '#FFC107', '#FF9800', '#E63946'], borderWidth: 0 }] },
+    type: 'doughnut', data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: [C.catNormal, C.catElevated, C.catStage1, C.catStage2], borderWidth: 0 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       onClick: (_event, elements) => { if (elements.length > 0) router.push({ name: 'readingList', query: { category: Object.keys(cats)[elements[0].index] } }) },
@@ -235,6 +236,7 @@ function renderPieChart() {
 watch(chartTab, () => { nextTick(() => renderActiveChart()) })
 watch(filteredReadings, () => { nextTick(() => renderActiveChart()) }, { flush: 'post' })
 watch(userBands, () => { nextTick(() => renderActiveChart()) }, { flush: 'post' })
+watch(theme, () => { nextTick(() => renderActiveChart()) })
 
 async function generatePDF() {
   generatingAction.value = 'pdf'
@@ -460,7 +462,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
           <table class="preview-table">
             <thead><tr><th>Data</th><th>Ora</th><th>SYS</th><th>DIA</th><th>BPM</th><th class="col-category">Categoria</th></tr></thead>
             <tbody>
-              <tr v-for="r in filteredReadings.slice(0, 30)" :key="r.id" :style="{ borderLeft: '3px solid ' + catColor(r.category) }">
+              <tr v-for="r in filteredReadings.slice(0, 30)" :key="r.id" :style="{ borderLeft: '3px solid ' + getChartColors().categoryMap[r.category] }">
                 <td class="col-date">{{ fmtDateShort(r.timestamp) }}</td>
                 <td>{{ new Date(r.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}</td>
                 <td :class="{ 'text-error': r.systolic >= 140, 'text-warning': r.systolic >= 130 && r.systolic < 140 }">{{ r.systolic }}</td>
@@ -481,7 +483,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
               <template v-for="band of userBands" :key="band.key">
                 <template v-if="day.bands[band.key] && day.bands[band.key].length">
                   <tr class="band-label-row"><td colspan="6"><span class="band-label">{{ band.icon }} {{ band.label }} ({{ day.bands[band.key].length }} letture)</span></td></tr>
-                  <tr v-for="r in day.bands[band.key]" :key="r.id" :style="{ borderLeft: '3px solid ' + catColor(r.category) }">
+                  <tr v-for="r in day.bands[band.key]" :key="r.id" :style="{ borderLeft: '3px solid ' + getChartColors().categoryMap[r.category] }">
                     <td></td>
                     <td>{{ new Date(r.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) }}</td>
                     <td :class="{ 'text-error': r.systolic >= 140, 'text-warning': r.systolic >= 130 && r.systolic < 140 }">{{ r.systolic }}</td>

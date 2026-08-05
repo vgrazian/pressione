@@ -5,6 +5,7 @@ import { supabase } from '@/services/supabaseClient.js'
 import { computeStatistics, computeDerivatives, computeMorningSurge, computeHypertensiveLoad } from '@/services/statistics.js'
 import { getCategoryLabel, classifyReading } from '@/services/categories.js'
 import { getDefaultBands, getBandForHour } from '@/services/timeBands.js'
+import { getChartColors } from '@/services/chartColors.js'
 import { Chart, registerables } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
 
@@ -43,11 +44,6 @@ const derivatives = computed(() => computeDerivatives(filteredReadings.value))
 const morningSurge = computed(() => computeMorningSurge(filteredReadings.value, bands))
 const htnLoad = computed(() => computeHypertensiveLoad(filteredReadings.value))
 const classification = computed(() => classifyReading(stats.value.avgSystolic, stats.value.avgDiastolic))
-
-function catColor(cat) {
-  const m = { 'NORMAL': '#006C4C', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
-  return m[cat] || '#999'
-}
 
 async function hashPin(pin) {
   const d = new TextEncoder().encode(pin)
@@ -94,19 +90,20 @@ function renderBPChart() {
   if (!bpChartEl.value) return
   const data = filteredReadings.value
   if (!data.length) return
+  const C = getChartColors()
   const labels = data.map(r => new Date(r.timestamp).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
   bpChart = new Chart(bpChartEl.value, {
     type: 'line', data: { labels, datasets: [
-      { label: 'Sistolica', data: data.map(r => r.systolic), borderColor: '#E63946', backgroundColor: 'rgba(230,57,70,0.08)', borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.35, fill: false },
-      { label: 'Diastolica', data: data.map(r => r.diastolic), borderColor: '#457B9D', backgroundColor: 'rgba(69,123,157,0.08)', borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.35, fill: false },
-      { label: 'BPM', data: data.map(r => r.heartRate), borderColor: '#6C757D', borderWidth: 1, pointRadius: 1, borderDash: [4, 3], tension: 0.35, fill: false, yAxisID: 'y1' }
+      { label: 'Sistolica', data: data.map(r => r.systolic), borderColor: C.systolic, backgroundColor: C.systolicBg, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.35, fill: false },
+      { label: 'Diastolica', data: data.map(r => r.diastolic), borderColor: C.diastolic, backgroundColor: C.diastolicBg, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.35, fill: false },
+      { label: 'BPM', data: data.map(r => r.heartRate), borderColor: C.bpm, borderWidth: 1, pointRadius: 1, borderDash: [4, 3], tension: 0.35, fill: false, yAxisID: 'y1' }
     ] },
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 } } },
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 }, color: C.textSecondary } },
         annotation: { annotations: {
-          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: 'rgba(0,108,76,0.05)', borderColor: 'rgba(0,108,76,0.2)', borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: 'rgba(255,255,255,0.85)', color: '#006C4C' } },
+          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: C.targetZoneBg, borderColor: C.targetZoneBorder, borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: C.targetLabelBg, color: C.targetLabelText } },
           sys140: { type: 'line', yMin: 140, yMax: 140, borderColor: 'rgba(186,26,26,0.4)', borderWidth: 1, borderDash: [5, 5] }
         } },
         tooltip: { callbacks: {
@@ -130,8 +127,9 @@ function renderDerivChart() {
   const d = derivatives.value
   if (!d.timestamps.length) return
   const labels = d.timestamps.map(t => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
+  const C2 = getChartColors()
   derivChart = new Chart(derivChartEl.value, {
-    type: 'bar', data: { labels, datasets: [{ label: 'dS/dt', data: d.systolic, backgroundColor: d.systolic.map(v => Math.abs(v) > 10 ? '#D90429' : v > 0 ? '#E6394680' : '#457B9D80'), borderWidth: 0, borderRadius: 2 }] },
+    type: 'bar', data: { labels, datasets: [{ label: 'dS/dt', data: d.systolic, backgroundColor: d.systolic.map(v => Math.abs(v) > 10 ? C2.derivAlarm : v > 0 ? C2.derivPositive : C2.derivNegative), borderWidth: 0, borderRadius: 2 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Δ ${ctx.raw > 0 ? '+' : ''}${ctx.raw} mmHg/ora` } } },
@@ -150,9 +148,10 @@ function renderPieChart() {
   if (!data.length) return
   const cats = {}
   data.forEach(r => { const l = getCategoryLabel(r.category || classifyReading(r.systolic, r.diastolic)); cats[l] = (cats[l] || 0) + 1 })
-  const colors = { 'Normale': '#006C4C', 'Elevata': '#FFC107', 'Ipert. Stadio 1': '#FF9800', 'Ipert. Stadio 2': '#E63946', 'Crisi Ipertensiva': '#7B1FA2', 'Ipotensione': '#1976D2' }
+  const C3 = getChartColors()
+  const colors = { 'Normale': C3.catNormal, 'Elevata': C3.catElevated, 'Ipert. Stadio 1': C3.catStage1, 'Ipert. Stadio 2': C3.catStage2, 'Crisi Ipertensiva': C3.catCrisis, 'Ipotensione': C3.catHypotension }
   pieChart = new Chart(pieChartEl.value, {
-    type: 'doughnut', data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: Object.keys(cats).map(k => colors[k] || '#999'), borderWidth: 1, borderColor: '#fff' }] },
+    type: 'doughnut', data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: Object.keys(cats).map(k => colors[k] || '#999'), borderWidth: 1, borderColor: C3.surfaceRaised }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } } } }
   })
 }
@@ -191,7 +190,7 @@ const readingsByTimeOfDay = computed(() => {
 
       <!-- Clinical Summary -->
       <div style="background:white;border:1px solid #E0E0E0;border-top:none;padding:1.5rem;border-radius:0 0 12px 12px;margin-bottom:1.5rem">
-        <div style="display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.875rem;font-weight:600;color:white;margin-bottom:1rem" :style="{ background: catColor(classification) }">{{ getCategoryLabel(classification) }}</div>
+        <div style="display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.875rem;font-weight:600;color:white;margin-bottom:1rem" :style="{ background: getChartColors().categoryMap[classification] }">{{ getCategoryLabel(classification) }}</div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1rem">
           <div style="background:#F8F9F7;border-radius:8px;padding:12px;text-align:center">
@@ -265,7 +264,7 @@ const readingsByTimeOfDay = computed(() => {
               <th style="padding:8px;text-align:left;font-size:0.6875rem;color:#888">Data</th><th style="padding:8px;text-align:right;font-size:0.6875rem;color:#888">SYS</th><th style="padding:8px;text-align:right;font-size:0.6875rem;color:#888">DIA</th><th style="padding:8px;text-align:right;font-size:0.6875rem;color:#888">BPM</th><th style="padding:8px;text-align:left;font-size:0.6875rem;color:#888">Categoria</th>
             </tr></thead>
             <tbody>
-              <tr v-for="(r, i) in filteredReadings" :key="i" style="border-bottom:1px solid #F0F0F0" :style="{ borderLeft: '3px solid ' + catColor(r.category || classifyReading(r.systolic, r.diastolic)) }">
+              <tr v-for="(r, i) in filteredReadings" :key="i" style="border-bottom:1px solid #F0F0F0" :style="{ borderLeft: '3px solid ' + getChartColors().categoryMap[r.category || classifyReading(r.systolic, r.diastolic)] }">
                 <td style="padding:6px 8px">{{ new Date(r.timestamp).toLocaleDateString('it-IT') }} <span style="color:#999;font-size:0.6875rem">{{ new Date(r.timestamp).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' }) }}</span></td>
                 <td style="padding:6px 8px;text-align:right;font-weight:600" :style="{ color: r.systolic >= 140 ? '#D32F2F' : r.systolic >= 130 ? '#EF6C00' : '#333' }">{{ r.systolic }}</td>
                 <td style="padding:6px 8px;text-align:right;font-weight:600" :style="{ color: r.diastolic >= 90 ? '#D32F2F' : r.diastolic >= 85 ? '#EF6C00' : '#333' }">{{ r.diastolic }}</td>

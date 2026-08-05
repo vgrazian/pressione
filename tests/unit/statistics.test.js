@@ -186,8 +186,8 @@ describe('computeMorningSurge', () => {
         const readings = [
             makeReading(130, 85, 72, '2026-01-01T07:00:00'),   // morning
             makeReading(135, 88, 74, '2026-01-01T08:00:00'),   // morning
-            makeReading(115, 78, 68, '2026-01-01T21:00:00'),   // evening
-            makeReading(118, 80, 70, '2026-01-01T22:00:00')    // evening
+            makeReading(115, 78, 68, '2026-01-01T20:00:00'),   // evening
+            makeReading(118, 80, 70, '2026-01-01T21:00:00')    // evening
         ]
         const result = computeMorningSurge(readings)
         expect(result.morningAvg).toBe(Math.round((130 + 135) / 2))  // 132.5 → 133
@@ -221,7 +221,7 @@ describe('computeMorningSurge', () => {
             makeReading(122, 82, 72, '2026-01-01T07:30:00'),
             makeReading(125, 84, 74, '2026-01-01T08:30:00'),
             makeReading(115, 76, 66, '2026-01-01T20:30:00'),
-            makeReading(117, 78, 68, '2026-01-01T22:30:00')
+            makeReading(117, 78, 68, '2026-01-01T21:30:00')
         ]
         const result = computeMorningSurge(readings)
         expect(result.morningCount).toBe(3)
