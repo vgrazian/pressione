@@ -111,6 +111,7 @@ onMounted(async () => {
   savedPostalCode.value = profilePostalCode.value
   timeBands.value = await getUserBands(user.value.username)
   savedBands.value = JSON.parse(JSON.stringify(timeBands.value))
+  window.scrollTo(0, 0)
 })
 
 // --- Time Bands ---
