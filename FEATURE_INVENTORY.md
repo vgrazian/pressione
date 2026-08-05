@@ -13,7 +13,6 @@
 | --- | --- |
 | Login/Logout | Table-based auth, SHA-256 |
 | Sessione TTL 8h | localStorage + IndexedDB fallback |
-| **Ricordami (30 giorni)** | Checkbox al login → sessione persistente 30gg, ideale per PWA |
 | Recupero password | Token-based flow su login |
 | Cambio password | Da Impostazioni (richiede pw attuale) |
 | Modifica email | Da Impostazioni → Account |
@@ -146,10 +145,10 @@
 | SHA-256 hashing | Client + server |
 | GDPR link TTL | 48 ore auto-scadenza |
 | Stats cache | IndexedDB pronto |
-| **Release script** | `scripts/deploy.sh` — local clone + force push, sub-second |
+| **Release script** | `scripts/deploy.sh` — git worktree isolato, safety gate .env, idempotente |
 | **Version from package.json** | Single source of truth, build number da git hash |
 | **Force cache clear** | `forceClearCache()` — deregistra SW, svuota caches, reload |
-| **81 test** | 81 unit + 15 E2E |
+| **79 test** | 79 unit + 15 E2E |
 
 ## 10. Nuove Feature (Agosto 2026) — Portabili su BP-Tracker
 
@@ -179,8 +178,6 @@
 | 22 | **Grafici con zone target ESC/ESH** — zona verde tratteggiata <140/90, hover tooltip con categoria | `AnalisiView.vue`, `SharedReportView.vue` |
 | 23 | **Release script automatizzato** — `scripts/deploy.sh` (verifica .env → build → deploy con worktree) | `scripts/deploy.sh` |
 | 24 | **Versione da package.json** — single source of truth, visibile in login e impostazioni | `vite.config.js`, `version.js`, `LoginView.vue`, `SettingsView.vue` |
-| 25 | **Ricordami su questo dispositivo** — checkbox login, sessione 30 giorni, auto-login PWA | `auth.js`, `LoginView.vue` |
-| 26 | **Deploy script fast** — `git clone --local` + force push, sub-second, output verificabile | `scripts/deploy.sh` |
 
 ---
 

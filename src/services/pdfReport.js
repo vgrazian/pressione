@@ -136,26 +136,6 @@ function addHeader(doc, opts) {
     const ageStr = !opts.anonymize && age ? `, ${age} anni` : ''
     const genderStr = !opts.anonymize && opts.gender ? `, ${genderLabel(opts.gender)}` : ''
     doc.text(`Paziente: ${patient}${ageStr}${genderStr}    •    Periodo: ${from} – ${to}    •    ${opts.data.length} misurazioni    •    Generato: ${new Date().toLocaleDateString('it-IT')}`, S.m, y)
-    y += S.in
-
-    // Full anagrafica (only if not anonymized and user data is available)
-    const u = opts.user
-    if (!opts.anonymize && u) {
-        const anagParts = []
-        if (u.firstName || u.lastName) anagParts.push(`${u.firstName || ''} ${u.lastName || ''}`.trim())
-        if (u.fiscalCode) anagParts.push(`CF: ${u.fiscalCode}`)
-        if (u.phone) anagParts.push(`Tel: ${u.phone}`)
-        if (u.street) {
-            const addr = [u.street, u.streetNumber, u.postalCode, u.city].filter(Boolean).join(' ')
-            if (addr) anagParts.push(addr)
-        }
-        if (anagParts.length > 0) {
-            doc.setFontSize(T.xs)
-            doc.setTextColor(...C.muted)
-            doc.text(anagParts.join('    •    '), S.m, y)
-            y += S.in - 1
-        }
-    }
 
     return y + S.gap
 }
@@ -497,10 +477,10 @@ function addFooter(doc, pageNum, totalPages) {
 }
 
 // ── Shared PDF builder ──────────────────────────────────────────
-async function buildPDF({ data, readings7, readings30, username, displayName, birthDate, gender, anonymize, includeCharts, includeHistory, user }) {
+async function buildPDF({ data, readings7, readings30, username, displayName, birthDate, gender, anonymize, includeCharts, includeHistory }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
     const stats = computeStatistics(data)
-    const opts = { data, username, displayName, birthDate, gender, anonymize, user }
+    const opts = { data, username, displayName, birthDate, gender, anonymize }
 
     let y = addHeader(doc, opts)
     y = addClinicalSummary(doc, y, stats, data, opts)

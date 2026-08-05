@@ -32,7 +32,7 @@ const userBands = ref(getDefaultBands())
 const includeCharts = ref(true)
 const includeHistory = ref(true)
 const anonymize = ref(false)
-const includeAnagrafica = ref(false)
+const anonymizeReportLink = ref(false)
 const shareLink = ref(null)
 const sharePin = ref('')
 const showPin = ref('')
@@ -241,20 +241,11 @@ watch(theme, () => { nextTick(() => renderActiveChart()) })
 async function generatePDF() {
   generatingAction.value = 'pdf'
   try {
-    const u = user.value
     await generatePDFReport({
       data: filteredReadings.value, readings7: readings7.value, readings30: readings30.value,
-      username: u?.username,
-      displayName: includeAnagrafica.value && !anonymize.value ? displayName.value : (anonymize.value ? null : u?.username),
-      birthDate: anonymize.value ? null : (u?.birthDate || null),
-      gender: anonymize.value ? null : (u?.gender || null),
-      anonymize: anonymize.value, includeCharts: includeCharts.value, includeHistory: includeHistory.value,
-      user: includeAnagrafica.value && !anonymize.value ? {
-        firstName: u?.firstName, lastName: u?.lastName,
-        fiscalCode: u?.fiscalCode, phone: u?.phone,
-        street: u?.street, streetNumber: u?.streetNumber,
-        city: u?.city, postalCode: u?.postalCode
-      } : null
+      username: user.value?.username, displayName: displayName.value,
+      birthDate: user.value?.birthDate || null, gender: user.value?.gender || null,
+      anonymize: anonymize.value, includeCharts: includeCharts.value, includeHistory: includeHistory.value
     })
   } catch (e) { linkMessage.value = 'Errore nella generazione PDF: ' + e.message }
   finally { generatingAction.value = null }
@@ -263,10 +254,9 @@ async function generatePDF() {
 async function getPDFFile() {
   return await generatePDFBlob({
     data: filteredReadings.value, readings7: readings7.value, readings30: readings30.value,
-    username: user.value?.username,
-    birthDate: anonymize.value ? null : (user.value?.birthDate || null),
-    gender: anonymize.value ? null : (user.value?.gender || null),
-    anonymize: anonymize.value, includeCharts: includeCharts.value, includeHistory: includeHistory.value
+    username: user.value?.username, birthDate: user.value?.birthDate || null,
+    gender: user.value?.gender || null, anonymize: anonymize.value,
+    includeCharts: includeCharts.value, includeHistory: includeHistory.value
   })
 }
 
@@ -296,8 +286,8 @@ async function generateShareLink() {
       stats: stats.value, readings: readingsData.slice(0, 100).map(r => ({
         systolic: r.systolic, diastolic: r.diastolic, heartRate: r.heartRate,
         timestamp: r.timestamp, notes: r.notes, category: r.category
-      })), anonymize: anonymize.value,
-      displayName: anonymize.value ? null : displayName.value,
+      })), anonymize: anonymizeReportLink.value,
+      displayName: anonymizeReportLink.value ? null : displayName.value,
       birthDate: anonymizeReportLink.value ? null : (user.value?.birthDate || null),
       gender: anonymizeReportLink.value ? null : (user.value?.gender || null)
     }
@@ -364,6 +354,12 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
           <input type="date" v-model="customTo" class="form-input" style="width:140px" @change="applyCustomRange" />
         </template>
       </div>
+      <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
+        <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF
+      </label>
+      <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
+        <input type="checkbox" v-model="anonymize" /> Anonimizza report
+      </label>
     </div>
 
     <div v-if="isLoading" class="p-lg"><SkeletonLoader type="text" :count="8" /></div>
@@ -426,8 +422,8 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
               <tr><td>Letture</td><td>{{ stats7.readingsCount }}</td><td>{{ stats30.readingsCount }}</td></tr>
               <tr><td>SYS/DIA media</td><td>{{ stats7.avgSystolic }}/{{ stats7.avgDiastolic }}</td><td>{{ stats30.avgSystolic }}/{{ stats30.avgDiastolic }}</td></tr>
               <tr><td>BPM medio</td><td>{{ stats7.avgHeartRate }}</td><td>{{ stats30.avgHeartRate }}</td></tr>
-              <tr><td><span title="Massimo aumento orario della pressione sistolica tra due misurazioni consecutive">Variazione max ↑</span></td><td class="text-error">{{ derivatives7.maxPositiveRate > 0 ? '+' + Math.round(derivatives7.maxPositiveRate) : '0' }} mmHg/h</td><td class="text-error">{{ derivatives30.maxPositiveRate > 0 ? '+' + Math.round(derivatives30.maxPositiveRate) : '0' }} mmHg/h</td></tr>
-              <tr><td><span title="Massima diminuzione oraria della pressione sistolica tra due misurazioni consecutive">Variazione max ↓</span></td><td class="text-warning">{{ derivatives7.maxNegativeRate < 0 ? Math.round(derivatives7.maxNegativeRate) : '0' }} mmHg/h</td><td class="text-warning">{{ derivatives30.maxNegativeRate < 0 ? Math.round(derivatives30.maxNegativeRate) : '0' }} mmHg/h</td></tr>
+              <tr><td>Variazione max ↑</td><td class="text-error">{{ derivatives7.maxPositiveRate > 0 ? '+' + Math.round(derivatives7.maxPositiveRate) : '0' }} mmHg/h</td><td class="text-error">{{ derivatives30.maxPositiveRate > 0 ? '+' + Math.round(derivatives30.maxPositiveRate) : '0' }} mmHg/h</td></tr>
+              <tr><td>Variazione max ↓</td><td class="text-warning">{{ derivatives7.maxNegativeRate < 0 ? Math.round(derivatives7.maxNegativeRate) : '0' }} mmHg/h</td><td class="text-warning">{{ derivatives30.maxNegativeRate < 0 ? Math.round(derivatives30.maxNegativeRate) : '0' }} mmHg/h</td></tr>
               <tr><td>Allarmi dP/dt</td><td :class="{ 'text-error': derivatives7.alarmSegments.length > 0 }">{{ derivatives7.alarmSegments.length }}</td><td :class="{ 'text-error': derivatives30.alarmSegments.length > 0 }">{{ derivatives30.alarmSegments.length }}</td></tr>
               <tr><td>Carico ipertensivo</td><td :class="{ 'text-error': htnLoad7.percentage > 30 }">{{ htnLoad7.percentage }}%</td><td :class="{ 'text-error': htnLoad30.percentage > 30 }">{{ htnLoad30.percentage }}%</td></tr>
               <tr><td>Picco mattutino</td><td>{{ surge7.delta !== null ? (surge7.delta > 0 ? '+' : '') + surge7.delta + ' mmHg' : 'N/D' }}</td><td>{{ surge30.delta !== null ? (surge30.delta > 0 ? '+' : '') + surge30.delta + ' mmHg' : 'N/D' }}</td></tr>
@@ -502,31 +498,22 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
         </div>
       </div>
 
-      <!-- PDF / Share options -->
       <div class="card mb-md">
         <h3 class="mb-sm">Scarica / Condividi</h3>
-        <p class="text-secondary mb-sm" style="font-size:0.8125rem">Le opzioni sotto si applicano sia al PDF che al link temporaneo.</p>
-        <div class="flex flex-col gap-sm mb-md">
-          <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
-            <input type="checkbox" v-model="includeCharts" /> Includi grafici
-          </label>
-          <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
-            <input type="checkbox" v-model="anonymize" /> Anonimizza (nasconde nome, genere, età e indirizzo)
-          </label>
-          <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem" :class="{ 'opacity-50': anonymize }">
-            <input type="checkbox" v-model="includeAnagrafica" :disabled="anonymize" /> Includi anagrafica completa (nome, cognome, CF, telefono, indirizzo)
-          </label>
-        </div>
-        <button class="btn btn-primary mb-sm" @click="generatePDF" :disabled="generatingAction !== null">
+        <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
           <AppIcon name="copy" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
         </button>
+      </div>
 
-        <hr style="margin:var(--space-md) 0;border-color:var(--color-border)" />
-        <h4 class="mb-sm" style="font-size:0.9375rem">Link Temporaneo (48h)</h4>
+      <div class="card mb-md">
+        <h3 class="mb-sm">Link Temporaneo (48h)</h3>
         <p class="text-secondary mb-sm" style="font-size:0.8125rem">Genera un link web per il medico. Con PIN opzionale per maggiore privacy.</p>
         <div class="flex gap-sm mb-sm items-center flex-wrap">
           <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
             <input type="checkbox" v-model="sharePin" /> Proteggi con PIN
+          </label>
+          <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
+            <input type="checkbox" v-model="anonymizeReportLink" /> Anonimizza dati
           </label>
           <button class="btn btn-primary btn-sm" @click="generateShareLink">Genera Link</button>
         </div>
@@ -603,5 +590,4 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
 
 .text-error { color: var(--color-error); }
 .text-warning { color: #EF6C00; }
-.opacity-50 { opacity: 0.5; }
 </style>

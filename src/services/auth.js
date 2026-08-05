@@ -18,8 +18,7 @@ import {
 } from './supabaseTableAuth'
 
 const SESSION_KEY = 'pressione_session'
-const DEFAULT_TTL_MINUTES = 480   // 8 hours
-const REMEMBER_TTL_MINUTES = 43200 // 30 days
+const DEFAULT_TTL_MINUTES = 480 // 8 hours
 
 const state = reactive({
     user: null,
@@ -163,7 +162,7 @@ export async function initAuth() {
 /**
  * Login
  */
-async function login(username, password, rememberMe = false) {
+async function login(username, password) {
     if (!username || !password) {
         throw new Error('Username e password sono obbligatori')
     }
@@ -173,7 +172,7 @@ async function login(username, password, rememberMe = false) {
         password
     })
 
-    return createSession(user, rememberMe)
+    return createSession(user)
 }
 
 /**
@@ -198,9 +197,8 @@ async function register(username, email, password, role = 'user') {
 /**
  * Create session after successful login
  */
-function createSession(userData, rememberMe = false) {
-    const ttlMinutes = rememberMe ? REMEMBER_TTL_MINUTES : state.sessionTtlMinutes
-    const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000)
+function createSession(userData) {
+    const expiresAt = new Date(Date.now() + state.sessionTtlMinutes * 60 * 1000)
     const session = {
         username: userData.username,
         email: userData.email,
@@ -217,8 +215,7 @@ function createSession(userData, rememberMe = false) {
         streetNumber: userData.streetNumber || '',
         city: userData.city || '',
         postalCode: userData.postalCode || '',
-        expiresAt: expiresAt.toISOString(),
-        persistent: rememberMe
+        expiresAt: expiresAt.toISOString()
     }
 
     const sessionJson = JSON.stringify(session)

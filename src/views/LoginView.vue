@@ -9,7 +9,6 @@ const { login, requestPasswordReset, completePasswordReset } = useAuth()
 
 const username = ref('')
 const password = ref('')
-const rememberMe = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 const isLoading = ref(false)
@@ -30,7 +29,7 @@ async function handleSubmit() {
 
   isLoading.value = true
   try {
-    await login(username.value, password.value, rememberMe.value)
+    await login(username.value, password.value)
     router.push('/')
   } catch (e) {
     errorMessage.value = e.message || 'Errore di accesso'
@@ -110,11 +109,6 @@ async function handleCompleteRecovery() {
           </div>
 
           <div v-if="errorMessage" class="form-error mb-md">{{ errorMessage }}</div>
-
-          <label class="flex items-center gap-sm mb-md" style="cursor:pointer;font-size:0.875rem">
-            <input type="checkbox" v-model="rememberMe" />
-            <span>Ricordami su questo dispositivo</span>
-          </label>
 
           <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
             {{ isLoading ? 'Accesso in corso...' : 'Accedi' }}
