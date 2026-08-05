@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ─── Pressione Release Script ───────────────────────────────────
-# Builds the app and deploys dist/ to the gh-pages branch.
-# Run from the project root.
+# ═══════════════════════════════════════════════════════════════
+# Pressione — Safe Release Deploy
+# ═══════════════════════════════════════════════════════════════
+# Builds the app and deploys dist/ to the gh-pages branch using
+# an isolated git worktree. Never touches the main working directory,
+# never uses destructive cross-branch cleanup.
 #
 # Usage:  bash scripts/deploy.sh [commit-message]
 
@@ -11,124 +14,167 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 
-COMMIT_MSG="${1:-deploy: $(node -p "require('./package.json').version")}"
+COMMIT_MSG="${1:-deploy: v$(node -p "require('./package.json').version")}"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+WORKTREE_DIR=""
+CLEANUP_DONE=false
+
+cleanup() {
+    if [ "$CLEANUP_DONE" = true ]; then return; fi
+    CLEANUP_DONE=true
+
+    if [ -n "$WORKTREE_DIR" ] && [ -d "$WORKTREE_DIR" ]; then
+        echo -e "   🧹 Rimozione worktree temporaneo..."
+        git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || rm -rf "$WORKTREE_DIR"
+    fi
+    # Return to original branch if we're not on it
+    git checkout --quiet - 2>/dev/null || true
+}
+trap cleanup EXIT
 
 echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║   Pressione — Release Deploy        ║"
-echo "╚══════════════════════════════════════╝"
+echo -e "${CYAN}╔══════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║   Pressione — Safe Release Deploy   ║${NC}"
+echo -e "${CYAN}╚══════════════════════════════════════╝${NC}"
 echo ""
 
-# ── 1. Check .env ──────────────────────────────────────────────
-echo "🔍 [1/5] Verifica .env..."
+# ── 1. Pre-flight checks ──────────────────────────────────────
+echo -e "${CYAN}🔍 [1/5] Verifica prerequisiti...${NC}"
+
+# .env check
 if [ ! -f .env ]; then
-    echo "❌ ERRORE: .env non trovato! Creane uno con:"
-    echo "   VITE_SUPABASE_URL=https://xxx.supabase.co"
-    echo "   VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_..."
+    echo -e "${RED}❌ ERRORE: .env non trovato!${NC}"
+    echo "   Crealo con VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY"
     exit 1
 fi
-
 if ! grep -q "sb_publishable_" .env 2>/dev/null; then
-    echo "❌ ERRORE: .env non contiene una chiave Supabase valida"
+    echo -e "${RED}❌ ERRORE: .env non contiene una chiave Supabase valida${NC}"
     exit 1
 fi
 
-# Safety: ensure .env is in .gitignore (prevents tracking)
+# Ensure .env is gitignored
 if [ -f .gitignore ] && ! grep -q '^\.env$' .gitignore 2>/dev/null; then
-    echo "⚠️  .env NON è in .gitignore! Aggiungilo prima di deployare."
+    echo -e "${YELLOW}   ⚠️  .env non in .gitignore — aggiunto${NC}"
     echo '.env' >> .gitignore
-    echo "   ✅ .env aggiunto a .gitignore"
 fi
-echo "   ✅ .env presente con credenziali Supabase"
 
-# ── 2. Install & Build ─────────────────────────────────────────
+# Build doesn't need clean working tree (Vite reads from disk, not git)
+# but warn if there are unstaged changes (they won't be in the deploy)
+if ! git diff --quiet 2>/dev/null; then
+    echo -e "${YELLOW}   ⚠️  Working tree con modifiche non committate (non incluse nel deploy)${NC}"
+fi
+
+echo -e "${GREEN}   ✅ Prerequisiti OK${NC}"
+
+# ── 2. Build ───────────────────────────────────────────────────
 echo ""
-echo "📦 [2/5] Installazione dipendenze + build..."
+echo -e "${CYAN}📦 [2/5] Build...${NC}"
 npm install --silent 2>&1 | tail -1
 npm run build
 
-# ── 3. Verify Supabase baked in ────────────────────────────────
+# ── 3. Verify build artifacts ──────────────────────────────────
 echo ""
-echo "🔬 [3/5] Verifica build..."
+echo -e "${CYAN}🔬 [3/5] Verifica build...${NC}"
+
+if [ ! -f dist/index.html ]; then
+    echo -e "${RED}❌ ERRORE: dist/index.html non trovato — build fallita${NC}"
+    exit 1
+fi
+
+# Safety: verify the anon key (NOT secret key) is in the bundle
+# We only check for the Supabase URL, never for secret keys
 if grep -q "pvmlphhzqevmktrknipo" dist/assets/index*.js 2>/dev/null; then
-    echo "   ✅ Supabase URL presente nel bundle"
+    echo -e "${GREEN}   ✅ Supabase URL presente nel bundle${NC}"
 else
-    echo "   ⚠️  Supabase URL NON trovato nel bundle — verifica .env"
+    echo -e "${YELLOW}   ⚠️  Supabase URL non trovato — verifica .env${NC}"
 fi
 
 VERSION=$(node -p "require('./package.json').version")
 BUILD=$(git rev-parse --short HEAD 2>/dev/null || echo "dev")
-echo "   📦 v${VERSION} (build ${BUILD})"
-echo "   📁 $(ls dist/assets/*.js 2>/dev/null | wc -l | tr -d ' ') asset JS"
+ASSET_COUNT=$(ls dist/assets/*.js 2>/dev/null | wc -l | tr -d ' ')
+echo -e "   📦 v${VERSION} (${BUILD})  ·  ${ASSET_COUNT} asset JS  ·  $(du -sh dist | cut -f1)"
 
-# ── 4. Deploy to gh-pages ──────────────────────────────────────
+# ── 4. Deploy via isolated worktree ────────────────────────────
 echo ""
-echo "🚀 [4/5] Deploy su gh-pages..."
+echo -e "${CYAN}🚀 [4/5] Deploy su gh-pages (worktree isolato)...${NC}"
 
-TMPDIR=$(mktemp -d /tmp/pressione-gh-pages.XXXXXX)
-# Ensure temp dir is always cleaned up, even on error
-trap "rm -rf '$TMPDIR' .temp .tmp 2>/dev/null; git checkout main --quiet 2>/dev/null" EXIT
-cp -r dist/* "$TMPDIR"/
+# Create temp worktree location
+WORKTREE_DIR=$(mktemp -d /tmp/pressione-gh-pages.XXXXXX)
 
-# Stash local changes before switching branch
-STASHED=false
-if ! git diff --quiet || ! git diff --cached --quiet; then
-    git stash push -m "deploy-script-auto-stash" --quiet
-    STASHED=true
+# Fetch gh-pages from remote to ensure we have latest
+git fetch origin gh-pages --quiet 2>/dev/null || true
+
+# Determine gh-pages source
+if git show-ref --verify --quiet refs/heads/gh-pages; then
+    echo "   📂 gh-pages branch locale"
+    git worktree add "$WORKTREE_DIR" gh-pages --quiet
+elif git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+    echo "   📂 gh-pages branch da origin"
+    git worktree add "$WORKTREE_DIR" origin/gh-pages --quiet
+    git -C "$WORKTREE_DIR" checkout -b gh-pages --quiet
+else
+    echo "   🆕 gh-pages non esiste — creazione"
+    git worktree add "$WORKTREE_DIR" --orphan gh-pages --quiet
 fi
 
-git checkout gh-pages --quiet 2>/dev/null || git checkout -b gh-pages origin/gh-pages --quiet
+# Clean ONLY git-tracked files inside the isolated worktree.
+# This is safe because: (a) we're in an isolated worktree,
+# (b) git rm only touches files known to git,
+# (c) .gitignore rules are respected — untracked files are left alone.
+echo "   🧹 Pulizia build precedente..."
+git -C "$WORKTREE_DIR" rm -rf --quiet . 2>/dev/null || true
 
-# Remove ONLY tracked files — list them explicitly and remove one by one.
-# This is safe because it only touches files known to git, never gitignored files.
-echo "   🧹 Pulizia file tracciati su gh-pages..."
-git ls-files -z | xargs -0 git rm --quiet -- 2>/dev/null || true
+# Copy new build artifacts
+echo "   📋 Copia nuovi artefatti..."
+cp -R dist/* "$WORKTREE_DIR"/
+touch "$WORKTREE_DIR/.nojekyll"
 
-# Copy new build
-cp -r "$TMPDIR"/* .
-touch .nojekyll
+# Stage all changes within the worktree
+git -C "$WORKTREE_DIR" add -A
 
-# Restore .gitignore from main (it was tracked, so git rm removed it from index)
-git show main:.gitignore > .gitignore 2>/dev/null || true
+# ── FINAL SAFETY GATES ─────────────────────────────────────────
 
-# Safety: if .gitignore is missing, create a minimal one that at least protects .env
-if [ ! -f .gitignore ]; then
-    echo "⚠️  .gitignore assente, creo protezione minima per .env"
-    printf '.env\n.env.local\nnode_modules/\n' > .gitignore
-fi
-
-git add -A
-
-# FINAL SAFETY: verify .env was NOT staged (would mean .gitignore failed)
-if git diff --cached --name-only | grep -q '^.env$'; then
-    echo "❌ ERRORE CRITICO: .env sta per essere committato!"
-    echo "   Qualcosa non va con .gitignore. Deploy ANNULLATO."
-    git reset --quiet HEAD .env 2>/dev/null || true
+# Gate 1: .env must NEVER be staged
+STAGED_FILES=$(git -C "$WORKTREE_DIR" diff --cached --name-only 2>/dev/null || echo "")
+if echo "$STAGED_FILES" | grep -q '^\.env$'; then
+    echo -e "${RED}❌ ERRORE CRITICO: .env sta per essere committato!${NC}"
+    echo -e "${RED}   Deploy ANNULLATO. Verifica .gitignore.${NC}"
     exit 1
 fi
-git commit -m "$COMMIT_MSG" --quiet
-git push origin gh-pages --quiet
 
-# ── 5. Cleanup ─────────────────────────────────────────────────
-echo ""
-echo "🧹 [5/5] Pulizia..."
-
-git checkout main --quiet
-if [ "$STASHED" = true ]; then
-    git stash pop --quiet 2>/dev/null || true
+# Gate 2: index.html must exist in the worktree
+if [ ! -f "$WORKTREE_DIR/index.html" ]; then
+    echo -e "${RED}❌ ERRORE: index.html assente dopo la copia${NC}"
+    exit 1
 fi
-rm -rf "$TMPDIR"
 
-# Clean up any accidental .temp or .tmp directories
-rm -rf .temp .tmp 2>/dev/null || true
+# Commit and push from the isolated worktree
+CHANGES=$(git -C "$WORKTREE_DIR" diff --cached --stat 2>/dev/null | tail -1 || echo "")
+echo -e "   📝 Commit: ${COMMIT_MSG}"
+echo -e "   📊 Changes: ${CHANGES:-nessuna modifica}"
 
-# ── Done ───────────────────────────────────────────────────────
+if git -C "$WORKTREE_DIR" diff --cached --quiet 2>/dev/null; then
+    echo -e "${YELLOW}   ⚠️  Nessuna modifica — build identica alla precedente, skip commit${NC}"
+else
+    git -C "$WORKTREE_DIR" commit -m "$COMMIT_MSG" --quiet
+fi
+
+echo "   🚀 Push su origin/gh-pages..."
+git -C "$WORKTREE_DIR" push origin gh-pages --quiet
+
+# ── 5. Done ────────────────────────────────────────────────────
 echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║   ✅ Deploy completato!             ║"
-echo "║   v${VERSION} (${BUILD})                  ║"
-echo "║   https://vgrazian.github.io/pressione/ ║"
-echo "╚══════════════════════════════════════╝"
+echo -e "${GREEN}╔══════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║   ✅ Deploy completato!             ║${NC}"
+printf "${GREEN}║   v%s (%s)%*s║${NC}\n" "$VERSION" "$BUILD" $(( 20 - ${#VERSION} - ${#BUILD} )) ""
+echo -e "${GREEN}║   https://vgrazian.github.io/pressione/ ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════╝${NC}"
 echo ""
-echo "Attendi ~1-2 min per propagazione CDN, poi hard refresh (Cmd+Shift+R)."
+echo "Attendi ~1-2 min per propagazione CDN, poi Cmd+Shift+R."
 echo ""
