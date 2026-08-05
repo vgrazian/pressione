@@ -241,14 +241,20 @@ watch(theme, () => { nextTick(() => renderActiveChart()) })
 async function generatePDF() {
   generatingAction.value = 'pdf'
   try {
+    const u = user.value
     await generatePDFReport({
       data: filteredReadings.value, readings7: readings7.value, readings30: readings30.value,
-      username: user.value?.username, displayName: includeAnagrafica.value ? displayName.value : (anonymize.value ? null : user.value?.username),
-      birthDate: anonymize.value ? null : (user.value?.birthDate || null),
-      gender: anonymize.value ? null : (user.value?.gender || null),
+      username: u?.username,
+      displayName: includeAnagrafica.value && !anonymize.value ? displayName.value : (anonymize.value ? null : u?.username),
+      birthDate: anonymize.value ? null : (u?.birthDate || null),
+      gender: anonymize.value ? null : (u?.gender || null),
       anonymize: anonymize.value, includeCharts: includeCharts.value, includeHistory: includeHistory.value,
-      // Pass full anagrafica only if includeAnagrafica is checked AND not anonymized
-      user: includeAnagrafica.value && !anonymize.value ? user.value : null
+      user: includeAnagrafica.value && !anonymize.value ? {
+        firstName: u?.firstName, lastName: u?.lastName,
+        fiscalCode: u?.fiscalCode, phone: u?.phone,
+        street: u?.street, streetNumber: u?.streetNumber,
+        city: u?.city, postalCode: u?.postalCode
+      } : null
     })
   } catch (e) { linkMessage.value = 'Errore nella generazione PDF: ' + e.message }
   finally { generatingAction.value = null }
