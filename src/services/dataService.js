@@ -19,17 +19,25 @@ function saveReadingsToLocalStorage(username, readings) {
             category: r.category, updatedAt: r.updatedAt || r.timestamp
         }))
         localStorage.setItem(lsReadingsKey(username), JSON.stringify(slim))
-    } catch {}
+        console.log('[LS-bridge] Saved', slim.length, 'readings to localStorage for', username)
+    } catch (e) {
+        console.warn('[LS-bridge] Save failed:', e.message)
+    }
 }
 
 function loadReadingsFromLocalStorage(username) {
     try {
         const raw = localStorage.getItem(lsReadingsKey(username))
+        console.log('[LS-bridge] localStorage key:', lsReadingsKey(username), 'exists:', !!raw, 'size:', raw ? raw.length : 0)
         if (!raw) return null
         const readings = JSON.parse(raw)
         if (!Array.isArray(readings) || readings.length === 0) return null
+        console.log('[LS-bridge] Loaded', readings.length, 'readings from localStorage')
         return readings
-    } catch { return null }
+    } catch (e) {
+        console.warn('[LS-bridge] Load failed:', e.message)
+        return null
+    }
 }
 
 /**
@@ -109,7 +117,7 @@ export async function upsertReading(reading, username) {
     await db.readings.put(idbRecord)
 
     // Update localStorage backup (fire-and-forget)
-    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => {})
+    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => { })
 
     // 2. Sync to Supabase if online
     if (isSupabaseConfigured) {
@@ -139,7 +147,7 @@ export async function deleteReading(id, username) {
     await db.readings.delete(id)
 
     // Update localStorage backup
-    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => {})
+    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => { })
 
     // 2. Delete from Supabase
     if (isSupabaseConfigured) {
@@ -164,7 +172,7 @@ export async function deleteReading(id, username) {
 export async function deleteAllReadings(username) {
     await db.readings.where('username').equals(username).delete()
 
-    try { localStorage.removeItem(lsReadingsKey(username)) } catch {}
+    try { localStorage.removeItem(lsReadingsKey(username)) } catch { }
 
     if (isSupabaseConfigured) {
         await supabase.from('readings').delete().eq('username', username)
@@ -179,13 +187,16 @@ export async function getReadings(username, filters = {}) {
 
     // Sort by timestamp descending
     let readings = await collection.toArray()
+    console.log('[getReadings] IndexedDB returned', readings.length, 'readings for', username)
 
     // Fallback: if IndexedDB is empty, try localStorage (iOS PWA isolation)
     if (readings.length === 0) {
+        console.log('[getReadings] IndexedDB empty, trying localStorage fallback...')
         const lsReadings = loadReadingsFromLocalStorage(username)
         if (lsReadings && lsReadings.length > 0) {
-            try { await db.readings.bulkPut(lsReadings) } catch {}
+            try { await db.readings.bulkPut(lsReadings) } catch { }
             readings = lsReadings
+            console.log('[getReadings] Restored', readings.length, 'readings from localStorage')
         }
     }
 
@@ -228,7 +239,10 @@ export async function getReadingById(id) {
  * Refresh data from Supabase
  */
 export async function refreshFromServer(username) {
-    if (!isSupabaseConfigured) return
+    if (!isSupabaseConfigured) {
+        console.log('[refreshFromServer] Supabase not configured, skipping')
+        return
+    }
 
     try {
         await withRetry(async () => {
@@ -240,6 +254,7 @@ export async function refreshFromServer(username) {
 
             if (error) throw error
 
+            console.log('[refreshFromServer] Supabase returned', readings ? readings.length : 0, 'readings for', username)
             if (readings && readings.length > 0) {
                 const mapped = readings.map(r => ({
                     id: r.id, username: r.username, timestamp: r.timestamp,
@@ -250,6 +265,7 @@ export async function refreshFromServer(username) {
                 }))
                 await db.readings.bulkPut(mapped)
                 saveReadingsToLocalStorage(username, mapped)
+                console.log('[refreshFromServer] Synced', mapped.length, 'readings to IndexedDB + localStorage')
             }
         })
     } catch (e) {
