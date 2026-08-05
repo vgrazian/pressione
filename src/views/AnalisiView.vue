@@ -508,7 +508,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
         <p class="text-secondary mb-sm" style="font-size:0.8125rem">Le opzioni sotto si applicano sia al PDF che al link temporaneo.</p>
         <div class="flex flex-col gap-sm mb-md">
           <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
-            <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF
+            <input type="checkbox" v-model="includeCharts" /> Includi grafici
           </label>
           <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
             <input type="checkbox" v-model="anonymize" /> Anonimizza (nasconde nome, genere, età e indirizzo)
