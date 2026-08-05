@@ -330,6 +330,7 @@ const appInstalled = ref(isStandalone())
 const installMessage = ref('')
 const cacheClearing = ref(false)
 const diagMessage = ref('')
+const syncInProgress = ref(false)
 const timeBands = ref(getDefaultBands())
 const timeBandsMessage = ref('')
 const savedBands = ref([])
@@ -434,6 +435,29 @@ async function handleShareDiagnostics() {
     if (e.name !== 'AbortError') {
       diagMessage.value = 'Errore: ' + e.message
     }
+  }
+}
+
+async function handleForceSyncToSupabase() {
+  syncInProgress.value = true
+  diagMessage.value = ''
+  try {
+    const { supabase } = await import('@/services/supabaseClient.js')
+    const readings = await getReadings(user.value?.username)
+    let synced = 0
+    for (const r of readings) {
+      const { error } = await supabase.from('readings').upsert({
+        id: r.id, username: r.username, systolic: r.systolic, diastolic: r.diastolic,
+        heart_rate: r.heartRate, timestamp: r.timestamp, notes: r.notes || '',
+        created_at: r.updatedAt || r.timestamp, updated_at: new Date().toISOString()
+      })
+      if (!error) synced++
+    }
+    diagMessage.value = `Sincronizzate ${synced}/${readings.length} letture su Supabase`
+  } catch (e) {
+    diagMessage.value = 'Errore: ' + e.message
+  } finally {
+    syncInProgress.value = false
   }
 }
 
@@ -701,6 +725,9 @@ async function handleInstall() {
       </p>
       <button class="btn btn-sm btn-secondary" @click="handleShareDiagnostics">
         📋 Condividi diagnostica
+      </button>
+      <button class="btn btn-sm btn-secondary mt-sm" @click="handleForceSyncToSupabase" :disabled="syncInProgress">
+        {{ syncInProgress ? 'Sincronizzazione...' : '🔄 Forza sync a Supabase' }}
       </button>
       <div v-if="diagMessage" class="form-success mt-sm">{{ diagMessage }}</div>
     </div>

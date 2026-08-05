@@ -133,10 +133,11 @@ export async function upsertReading(reading, username) {
         heart_rate: reading.heartRate,
         timestamp: reading.timestamp || now,
         notes: reading.notes || '',
-        category,
         created_at: reading.created_at || now,
         updated_at: now
     }
+    // Supabase record (no 'category' — column doesn't exist in schema)
+    const supabaseRecord = { ...normalized }
 
     // 1. Save to IndexedDB first
     const idbRecord = {
@@ -163,7 +164,7 @@ export async function upsertReading(reading, username) {
     // 2. Sync to Supabase if online
     if (isSupabaseConfigured) {
         try {
-            await supabase.from('readings').upsert(normalized)
+            await supabase.from('readings').upsert(supabaseRecord)
         } catch (e) {
             // Enqueue for later sync
             await db.syncQueue.put({
@@ -171,7 +172,7 @@ export async function upsertReading(reading, username) {
                 operation: 'upsert',
                 tableName: 'readings',
                 recordId: normalized.id,
-                recordData: normalized,
+                recordData: supabaseRecord,
                 createdAt: now
             })
         }
