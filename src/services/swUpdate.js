@@ -14,42 +14,33 @@ export function useSWUpdate() {
 async function applyUpdate() {
     updateFailed.value = false
 
-    // 1. Try SKIP_WAITING on waiting workers (standard SW update)
+    // 1. Activate waiting service worker
     if (navigator.serviceWorker) {
         try {
             const registrations = await navigator.serviceWorker.getRegistrations()
             for (const reg of registrations) {
-                if (reg.waiting) {
-                    reg.waiting.postMessage({ type: 'SKIP_WAITING' })
-                }
-                // Also check for installing workers
-                if (reg.installing) {
-                    reg.installing.postMessage({ type: 'SKIP_WAITING' })
-                }
-                // Force update check
-                await reg.update()
+                if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+                if (reg.installing) reg.installing.postMessage({ type: 'SKIP_WAITING' })
             }
-        } catch { /* continue to fallback */ }
+        } catch { /* continue */ }
     }
 
-    // 2. Listen for controller change (SW takes over) — reload
+    // 2. Listen for controller change (SW takes over) — instant reload
     let reloaded = false
+    const doReload = () => {
+        if (!reloaded) { reloaded = true; window.location.reload() }
+    }
     if (navigator.serviceWorker) {
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!reloaded) {
-                reloaded = true
-                window.location.reload()
-            }
-        }, { once: true })
+        navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true })
     }
 
-    // 3. Fallback: if no reload after 3s, force-clear and reload
-    setTimeout(async () => {
+    // 3. Fallback: if controllerchange didn't fire within 1.5s, reload anyway
+    setTimeout(() => {
         if (!reloaded) {
             updateFailed.value = true
-            await forceClearCache()
+            doReload()
         }
-    }, 3000)
+    }, 1500)
 }
 
 /**
