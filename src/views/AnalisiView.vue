@@ -355,10 +355,10 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
         </template>
       </div>
       <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
-        <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF
+        <input type="checkbox" v-model="includeCharts" /> Includi grafici
       </label>
       <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
-        <input type="checkbox" v-model="anonymize" /> Anonimizza report
+        <input type="checkbox" v-model="anonymize" /> Anonimizza (nasconde nome, genere, età e anagrafica se selezionata e presente)
       </label>
     </div>
 
