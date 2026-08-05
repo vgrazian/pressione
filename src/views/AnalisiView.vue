@@ -69,6 +69,7 @@ onMounted(async () => {
     await refreshFromServer(user.value.username)
     readings.value = await getReadings(user.value.username)
     userBands.value = await getUserBands(user.value.username)
+    await nextTick()
     await loadActiveLinks()
   } finally {
     isLoading.value = false
