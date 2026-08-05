@@ -10,6 +10,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 ### Autenticazione e Utenti
 
 - Login/Logout con password hashed (SHA-256), sessione persistente 8 ore
+- **"Ricordami"**: sessione estesa a 30 giorni con checkbox al login
 - Recupero password via token, modifica email
 - RBAC: admin (gestione utenti, reset password) e user
 - 8 utenti pre-configurati
@@ -111,7 +112,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 | PDF | jsPDF (A4) |
 | Backend | Supabase (PostgreSQL + REST API) |
 | Database locale | Dexie (IndexedDB v1) + localStorage bridge |
-| Test | Vitest (79) + Playwright (15) |
+| Test | Vitest (81) + Playwright (15) |
 | PWA | Vite PWA Plugin (generateSW, autoUpdate) |
 | UI | Inter font, CSS custom properties, 18 SVG icons |
 
