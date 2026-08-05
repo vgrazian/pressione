@@ -131,11 +131,36 @@ function addHeader(doc, opts) {
     doc.setTextColor(...C.muted)
     const from = opts.data.length ? new Date(opts.data[opts.data.length - 1].timestamp).toLocaleDateString('it-IT') : 'N/D'
     const to = opts.data.length ? new Date(opts.data[0].timestamp).toLocaleDateString('it-IT') : 'N/D'
-    const patient = opts.anonymize ? 'Anonimo' : (opts.displayName || opts.username || '—')
+    const u = opts.user
+    const hasAnagrafica = !opts.anonymize && u && (u.firstName || u.lastName)
+    const patient = opts.anonymize ? 'Anonimo' : (hasAnagrafica ? '' : (opts.displayName || opts.username || '—'))
     const age = computeAge(opts.birthDate)
-    const ageStr = !opts.anonymize && age ? `, ${age} anni` : ''
-    const genderStr = !opts.anonymize && opts.gender ? `, ${genderLabel(opts.gender)}` : ''
-    doc.text(`Paziente: ${patient}${ageStr}${genderStr}    •    Periodo: ${from} – ${to}    •    ${opts.data.length} misurazioni    •    Generato: ${new Date().toLocaleDateString('it-IT')}`, S.m, y)
+    const ageStr = !opts.anonymize && age ? `${age} anni` : ''
+    const genderStr = !opts.anonymize && opts.gender ? `${genderLabel(opts.gender)}` : ''
+    const patientLabel = hasAnagrafica
+        ? `Paziente: ${ageStr}${ageStr && genderStr ? ', ' : ''}${genderStr}`
+        : `Paziente: ${patient}${ageStr ? ', ' + ageStr : ''}${genderStr ? ', ' + genderStr : ''}`
+    doc.text(`${patientLabel}    •    Periodo: ${from} – ${to}    •    ${opts.data.length} misurazioni    •    Generato: ${new Date().toLocaleDateString('it-IT')}`, S.m, y)
+    y += S.in
+
+    // Full anagrafica (only if not anonymized and user data is available)
+    if (hasAnagrafica) {
+        const anagParts = []
+        const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim()
+        if (fullName) anagParts.push(fullName)
+        if (u.fiscalCode) anagParts.push(`CF: ${u.fiscalCode}`)
+        if (u.phone) anagParts.push(`Tel: ${u.phone}`)
+        if (u.street) {
+            const addr = [u.street, u.streetNumber, u.postalCode, u.city].filter(Boolean).join(' ')
+            if (addr) anagParts.push(addr)
+        }
+        if (anagParts.length > 0) {
+            doc.setFontSize(T.xs)
+            doc.setTextColor(...C.muted)
+            doc.text(anagParts.join('    •    '), S.m, y)
+            y += S.in - 1
+        }
+    }
 
     return y + S.gap
 }
@@ -477,10 +502,10 @@ function addFooter(doc, pageNum, totalPages) {
 }
 
 // ── Shared PDF builder ──────────────────────────────────────────
-async function buildPDF({ data, readings7, readings30, username, displayName, birthDate, gender, anonymize, includeCharts, includeHistory }) {
+async function buildPDF({ data, readings7, readings30, username, displayName, birthDate, gender, anonymize, includeCharts, includeHistory, user }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
     const stats = computeStatistics(data)
-    const opts = { data, username, displayName, birthDate, gender, anonymize }
+    const opts = { data, username, displayName, birthDate, gender, anonymize, user }
 
     let y = addHeader(doc, opts)
     y = addClinicalSummary(doc, y, stats, data, opts)
