@@ -347,6 +347,31 @@ async function handleForceClearCache() {
 async function handleShareDiagnostics() {
   diagMessage.value = ''
   try {
+    // Test Supabase connectivity directly
+    let supabaseStatus = 'not checked'
+    let supabaseReadings = 'not checked'
+    let syncQueueStatus = 'not checked'
+    let supabaseConfigured = false
+
+    try {
+      const { isSupabaseConfigured: configured } = await import('@/services/supabaseClient.js')
+      supabaseConfigured = configured
+      if (configured) {
+        const { supabase } = await import('@/services/supabaseClient.js')
+        const { data, error } = await supabase.from('readings').select('id').eq('username', user.value?.username)
+        supabaseStatus = error ? 'error: ' + error.message : 'ok'
+        supabaseReadings = data ? `${data.length} readings` : 'null'
+        // Check sync queue
+        const { db } = await import('@/db/index.js')
+        const pending = await db.syncQueue.where('username').equals(user.value?.username).toArray()
+        syncQueueStatus = `${pending.length} pending`
+      } else {
+        supabaseStatus = 'not configured'
+      }
+    } catch (e) {
+      supabaseStatus = 'exception: ' + e.message
+    }
+
     const info = {
       version: APP_VERSION,
       build: BUILD_NUMBER,
@@ -357,6 +382,10 @@ async function handleShareDiagnostics() {
       online: navigator.onLine,
       theme: document.documentElement.getAttribute('data-theme') || 'system',
       username: user.value?.username || 'N/D',
+      supabaseConfigured,
+      supabaseStatus,
+      supabaseReadings,
+      syncQueue: syncQueueStatus,
       indexedDB: 'pending...',
       localStorageReadings: 'N/D'
     }
