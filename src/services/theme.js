@@ -8,7 +8,7 @@ function getStoredTheme() {
     catch { return null }
 }
 
-const theme = ref(getStoredTheme() || 'system')
+const theme = ref(getStoredTheme() || 'light')
 
 // Resolved theme: maps 'system' → actual 'light' or 'dark' based on OS pref
 const resolvedTheme = computed(() => {

@@ -7,6 +7,31 @@ import { classifyReading } from './categories'
 const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
 
+// --- localStorage bridge for readings (iOS PWA compatibility) ---
+function lsReadingsKey(username) { return 'pressione_readings_' + username }
+
+function saveReadingsToLocalStorage(username, readings) {
+    try {
+        const slim = readings.map(r => ({
+            id: r.id, username: r.username, timestamp: r.timestamp,
+            systolic: r.systolic, diastolic: r.diastolic,
+            heartRate: r.heartRate, notes: r.notes || '',
+            category: r.category, updatedAt: r.updatedAt || r.timestamp
+        }))
+        localStorage.setItem(lsReadingsKey(username), JSON.stringify(slim))
+    } catch {}
+}
+
+function loadReadingsFromLocalStorage(username) {
+    try {
+        const raw = localStorage.getItem(lsReadingsKey(username))
+        if (!raw) return null
+        const readings = JSON.parse(raw)
+        if (!Array.isArray(readings) || readings.length === 0) return null
+        return readings
+    } catch { return null }
+}
+
 /**
  * Retry wrapper with exponential backoff
  */
@@ -70,7 +95,7 @@ export async function upsertReading(reading, username) {
     }
 
     // 1. Save to IndexedDB first
-    await db.readings.put({
+    const idbRecord = {
         id: normalized.id,
         username,
         timestamp: normalized.timestamp,
@@ -80,7 +105,11 @@ export async function upsertReading(reading, username) {
         notes: normalized.notes,
         category: normalized.category,
         updatedAt: now
-    })
+    }
+    await db.readings.put(idbRecord)
+
+    // Update localStorage backup (fire-and-forget)
+    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => {})
 
     // 2. Sync to Supabase if online
     if (isSupabaseConfigured) {
@@ -109,6 +138,9 @@ export async function deleteReading(id, username) {
     // 1. Remove from IndexedDB
     await db.readings.delete(id)
 
+    // Update localStorage backup
+    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => {})
+
     // 2. Delete from Supabase
     if (isSupabaseConfigured) {
         try {
@@ -132,6 +164,8 @@ export async function deleteReading(id, username) {
 export async function deleteAllReadings(username) {
     await db.readings.where('username').equals(username).delete()
 
+    try { localStorage.removeItem(lsReadingsKey(username)) } catch {}
+
     if (isSupabaseConfigured) {
         await supabase.from('readings').delete().eq('username', username)
     }
@@ -145,6 +179,16 @@ export async function getReadings(username, filters = {}) {
 
     // Sort by timestamp descending
     let readings = await collection.toArray()
+
+    // Fallback: if IndexedDB is empty, try localStorage (iOS PWA isolation)
+    if (readings.length === 0) {
+        const lsReadings = loadReadingsFromLocalStorage(username)
+        if (lsReadings && lsReadings.length > 0) {
+            try { await db.readings.bulkPut(lsReadings) } catch {}
+            readings = lsReadings
+        }
+    }
+
     readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 
     // Apply filters
@@ -205,6 +249,7 @@ export async function refreshFromServer(username) {
                     updatedAt: r.updated_at
                 }))
                 await db.readings.bulkPut(mapped)
+                saveReadingsToLocalStorage(username, mapped)
             }
         })
     } catch (e) {
