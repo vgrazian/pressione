@@ -240,7 +240,18 @@ export async function getReadings(username, filters = {}) {
             console.log('[getReadings] Restored', readings.length, 'readings from localStorage')
         }
     }
-
+    // Final fallback: if still empty, try Supabase directly
+    // (iOS 18 isolates localStorage between Safari and PWA, so Supabase is the only bridge)
+    if (readings.length === 0 && isSupabaseConfigured) {
+        console.log('[getReadings] Both empty, trying Supabase fallback...')
+        try {
+            await refreshFromServer(username)
+            readings = await db.readings.where('username').equals(username).toArray()
+            console.log('[getReadings] Supabase fallback returned', readings.length, 'readings')
+        } catch (e) {
+            console.warn('[getReadings] Supabase fallback failed:', e.message)
+        }
+    }
     readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 
     // Apply filters
