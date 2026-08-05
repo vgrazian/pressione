@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer, retrySyncQueue } from '@/services/dataService.js'
 import { computeStatistics, computeDerivatives } from '@/services/statistics.js'
-import { getCategoryColor } from '@/services/categories.js'
 import ReadingCard from '@/components/ReadingCard.vue'
 import CategoryBadge from '@/components/CategoryBadge.vue'
 import AppIcon from '@/components/AppIcon.vue'
@@ -56,6 +55,8 @@ async function loadData() {
     }
   } catch (e) {
     console.error('Load error:', e)
+    syncStatus.value = 'error'
+    syncError.value = e.message || 'Errore di sincronizzazione'
   } finally {
     isLoading.value = false
   }
@@ -68,11 +69,6 @@ function goToAdd() {
 function editReading(reading) {
   router.push(`/edit/${reading.id}`)
 }
-
-const latestCategoryColor = computed(() => {
-  if (!latestReading.value) return ''
-  return getCategoryColor(latestReading.value.category)
-})
 </script>
 
 <template>
@@ -85,8 +81,17 @@ const latestCategoryColor = computed(() => {
       <button class="btn btn-primary" @click="goToAdd">+ Nuova</button>
     </div>
 
+    <!-- Sync Status -->
+    <div v-if="syncStatus === 'syncing'" class="sync-banner mb-md">
+      Sincronizzazione in corso...
+    </div>
+    <div v-if="syncStatus === 'error'" class="sync-banner sync-banner--error mb-md">
+      <span>{{ syncError }}</span>
+      <button class="btn btn-sm btn-ghost" @click="loadData">Riprova</button>
+    </div>
+
     <!-- Latest Reading Card -->
-    <div v-if="latestReading" class="latest-card card mb-md" :style="{ borderLeftColor: latestCategoryColor }">
+    <div v-if="latestReading" class="latest-card card mb-md">
       <div class="latest-card__header">
         <h2>Ultima Misurazione</h2>
         <CategoryBadge :category="latestReading.category" />
@@ -186,9 +191,16 @@ const latestCategoryColor = computed(() => {
 
     <!-- Empty State -->
     <div v-if="!isLoading && !latestReading" class="empty-state">
-      <AppIcon name="heart" :size="48" color="var(--color-text-tertiary)" class="empty-state__icon" />
+      <div class="empty-state__illustration">
+        <AppIcon name="heart" :size="48" color="var(--color-accent-muted)" />
+      </div>
       <h3>Nessuna misurazione</h3>
       <p>Inizia a monitorare la tua pressione aggiungendo la prima misurazione.</p>
+      <div class="empty-state__steps">
+        <div class="empty-step"><span class="empty-step__num">1</span><span>Tocca il pulsante qui sotto</span></div>
+        <div class="empty-step"><span class="empty-step__num">2</span><span>Inserisci i valori misurati</span></div>
+        <div class="empty-step"><span class="empty-step__num">3</span><span>Salva e monitora l'andamento</span></div>
+      </div>
       <button class="btn btn-primary mt-md" @click="goToAdd">Aggiungi Misurazione</button>
     </div>
   </div>
@@ -199,6 +211,16 @@ const latestCategoryColor = computed(() => {
   color: var(--color-text-secondary);
   font-size: 0.875rem;
 }
+
+/* Sync banner */
+.sync-banner { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); background: var(--color-accent-muted); color: var(--color-accent); font-size: 0.8125rem; }
+.sync-banner--error { background: var(--color-error-muted); color: var(--color-error); justify-content: space-between; }
+
+/* Empty state steps */
+.empty-state__illustration { margin-bottom: var(--space-sm); opacity: 0.6; }
+.empty-state__steps { display: flex; flex-direction: column; gap: var(--space-sm); margin-top: var(--space-md); text-align: left; width: 100%; max-width: 260px; }
+.empty-step { display: flex; align-items: center; gap: var(--space-sm); font-size: 0.8125rem; color: var(--color-text-secondary); }
+.empty-step__num { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--color-accent-muted); color: var(--color-accent); font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
 
 .latest-card {
   border-left: 4px solid var(--color-accent);

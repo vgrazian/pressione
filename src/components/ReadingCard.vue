@@ -68,6 +68,17 @@ function formatTime(ts) {
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border);
   border-left: 4px solid var(--color-accent);
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+
+@media (hover: hover) {
+  .reading-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.reading-card:active {
+  transform: scale(0.985);
 }
 
 .reading-card--compact {
