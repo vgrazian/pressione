@@ -148,7 +148,7 @@ export async function upsertReading(reading, username) {
         diastolic: normalized.diastolic,
         heartRate: normalized.heart_rate,
         notes: normalized.notes,
-        category: normalized.category,
+        category,
         updatedAt: now
     }
     await db.readings.put(idbRecord)
@@ -158,7 +158,7 @@ export async function upsertReading(reading, username) {
         id: idbRecord.id, username, timestamp: idbRecord.timestamp,
         systolic: idbRecord.systolic, diastolic: idbRecord.diastolic,
         heartRate: idbRecord.heartRate, notes: idbRecord.notes || '',
-        category: idbRecord.category, updatedAt: idbRecord.updatedAt
+        category, updatedAt: idbRecord.updatedAt
     })
 
     // 2. Sync to Supabase if online
@@ -326,6 +326,11 @@ export async function refreshFromServer(username) {
             if (error) throw error
 
             console.log('[refreshFromServer] Supabase returned', readings ? readings.length : 0, 'readings for', username)
+
+            // Clear existing IndexedDB data for this user to properly reflect deletions
+            // (bulkPut only upserts, it never removes records missing from Supabase)
+            await db.readings.where('username').equals(username).delete()
+
             if (readings && readings.length > 0) {
                 const mapped = readings.map(r => ({
                     id: r.id, username: r.username, timestamp: r.timestamp,
@@ -337,6 +342,10 @@ export async function refreshFromServer(username) {
                 await db.readings.bulkPut(mapped)
                 saveReadingsToLocalStorage(username, mapped)
                 console.log('[refreshFromServer] Synced', mapped.length, 'readings to IndexedDB + localStorage')
+            } else {
+                // Also clear localStorage when no readings remain
+                try { localStorage.removeItem(lsReadingsKey(username)) } catch { }
+                console.log('[refreshFromServer] No readings on server, cleared local cache')
             }
         })
     } catch (e) {
@@ -355,7 +364,7 @@ export async function retrySyncQueue(username) {
             if (item.operation === 'upsert') {
                 await supabase.from(item.tableName).upsert(item.recordData)
             } else if (item.operation === 'delete') {
-                await supabase.from(item.tableName).delete().eq('id', item.recordId)
+                await supabase.from(item.tableName).delete().eq('id', item.recordId).eq('username', item.username)
             }
             await db.syncQueue.delete(item.id)
         } catch (e) {

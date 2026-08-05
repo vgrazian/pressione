@@ -741,6 +741,9 @@ async function handleInstall() {
     <p class="text-center" style="color:var(--color-text-secondary);font-size:0.75rem;padding:var(--space-lg)">
       Pressione v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}
     </p>
+    <p class="text-center" style="color:var(--color-text-secondary);font-size:0.8rem;padding-bottom:var(--space-lg)">
+      fatto con ❤️ per i miei amici
+    </p>
   </div>
 </template>
 
