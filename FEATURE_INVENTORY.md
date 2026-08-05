@@ -1,9 +1,9 @@
 # Pressione — Feature Inventory & Review
 
-> **Versione:** 1.1.0 | **Data:** 2026-08-03  
+> **Versione:** 1.2.0 | **Data:** 2026-08-05  
 > **URL:** <https://vgrazian.github.io/pressione/>  
-> **Stack:** Vue 3 + Vite PWA · Supabase · Dexie/IndexedDB · Chart.js · chartjs-plugin-annotation · jsPDF  
-> **Test:** 29 unit (Vitest) + 15 E2E (Playwright)
+> **Stack:** Vue 3 + Vite PWA · Supabase · Dexie/IndexedDB (+ localStorage bridge) · Chart.js (theme-aware) · chartjs-plugin-annotation · jsPDF  
+> **Test:** 79 unit (Vitest) + 15 E2E (Playwright)
 
 ---
 
@@ -26,10 +26,11 @@
 
 | Feature | Note |
 | --- | --- |
-| Saluto + ultima lettura | Card con categoria e valori |
+| Saluto + ultima lettura | Card uniforme con categoria e valori |
 | 4 KPI rapidi | Media SYS/DIA/BPM + conteggio |
 | 5 letture recenti | Card compact |
-| Empty state + CTA | |
+| Empty state + guida 3-step | Step numerati: tocca, inserisci, monitora |
+| **Sync status banner** | "Sincronizzazione..." con pulsante riprova in caso di errore |
 | Skeleton loader | |
 
 ## 3. CRUD Misurazioni
@@ -55,42 +56,44 @@
 | Edit/Delete | Su ogni card |
 | Skeleton loader | |
 
-## 5. Statistiche Avanzate
+## 5. Analisi (Statistiche + Report unificati)
 
 | Feature | Note |
 | --- | --- |
 | Filtri: 7g, 30g, custom | Date picker |
-| **Line chart (Chart.js)** | SYS (rosso), DIA (blu), BPM (grigio tratteggiato) |
+| **Chart a tab** | Andamento (linee) / Variazioni (barre) / Distribuzione (doughnut) — scroll ridotto |
+| **Colori theme-aware** | `chartColors.js` — legge `--color-*` token a ogni render, si adatta a dark mode |
+| **Line chart (Chart.js)** | SYS (--color-error), DIA (blu derivato), BPM (--color-text-secondary) |
 | **Fascia target ESC/ESH** | Zona verde tratteggiata 90-140 mmHg con label |
 | **Linea soglia 140** | Tratteggiata rossa nel grafico BP |
 | **Hover tooltip interattivi** | Data/ora + valore + categoria ESC/ESH |
-| **Grafico derivate dP/dt** | mmHg/ora, smoothing media mobile 3pt |
-| **Allarme >10 mmHg/h** | Barre rosse + lista segmenti critici |
+| **Grafico derivate dP/dt** | mmHg/ora, barre: allarme >10 (rosso pieno), positivo (red 50%), negativo (blue 50%) |
+| **Allarme >10 mmHg/h** | Barre rosse + alert box |
 | **Morning Surge** | Δ fasce configurabili, badge ⚠️ |
-| **Carico Ipertensivo** | % fuori norma + barra progresso |
+| **Carico Ipertensivo** | % fuori norma in KPI |
 | **HRV** | Deviazione standard BPM |
 | **Pie chart OMS cliccabile** | 4 categorie, click → filtra lista |
-| **Trend lines** | Lineare + Media mobile |
+| **Confronto 7/30 giorni** | Tabella multi-periodo con 8 metriche |
 | Auto-aggregazione | Per >50 punti |
 | Skeleton loader | |
-| **Fasce orarie configurabili** | Mattina/Pomeriggio/Sera/Notte con orari personalizzabili | |
+| **Fasce orarie configurabili** | Mattina/Pomeriggio/Sera/Notte con orari personalizzabili |
+| **Theme watcher** | `watch(theme)` → re-render immediato dei chart al cambio tema |
 
-## 6. Report e Condivisione
+## 6. Report e Condivisione (integrati in Analisi)
 
 | Feature | Note |
 | --- | --- |
-| Filtri contenuto | Periodo, storico, anonimizza |
-| **Grafico interattivo inline** | Chart.js nel ReportView con zone target ESC/ESH |
+| Filtri contenuto | Periodo, includi grafici, anonimizza |
 | **PDF (jsPDF)** | A4 con header, stats, tabella, grafici incorporati |
 | **PDF come Blob** | `generatePDFBlob()` per condivisione file |
-| **Condivisione con PDF allegato** | Email, WhatsApp, Condividi via Web Share API con file |
+| **Condivisione con PDF allegato** | Email, WhatsApp, Web Share API con file |
 | **Link temporaneo 48h** | Token + PIN 4 cifre opzionale |
 | **Revoca link** | Lista attivi + bottone revoca |
 | **PIN gate** | SharedReportView con schermata PIN |
 | **Dashboard medico interattiva** | SharedReportView: KPI, classificazione, alert, grafici interattivi |
 | **Grafico BP nel report** | Con zona target, hover tooltip, filtro 7/30/tutto |
 | **Card fasce orarie** | Media per fascia nel report condiviso |
-| **Grafico derivate + doughnut** | Nel report condiviso |
+| **Grafico derivate + doughnut** | Nel report condiviso (colori theme-aware) |
 | **Vista per fascia oraria** | Toggle Lista/Per fascia con tabella raggruppata giorno+fascia |
 
 ## 7. Impostazioni
@@ -99,28 +102,33 @@
 | --- | --- |
 | Lingua IT/EN | Selettore in cima |
 | Account | Username, email, ruolo |
-| **Profilo** | Data di nascita con età calcolata + genere |
-| Modifica email/password | |
+| Modifica email/password | Password in sezione collassabile |
+| **Profilo** | Data di nascita con età calcolata + genere + anagrafica completa |
 | Promemoria | Multipli, orari + giorni |
-| **Fasce orarie configurabili** | Mattina/Pomeriggio/Sera/Notte, orari personalizzabili per fascia |
-| CSV Export | |
-| Genera dati test | 30 letture via RPC Supabase |
+| **Fasce orarie configurabili** | Sezione collassabile, slider interattivo |
+| CSV Export / Import | Supporto formato bp-tracker |
+| Backup / Ripristino JSON | |
+| Genera dati test | 30 letture |
 | Gestione utenti (admin) | Ruolo, reset pw, disattiva |
-| **Cache & Aggiornamenti** | Pulsante "Forza aggiornamento" (svuota SW cache) |
-| **Keep-Alive DB** | Attivo di default, ping Supabase ogni 5 min + storage persistente |
-| Elimina tutto | Doppia conferma |
+| **Cache & Aggiornamenti** | Sezione collassabile, "Forza aggiornamento" |
+| **Keep-Alive DB** | Sezione collassabile, toggle on/off |
+| **PWA Install** | Sezione collassabile, istruzioni iOS + pulsante Android |
+| Elimina tutto | Danger Zone con doppia conferma |
 
 ## 8. UI/UX
 
 | Feature | Note |
 | --- | --- |
-| Design system CSS | Variabili, radius 12px |
-| Dark mode | `prefers-color-scheme` |
+| Design system CSS | Variabili, radius 12px, FAB rotonda |
+| **Micro-interazioni** | Card: hover shadow + active scale(0.99); pulsanti: active scale(0.97) |
+| **Transizioni view** | Fade + slide animato tra pagine (`view-fade`) |
+| Dark mode | `prefers-color-scheme` + `[data-theme]` toggle |
+| **Dark mode badge** | `text-shadow` per migliorare contrasto categorie |
 | Font Inter | Google Fonts, swap |
 | Icone SVG | AppIcon (18 icone) |
 | Skeleton loader | Componente riutilizzabile |
 | Confirm dialog | Globale via provide/inject |
-| Top bar + bottom nav | Sticky, 4 tab |
+| Top bar + bottom nav | Sticky, 4 tab (logo-only topbar) |
 | Offline banner | Giallo se no Supabase |
 | Focus-visible, reduced-motion | A11y |
 | PWA | Installabile, SW, manifest |
@@ -131,32 +139,46 @@
 | --- | --- |
 | Retry backoff | 2 tentativi esponenziali |
 | Offline-first | Dexie sempre disponibile |
+| **LocalStorage bridge** | Backup letture per compatibilità iOS PWA (IndexedDB isolato tra Safari e standalone) |
 | Sync queue | Coda operazioni offline |
 | RLS policies | Tutte le tabelle |
 | SHA-256 hashing | Client + server |
 | GDPR link TTL | 48 ore auto-scadenza |
 | Stats cache | IndexedDB pronto |
-| **Release script** | `scripts/deploy.sh` — verifica .env, build, deploy gh-pages |
+| **Release script** | `scripts/deploy.sh` — git worktree isolato, safety gate .env, idempotente |
 | **Version from package.json** | Single source of truth, build number da git hash |
 | **Force cache clear** | `forceClearCache()` — deregistra SW, svuota caches, reload |
-| **44 test** | 29 unit + 15 E2E |
+| **79 test** | 79 unit + 15 E2E |
 
 ## 10. Nuove Feature (Agosto 2026) — Portabili su BP-Tracker
 
 | # | Feature | File(s) |
 | --- | --- | --- |
-| 1 | **Data di nascita invece di età** — calcolo dinamico con `computeAge()` | `ProfilePrompt.vue`, `SettingsView.vue`, `auth.js`, `supabaseTableAuth.js`, `pdfReport.js` |
-| 2 | **Prompt profilo non ripetitivo** — `refreshSession()` persiste flag, `initAuth()` await | `auth.js`, `App.vue` |
-| 3 | **Forza aggiornamento cache** — deregistra SW + svuota caches + reload | `swUpdate.js`, `SettingsView.vue` |
-| 4 | **Keep-alive DB default ON** — ping Supabase 5min + persistent storage | `keepAlive.js` |
-| 5 | **Fasce orarie configurabili** — servizio `timeBands.js`, UI in Impostazioni, consumer in stats/report | `timeBands.js`, `SettingsView.vue`, `statistics.js`, `TimeOfDayIcon.vue`, `ReportView.vue` |
-| 6 | **Vista report per fascia oraria** — toggle Lista/Per fascia, tabella raggruppata giorno+fascia | `ReportView.vue` |
-| 7 | **PDF condiviso via Web Share API** — `generatePDFBlob()`, File allegato | `pdfReport.js`, `ReportView.vue` |
-| 8 | **Dashboard medico interattiva** — KPI, classificazione, grafici Chart.js, filtro date, alert ESC/ESH | `SharedReportView.vue` |
-| 9 | **Grafici con zone target ESC/ESH** — zona verde tratteggiata <140/90, hover tooltip con categoria | `StatisticsView.vue`, `ReportView.vue`, `SharedReportView.vue` |
-| 10 | **Release script automatizzato** — `scripts/deploy.sh` (verifica .env → build → deploy) | `scripts/deploy.sh` |
-| 11 | **Versione da package.json** — single source of truth, visibile in login e impostazioni | `vite.config.js`, `version.js`, `LoginView.vue`, `SettingsView.vue` |
+| 1 | **AnalisiView unificata** — Stats+Report fusi con chart a tab, scroll ridotto | `AnalisiView.vue`, `router/index.js` |
+| 2 | **Bottom nav 5→4** — Home, Lista, Analisi, Altro | `AppNav.vue` |
+| 3 | **Topbar logo-only** — rimosso testo "Pressione" ridondante | `App.vue` |
+| 4 | **Colori chart theme-aware** — `chartColors.js` legge `--color-*` token, si adatta a dark mode | `chartColors.js`, `AnalisiView.vue`, `SharedReportView.vue` |
+| 5 | **Sync status banner** — "Sincronizzazione..." con pulsante riprova in HomeView | `HomeView.vue` |
+| 6 | **Empty state con guida 3-step** — step numerati per primo utilizzo | `HomeView.vue` |
+| 7 | **Router-view fade transition** — animazione tra pagine | `App.vue` |
+| 8 | **Settings sezioni collassabili** — Password, Fasce Orarie, Dati, Keep-Alive, PWA, Cache | `SettingsView.vue`, `CollapsibleSection.vue` |
+| 9 | **Card micro-interazioni** — hover shadow, active scale su `.card` e `.reading-card` | `style.css`, `ReadingCard.vue` |
+| 10 | **FAB rotonda** — `border-radius: var(--radius-full)` coerente con badge/chip | `style.css` |
+| 11 | **Dark mode badge contrast** — `text-shadow` per leggibilità categorie | `style.css` |
+| 12 | **LocalStorage bridge** — backup letture per iOS PWA (IndexedDB isolato) | `dataService.js` |
+| 13 | **Deploy script safe** — git worktree isolato, safety gate .env, idempotente | `scripts/deploy.sh` |
+| 14 | **Data di nascita invece di età** — calcolo dinamico con `computeAge()` | `ProfilePrompt.vue`, `SettingsView.vue`, `auth.js`, `supabaseTableAuth.js`, `pdfReport.js` |
+| 15 | **Prompt profilo non ripetitivo** — `refreshSession()` persiste flag, `initAuth()` await | `auth.js`, `App.vue` |
+| 16 | **Forza aggiornamento cache** — deregistra SW + svuota caches + reload | `swUpdate.js`, `SettingsView.vue` |
+| 17 | **Keep-alive DB default ON** — ping Supabase 5min + persistent storage | `keepAlive.js` |
+| 18 | **Fasce orarie configurabili** — servizio `timeBands.js`, UI in Impostazioni, consumer in stats/report | `timeBands.js`, `SettingsView.vue`, `statistics.js`, `TimeOfDayIcon.vue` |
+| 19 | **Vista report per fascia oraria** — toggle Lista/Per fascia, tabella raggruppata giorno+fascia | `AnalisiView.vue` |
+| 20 | **PDF condiviso via Web Share API** — `generatePDFBlob()`, File allegato | `pdfReport.js`, `AnalisiView.vue` |
+| 21 | **Dashboard medico interattiva** — KPI, classificazione, grafici Chart.js, filtro date, alert ESC/ESH | `SharedReportView.vue` |
+| 22 | **Grafici con zone target ESC/ESH** — zona verde tratteggiata <140/90, hover tooltip con categoria | `AnalisiView.vue`, `SharedReportView.vue` |
+| 23 | **Release script automatizzato** — `scripts/deploy.sh` (verifica .env → build → deploy con worktree) | `scripts/deploy.sh` |
+| 24 | **Versione da package.json** — single source of truth, visibile in login e impostazioni | `vite.config.js`, `version.js`, `LoginView.vue`, `SettingsView.vue` |
 
 ---
 
-*Documento generato per revisione — ultimo aggiornamento 2026-08-02*
+*Documento generato per revisione — ultimo aggiornamento 2026-08-05*

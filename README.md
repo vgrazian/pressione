@@ -17,8 +17,8 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 ### Navigazione
 
 - **Top bar**: logo, toggle tema (☀️/🌙/sistema), logout
-- **Bottom nav 5 tab**: Home, Lista, Statistiche, Report, Impostazioni
-- **FAB globale**: pulsante "+" flottante su tutte le pagine per aggiungere una misurazione
+- **Bottom nav 4 tab**: Home, Lista, Analisi, Altro
+- **FAB globale rotonda**: pulsante "+" flottante su tutte le pagine per aggiungere una misurazione
 
 ### Monitoraggio
 
@@ -32,7 +32,8 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Ultima misurazione con categoria e valori
 - 4 KPI rapidi: media SYS/DIA/BPM + conteggio
 - Trend settimanale con derivata dP/dt e conteggio allarmi
-- Empty state con CTA
+- Banner stato sincronizzazione con pulsante riprova
+- Empty state con guida 3-step per il primo utilizzo
 
 ### Lista Misurazioni
 
@@ -40,37 +41,42 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Swipe-to-delete su mobile
 - Icona momento giornata (mattina/pomeriggio/sera/notte)
 
-### Statistiche Avanzate
+### Analisi (Statistiche + Report unificati)
 
-- **Line chart (Chart.js)**: Sistolica (rossa) + Diastolica (blu) + BPM (grigia)
-- **Fascia sicurezza OMS**: rettangoli sfumati (SYS 90-140, DIA 60-90)
-- **Grafico derivate dP/dt**: variazione mmHg/ora, allarme a >10 mmHg/h con lista segmenti
-- **Morning Surge**: Δ mattina (06-09) vs sera (20-23) con badge allarme
-- **Carico Ipertensivo**: % letture fuori norma con barra progresso
+- **Chart a tab**: Andamento (linee SYS/DIA/BPM) | Variazioni (barre dP/dt) | Distribuzione (doughnut OMS)
+- Colori theme-aware via CSS tokens — si adattano automaticamente a light/dark mode
+- **Fascia target ESC/ESH**: zona verde tratteggiata con label
+- **Linea soglia 140 mmHg**: tratteggiata rossa
+- **Hover tooltip interattivi**: data/ora + valore + categoria ESC/ESH
+- **Confronto 7/30 giorni**: tabella multi-periodo (letture, medie, variazioni, allarmi, carico ipertensivo, picco mattutino)
+- **Morning Surge**: Δ fasce configurabili con badge allarme
+- **Carico Ipertensivo**: % letture fuori norma
 - **HRV**: deviazione standard frequenza cardiaca
-- **Pie chart OMS**: 4 categorie cliccabili (filtrano la lista)
-- **Trend algorithm**: regressione lineare e media mobile a 3 punti
+- **Fasce orarie**: 4 card con media per fascia (Mattina/Pomeriggio/Sera/Notte)
 - Filtri temporali: 7/30 giorni + personalizzato
+- **Storico** con toggle Lista / Per fascia oraria, tabella raggruppata giorno+fascia
 
 ### Report e Condivisione
 
-- **PDF (jsPDF)**: A4 con header, statistiche, tabella completa, footer
+- **PDF (jsPDF)**: A4 con header, statistiche, tabella completa
 - **Condivisione**: Email, WhatsApp, Web Share API nativa, copia appunti
 - **Link temporaneo (48h)**: URL condivisibile con PIN opzionale 4 cifre (SHA-256)
-- **Scadenza visibile**: data e ora esatte di scadenza sul link generato e nella lista link attivi
+- **Scadenza visibile**: data e ora esatte sul link e nella lista link attivi
 - **Revoca link**: lista link attivi con bottone revoca immediata
-- **Pagina medico**: SharedReportView pubblica con PIN gate e tabella responsive
-- Filtri contenuto: periodo, includi storico, includi grafici, anonimizza
+- **Pagina medico**: SharedReportView pubblica con PIN gate e dashboard interattiva
+- Filtri contenuto: periodo, includi grafici, anonimizza
 
 ### Impostazioni
 
 - **Lingua**: Italiano / English
-- **Account**: modifica email, cambio password
+- **Account**: username, email, ruolo, modifica email, cambio password
+- **Profilo**: data di nascita con età calcolata, genere, anagrafica completa (nome, cognome, CF, telefono, indirizzo)
 - **Tema**: chiaro / scuro / sistema (con toggle nella top bar)
+- **Sezioni raggruppate**: Password, Promemoria, Fasce Orarie, Dati, Keep-Alive, PWA Install, Cache — tutte collassabili
 - **Promemoria**: orari + giorni settimana configurabili
-- **Keep-Alive DB**: ping periodici Supabase + richiesta archiviazione persistente IndexedDB (evita eliminazione dati dal browser)
+- **Keep-Alive DB**: ping periodici Supabase + richiesta archiviazione persistente IndexedDB
 - **Installa App**: pulsante nativo Android/Chrome + istruzioni passo-passo per iOS Safari
-- **Dati**: CSV Export, Backup/Ripristino JSON, genera dati test (30 letture)
+- **Dati**: CSV Export, Backup/Ripristino JSON, Import CSV (bp-tracker), genera dati test (30 letture)
 - **Admin**: gestione utenti (ruolo, reset password, disattivazione)
 - **Danger Zone**: elimina tutti i dati
 
@@ -78,30 +84,34 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 
 - Design system con **dark mode** (data-theme + prefers-color-scheme)
 - Font Inter, icone SVG inline (18 icone), radius 12px consistente
+- **Micro-interazioni**: hover shadow, active scale su card e pulsanti
+- **Transizioni view**: fade animato tra pagine
 - Skeleton loader in tutte le viste
 - Offline banner quando Supabase non raggiungibile
 - **PWA installabile**: service worker, manifest, meta tag iOS (standalone, status bar)
 - Checkbox personalizzate, toggle switch animati
 - Reduced motion support
+- **Dark mode badge**: contrasto migliorato per categorie su sfondo scuro
 
 ### Affidabilità
 
 - **Offline-first**: IndexedDB (Dexie) sempre disponibile, sync queue
+- **LocalStorage bridge**: backup letture per compatibilità iOS PWA (IndexedDB isolato tra Safari e standalone)
 - Retry automatico con backoff esponenziale
 - Keep-alive database: ping Supabase ogni 5 min + navigator.storage.persist()
 - Gestione errori resiliente (try/catch su tutte le operazioni)
-- 44 test (29 unit Vitest + 15 E2E Playwright)
+- 79 test (79 unit Vitest + 15 E2E Playwright)
 
 ## Tecnologie
 
 | Layer | Tecnologia |
 | --- | --- |
 | Frontend | Vue 3 + Vite + Vue Router (hash history) |
-| Grafici | Chart.js 4 + chartjs-plugin-annotation |
+| Grafici | Chart.js 4 + chartjs-plugin-annotation (colori theme-aware) |
 | PDF | jsPDF (A4) |
 | Backend | Supabase (PostgreSQL + REST API) |
-| Database locale | Dexie (IndexedDB v1) |
-| Test | Vitest (29) + Playwright (15) |
+| Database locale | Dexie (IndexedDB v1) + localStorage bridge |
+| Test | Vitest (79) + Playwright (15) |
 | PWA | Vite PWA Plugin (generateSW, autoUpdate) |
 | UI | Inter font, CSS custom properties, 18 SVG icons |
 
@@ -124,6 +134,7 @@ npm run dev            # http://localhost:5173
 | `npm test` | Test unitari (Vitest) |
 | `npm run test:e2e` | Test E2E (Playwright) |
 | `npm run seed:users` | Crea utenti seed |
+| `bash scripts/deploy.sh` | Build + deploy su GitHub Pages (worktree isolato) |
 
 ## Utenti
 
@@ -151,18 +162,20 @@ src/
 │   ├── auth.js              # Auth state reattivo + sessione localStorage
 │   ├── supabaseTableAuth.js # Auth CRUD su tabella users
 │   ├── supabaseClient.js    # Client Supabase
-│   ├── dataService.js       # CRUD offline-first + sync + retry + CSV/backup
+│   ├── dataService.js       # CRUD offline-first + sync + retry + CSV/backup + localStorage bridge
 │   ├── categories.js        # Classificazione ESC/ESH (6 categorie)
 │   ├── statistics.js        # Stats, derivate, morning surge, HRV, carico ipertensivo
+│   ├── chartColors.js       # Colori chart theme-aware via CSS tokens
 │   ├── i18n.js              # IT/EN translations
 │   ├── theme.js             # Light/dark/system toggle
 │   ├── keepAlive.js         # Ping Supabase + navigator.storage.persist()
 │   ├── pwaInstall.js        # beforeinstallprompt + iOS detection
-│   ├── rbac.js, ids.js, errorHandling.js
-├── components/      # AppNav, AppIcon (18 SVG), ReadingCard, SkeletonLoader, etc.
-├── views/           # Home, Login, AddEdit, List, Stats, Report, Settings, Operators, SharedReport
+│   ├── timeBands.js         # Fasce orarie configurabili
+│   ├── rbac.js, ids.js, errorHandling.js, swUpdate.js, version.js
+├── components/      # AppNav, AppIcon (18 SVG), ReadingCard, SkeletonLoader, CollapsibleSection, etc.
+├── views/           # Home, Login, AddEdit, List, Analisi (Stats+Report unificati), Settings, Operators, SharedReport
 tests/
-├── unit/            # 29 Vitest tests
+├── unit/            # 79 Vitest tests
 ├── e2e/             # 15 Playwright tests
 supabase/migrations/ # SQL schema
 ```
