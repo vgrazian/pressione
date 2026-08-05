@@ -12,6 +12,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ProfilePrompt from '@/components/ProfilePrompt.vue'
 import { useSWUpdate } from '@/services/swUpdate.js'
 import { startReminderScheduler, stopReminderScheduler, reminderAlert, dismissReminderAlert } from '@/services/reminderService.js'
+import { refreshFromServer, getReadings } from '@/services/dataService.js'
 
 const router = useRouter()
 const { isAuthenticated, isAuthReady, user, logout } = useAuth()
@@ -38,6 +39,8 @@ watch(() => user.value?.username, (username, oldUsername) => {
   if (username) {
     initKeepAlive(username)
     startReminderScheduler(username)
+    // Populate localStorage bridge immediately (critical for iOS PWA)
+    refreshFromServer(username).then(() => getReadings(username)).catch(() => {})
   } else if (oldUsername) {
     stopReminderScheduler()
   }
