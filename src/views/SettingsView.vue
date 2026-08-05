@@ -329,6 +329,7 @@ const installAvailable = ref(isInstallPromptAvailable())
 const appInstalled = ref(isStandalone())
 const installMessage = ref('')
 const cacheClearing = ref(false)
+const diagMessage = ref('')
 const timeBands = ref(getDefaultBands())
 const timeBandsMessage = ref('')
 const savedBands = ref([])
@@ -341,6 +342,53 @@ const bandsDirty = computed(() => {
 async function handleForceClearCache() {
   cacheClearing.value = true
   await forceClearCache()
+}
+
+async function handleShareDiagnostics() {
+  diagMessage.value = ''
+  try {
+    const info = {
+      version: APP_VERSION,
+      build: BUILD_NUMBER,
+      buildTime: BUILD_TIME,
+      userAgent: navigator.userAgent,
+      standalone: isStandalone(),
+      isIOS: isIOS(),
+      online: navigator.onLine,
+      theme: document.documentElement.getAttribute('data-theme') || 'system',
+      username: user.value?.username || 'N/D',
+      indexedDB: 'pending...',
+      localStorageReadings: 'N/D'
+    }
+
+    // Check IndexedDB
+    try {
+      const readings = await getReadings(user.value?.username)
+      info.indexedDB = `${readings.length} readings`
+    } catch { info.indexedDB = 'error' }
+
+    // Check localStorage bridge
+    try {
+      const key = `pressione_readings_${user.value?.username}`
+      const raw = localStorage.getItem(key)
+      info.localStorageReadings = raw ? `${JSON.parse(raw).length} readings (${raw.length} bytes)` : 'empty'
+    } catch { info.localStorageReadings = 'error' }
+
+    const text = Object.entries(info).map(([k, v]) => `${k}: ${v}`).join('\n')
+    const fullText = `Pressione Diagnostics\n${new Date().toISOString()}\n\n${text}`
+
+    if (navigator.share) {
+      await navigator.share({ title: 'Pressione Diagnostica', text: fullText })
+    } else {
+      await navigator.clipboard.writeText(fullText)
+      diagMessage.value = 'Diagnostica copiata negli appunti!'
+      setTimeout(() => diagMessage.value = '', 3000)
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      diagMessage.value = 'Errore: ' + e.message
+    }
+  }
 }
 
 async function handleInstall() {
@@ -597,6 +645,18 @@ async function handleInstall() {
       <button class="btn btn-sm btn-secondary" @click="handleForceClearCache" :disabled="cacheClearing">
         {{ cacheClearing ? 'Aggiornamento...' : 'Forza aggiornamento' }}
       </button>
+    </div>
+
+    <!-- Diagnostica -->
+    <div class="card mb-md">
+      <h3 class="mb-sm">🔧 Diagnostica</h3>
+      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
+        Condividi le informazioni di diagnostica per aiutare a risolvere i problemi.
+      </p>
+      <button class="btn btn-sm btn-secondary" @click="handleShareDiagnostics">
+        📋 Condividi diagnostica
+      </button>
+      <div v-if="diagMessage" class="form-success mt-sm">{{ diagMessage }}</div>
     </div>
 
     <!-- Danger Zone -->
