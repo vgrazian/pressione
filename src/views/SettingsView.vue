@@ -352,6 +352,7 @@ async function handleShareDiagnostics() {
     let supabaseReadings = 'not checked'
     let syncQueueStatus = 'not checked'
     let supabaseConfigured = false
+    let supabaseWriteTest = 'not checked'
 
     try {
       const { isSupabaseConfigured: configured } = await import('@/services/supabaseClient.js')
@@ -365,6 +366,21 @@ async function handleShareDiagnostics() {
         const { db } = await import('@/db/index.js')
         const pending = await db.syncQueue.where('username').equals(user.value?.username).toArray()
         syncQueueStatus = `${pending.length} pending`
+        // Test write capability
+        try {
+          const testId = '00000000-0000-0000-0000-000000000000'
+          const { error: wErr } = await supabase.from('readings').upsert({
+            id: testId, username: user.value?.username, systolic: 1, diastolic: 1,
+            heart_rate: 1, timestamp: new Date().toISOString(), notes: '_diag_test_',
+            created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+          })
+          if (!wErr) {
+            await supabase.from('readings').delete().eq('id', testId)
+            supabaseWriteTest = 'ok'
+          } else {
+            supabaseWriteTest = 'error: ' + wErr.message
+          }
+        } catch (we) { supabaseWriteTest = 'exception: ' + we.message }
       } else {
         supabaseStatus = 'not configured'
       }
@@ -385,6 +401,7 @@ async function handleShareDiagnostics() {
       supabaseConfigured,
       supabaseStatus,
       supabaseReadings,
+      supabaseWriteTest,
       syncQueue: syncQueueStatus,
       indexedDB: 'pending...',
       localStorageReadings: 'N/D'
