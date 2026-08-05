@@ -95,7 +95,6 @@ async function handleLogout() {
       <header v-if="isAuthenticated" class="topbar">
         <span class="topbar-brand">
           <img src="/logo.png" alt="Pressione" class="topbar-logo" />
-          Pressione
         </span>
         <div class="topbar-actions">
           <button class="topbar-btn" @click="toggleTheme" :title="'Tema: ' + theme">
@@ -122,7 +121,11 @@ async function handleLogout() {
 
       <AppNav v-if="isAuthenticated" />
       <main :class="{ 'has-nav': isAuthenticated, 'has-topbar': isAuthenticated }">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="view-fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </main>
 
       <!-- Global FAB — hidden on add/edit pages -->
@@ -138,6 +141,20 @@ async function handleLogout() {
 </template>
 
 <style scoped>
+/* View transitions */
+.view-fade-enter-active,
+.view-fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.view-fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.view-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .app-loading,
 .app-error {
   display: flex;

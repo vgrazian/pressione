@@ -10,8 +10,7 @@ const { user, logout } = useAuth()
 const navItems = [
   { name: 'home', label: 'Home', icon: 'home', path: '/' },
   { name: 'readingList', label: 'Lista', icon: 'list', path: '/list' },
-  { name: 'statistics', label: 'Stats', icon: 'chart', path: '/statistics' },
-  { name: 'report', label: 'Report', icon: 'copy', path: '/report' },
+  { name: 'analisi', label: 'Analisi', icon: 'chart', path: '/analisi' },
   { name: 'settings', label: 'Altro', icon: 'settings', path: '/settings' },
 ]
 

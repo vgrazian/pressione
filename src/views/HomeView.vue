@@ -18,6 +18,8 @@ const statistics = ref(null)
 const weeklyTrend = ref(null)
 const recentReadings = ref([])
 const isLoading = ref(true)
+const syncStatus = ref('idle')
+const syncError = ref('')
 
 onMounted(async () => {
   await loadData()
@@ -25,9 +27,12 @@ onMounted(async () => {
 
 async function loadData() {
   isLoading.value = true
+  syncStatus.value = 'syncing'
+  syncError.value = ''
   try {
     await retrySyncQueue(user.value.username)
     await refreshFromServer(user.value.username)
+    syncStatus.value = 'idle'
 
     const allReadings = await getReadings(user.value.username)
     if (allReadings.length > 0) {

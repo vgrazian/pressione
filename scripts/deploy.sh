@@ -107,17 +107,21 @@ echo -e "${CYAN}🚀 [4/5] Deploy su gh-pages (worktree isolato)...${NC}"
 # Create temp worktree location
 WORKTREE_DIR=$(mktemp -d /tmp/pressione-gh-pages.XXXXXX)
 
-# Fetch gh-pages from remote to ensure we have latest
+# Fetch gh-pages from remote
 git fetch origin gh-pages --quiet 2>/dev/null || true
 
-# Determine gh-pages source
-if git show-ref --verify --quiet refs/heads/gh-pages; then
-    echo "   📂 gh-pages branch locale"
-    git worktree add "$WORKTREE_DIR" gh-pages --quiet
-elif git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+# Always sync local gh-pages with origin to avoid stale worktrees
+if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
     echo "   📂 gh-pages branch da origin"
+    if git show-ref --verify --quiet refs/heads/gh-pages; then
+        # Local exists — force-sync it with remote to ensure clean state
+        git branch -f gh-pages origin/gh-pages --quiet
+    fi
     git worktree add "$WORKTREE_DIR" origin/gh-pages --quiet
-    git -C "$WORKTREE_DIR" checkout -b gh-pages --quiet
+    git -C "$WORKTREE_DIR" checkout -B gh-pages --quiet
+elif git show-ref --verify --quiet refs/heads/gh-pages; then
+    echo "   📂 gh-pages branch locale (no remote)"
+    git worktree add "$WORKTREE_DIR" gh-pages --quiet
 else
     echo "   🆕 gh-pages non esiste — creazione"
     git worktree add "$WORKTREE_DIR" --orphan gh-pages --quiet

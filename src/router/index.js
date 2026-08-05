@@ -32,17 +32,14 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/statistics',
-        name: 'statistics',
-        component: () => import('@/views/StatisticsView.vue'),
+        path: '/analisi',
+        name: 'analisi',
+        component: () => import('@/views/AnalisiView.vue'),
         meta: { requiresAuth: true }
     },
-    {
-        path: '/report',
-        name: 'report',
-        component: () => import('@/views/ReportView.vue'),
-        meta: { requiresAuth: true }
-    },
+    // Legacy redirects
+    { path: '/statistics', redirect: '/analisi' },
+    { path: '/report', redirect: '/analisi' },
     {
         path: '/settings',
         name: 'settings',
