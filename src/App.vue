@@ -11,7 +11,7 @@ import OfflineBanner from '@/components/OfflineBanner.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ProfilePrompt from '@/components/ProfilePrompt.vue'
 import { useSWUpdate } from '@/services/swUpdate.js'
-import { startReminderScheduler, stopReminderScheduler } from '@/services/reminderService.js'
+import { startReminderScheduler, stopReminderScheduler, reminderAlert, dismissReminderAlert } from '@/services/reminderService.js'
 
 const router = useRouter()
 const { isAuthenticated, isAuthReady, user, logout } = useAuth()
@@ -124,6 +124,13 @@ async function handleLogout() {
       </div>
 
       <OfflineBanner v-if="isAuthenticated" />
+
+      <!-- Reminder alert banner -->
+      <div v-if="isAuthenticated && reminderAlert" class="reminder-banner" @click="dismissReminderAlert(); router.push('/add')">
+        <span>{{ reminderAlert.message }}</span>
+        <button class="btn btn-sm btn-primary" @click.stop="dismissReminderAlert(); router.push('/add')">+ Nuova</button>
+        <button class="reminder-banner__close" @click.stop="dismissReminderAlert">×</button>
+      </div>
 
       <AppNav v-if="isAuthenticated" />
       <main :class="{ 'has-nav': isAuthenticated, 'has-topbar': isAuthenticated }">
@@ -238,6 +245,25 @@ async function handleLogout() {
   animation: slideDown 0.3s ease;
 }
 @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+.reminder-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: #FFF3E0;
+  border-bottom: 2px solid #FF9800;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #E65100;
+  cursor: pointer;
+  animation: slideDown 0.3s ease;
+}
+.reminder-banner__close {
+  background: none; border: none; font-size: 1.25rem; cursor: pointer;
+  color: #E65100; padding: 0 4px; line-height: 1;
+}
 
 main { padding-bottom: 1rem; }
 main.has-topbar { padding-top: 48px; }
