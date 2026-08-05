@@ -241,13 +241,31 @@ export async function getReadings(username, filters = {}) {
         }
     }
     // Final fallback: if still empty, try Supabase directly
-    // (iOS 18 isolates localStorage between Safari and PWA, so Supabase is the only bridge)
+    // (iOS 18 isolates both IndexedDB and localStorage — Supabase is the only bridge)
     if (readings.length === 0 && isSupabaseConfigured) {
         console.log('[getReadings] Both empty, trying Supabase fallback...')
         try {
-            await refreshFromServer(username)
-            readings = await db.readings.where('username').equals(username).toArray()
-            console.log('[getReadings] Supabase fallback returned', readings.length, 'readings')
+            const { data, error } = await supabase
+                .from('readings')
+                .select('*')
+                .eq('username', username)
+                .order('timestamp', { ascending: false })
+            if (!error && data && data.length > 0) {
+                const mapped = data.map(r => ({
+                    id: r.id, username: r.username, timestamp: r.timestamp,
+                    systolic: r.systolic, diastolic: r.diastolic,
+                    heartRate: r.heart_rate, notes: r.notes || '',
+                    category: classifyReading(r.systolic, r.diastolic),
+                    updatedAt: r.updated_at
+                }))
+                await db.readings.bulkPut(mapped)
+                // Also save to localStorage for non-iOS-18 contexts
+                saveReadingsToLocalStorage(username, mapped)
+                readings = mapped
+                console.log('[getReadings] Supabase fallback returned', readings.length, 'readings')
+            } else {
+                console.log('[getReadings] Supabase fallback: no data or error:', error?.message || 'empty')
+            }
         } catch (e) {
             console.warn('[getReadings] Supabase fallback failed:', e.message)
         }
