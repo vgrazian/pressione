@@ -11,6 +11,7 @@ import OfflineBanner from '@/components/OfflineBanner.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ProfilePrompt from '@/components/ProfilePrompt.vue'
 import { useSWUpdate } from '@/services/swUpdate.js'
+import { startReminderScheduler, stopReminderScheduler } from '@/services/reminderService.js'
 
 const router = useRouter()
 const { isAuthenticated, isAuthReady, user, logout } = useAuth()
@@ -32,9 +33,14 @@ onMounted(async () => {
   }
 })
 
-// Start keep-alive when user logs in
-watch(() => user.value?.username, (username) => {
-  if (username) initKeepAlive(username)
+// Start keep-alive and reminder scheduler when user logs in
+watch(() => user.value?.username, (username, oldUsername) => {
+  if (username) {
+    initKeepAlive(username)
+    startReminderScheduler(username)
+  } else if (oldUsername) {
+    stopReminderScheduler()
+  }
 }, { immediate: true })
 
 // Show profile prompt only if ALL of: auth ready, user exists, profile not completed,
