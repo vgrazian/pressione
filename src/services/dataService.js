@@ -41,6 +41,42 @@ function loadReadingsFromLocalStorage(username) {
 }
 
 /**
+ * Add or update a single reading in localStorage (synchronous helper).
+ * Avoids the async getReadings round-trip used by saveReadingsToLocalStorage.
+ */
+function addReadingToLocalStorage(username, reading) {
+    try {
+        const key = lsReadingsKey(username)
+        const raw = localStorage.getItem(key)
+        let readings = raw ? JSON.parse(raw) : []
+        if (!Array.isArray(readings)) readings = []
+        // Replace if exists, otherwise prepend
+        const idx = readings.findIndex(r => r.id === reading.id)
+        if (idx >= 0) readings[idx] = reading
+        else readings.unshift(reading)
+        localStorage.setItem(key, JSON.stringify(readings))
+        console.log('[LS-bridge] addReadingToLocalStorage:', reading.id, 'total:', readings.length)
+    } catch (e) {
+        console.warn('[LS-bridge] addReadingToLocalStorage failed:', e.message)
+    }
+}
+
+function removeReadingFromLocalStorage(username, id) {
+    try {
+        const key = lsReadingsKey(username)
+        const raw = localStorage.getItem(key)
+        if (!raw) return
+        let readings = JSON.parse(raw)
+        if (!Array.isArray(readings)) return
+        readings = readings.filter(r => r.id !== id)
+        localStorage.setItem(key, JSON.stringify(readings))
+        console.log('[LS-bridge] Removed reading', id, 'total:', readings.length)
+    } catch (e) {
+        console.warn('[LS-bridge] removeReadingFromLocalStorage failed:', e.message)
+    }
+}
+
+/**
  * Retry wrapper with exponential backoff
  */
 async function withRetry(fn, retries = MAX_RETRIES) {
@@ -116,8 +152,13 @@ export async function upsertReading(reading, username) {
     }
     await db.readings.put(idbRecord)
 
-    // Update localStorage backup (fire-and-forget)
-    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => { })
+    // Direct localStorage update (avoids async getReadings race)
+    addReadingToLocalStorage(username, {
+        id: idbRecord.id, username, timestamp: idbRecord.timestamp,
+        systolic: idbRecord.systolic, diastolic: idbRecord.diastolic,
+        heartRate: idbRecord.heartRate, notes: idbRecord.notes || '',
+        category: idbRecord.category, updatedAt: idbRecord.updatedAt
+    })
 
     // 2. Sync to Supabase if online
     if (isSupabaseConfigured) {
@@ -146,8 +187,8 @@ export async function deleteReading(id, username) {
     // 1. Remove from IndexedDB
     await db.readings.delete(id)
 
-    // Update localStorage backup
-    getReadings(username).then(all => saveReadingsToLocalStorage(username, all)).catch(() => { })
+    // Direct localStorage update
+    removeReadingFromLocalStorage(username, id)
 
     // 2. Delete from Supabase
     if (isSupabaseConfigured) {
