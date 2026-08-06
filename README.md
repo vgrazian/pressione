@@ -101,7 +101,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Retry automatico con backoff esponenziale
 - Keep-alive database: ping Supabase ogni 5 min + navigator.storage.persist()
 - Gestione errori resiliente (try/catch su tutte le operazioni)
-- 137 test (137 unit Vitest + 64 E2E Playwright)
+- 201 test (201 unit Vitest + 64 E2E Playwright)
 
 ## Tecnologie
 
@@ -112,7 +112,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 | PDF | jsPDF (A4) |
 | Backend | Supabase (PostgreSQL + REST API) |
 | Database locale | Dexie (IndexedDB v1) + localStorage bridge |
-| Test | Vitest (137) + Playwright (64) |
+| Test | Vitest (201) + Playwright (64) |
 | PWA | Vite PWA Plugin (generateSW, autoUpdate) |
 | UI | Inter font, CSS custom properties, 18 SVG icons |
 
@@ -176,8 +176,8 @@ src/
 ├── components/      # AppNav, AppIcon (18 SVG), ReadingCard, SkeletonLoader, CollapsibleSection, etc.
 ├── views/           # Home, Login, AddEdit, List, Analisi (Stats+Report unificati), Settings, Operators, SharedReport
 tests/
-├── unit/            # 137 Vitest tests (auth, categories, chartColors, errorHandling, i18n, ids, keepAlive, pwaInstall, rbac, statistics, swUpdate, theme, timeBands)
-├── e2e/             # 64 Playwright tests (auth, home, navigation, password-reset, readings, regression, statistics, ui-components, workflow)
+├── unit/            # 201 Vitest tests (auth, categories, chartColors, components, errorHandling, i18n, ids, keepAlive, pwaInstall, rbac, statistics, swUpdate, theme, timeBands)
+├── e2e/             # 64 Playwright tests
 supabase/migrations/ # SQL schema
 ```
 
