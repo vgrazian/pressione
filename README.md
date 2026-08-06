@@ -101,7 +101,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Retry automatico con backoff esponenziale
 - Keep-alive database: ping Supabase ogni 5 min + navigator.storage.persist()
 - Gestione errori resiliente (try/catch su tutte le operazioni)
-- 296 test (201 unit Vitest + 95 E2E Playwright)
+- 318 test (214 unit Vitest + 104 E2E Playwright)
 
 ## Tecnologie
 
@@ -112,7 +112,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 | PDF | jsPDF (A4) |
 | Backend | Supabase (PostgreSQL + REST API) |
 | Database locale | Dexie (IndexedDB v1) + localStorage bridge |
-| Test | Vitest (201) + Playwright (95) |
+| Test | Vitest (214) + Playwright (104) |
 | PWA | Vite PWA Plugin (generateSW, autoUpdate) |
 | UI | Inter font, CSS custom properties, 18 SVG icons |
 

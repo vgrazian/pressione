@@ -617,6 +617,12 @@ async function handleInstall() {
       <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
     </div>
 
+    <!-- Admin -->
+    <div v-if="isAdmin(user)" class="card mb-md">
+      <h3 class="mb-sm">{{ t('admin') }}</h3>
+      <router-link to="/operators" class="btn btn-ghost btn-sm">{{ t('user_management') }}</router-link>
+    </div>
+
     <!-- Data Management -->
     <div class="card mb-md">
       <h3 class="mb-sm">Dati</h3>
@@ -688,12 +694,6 @@ async function handleInstall() {
           Su desktop, usa l'icona <strong>Installa</strong> nella barra degli indirizzi del browser.
         </p>
       </div>
-    </div>
-
-    <!-- Admin -->
-    <div v-if="isAdmin(user)" class="card mb-md">
-      <h3 class="mb-sm">{{ t('admin') }}</h3>
-      <router-link to="/operators" class="btn btn-ghost btn-sm">{{ t('user_management') }}</router-link>
     </div>
 
     <!-- Language -->
