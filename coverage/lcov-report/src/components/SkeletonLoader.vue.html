@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -132,23 +132,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -192,23 +192,23 @@ defineProps({
 &lt;/script&gt;
 &nbsp;
 &lt;template&gt;
-<span class="cstat-no" title="statement not covered" >  &lt;!-- Text skeletons --&gt;</span>
-<span class="cstat-no" title="statement not covered" >  &lt;div v-if="type === 'text'" class="skeleton-list"&gt;</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div v-for="i in count" :key="i" class="skeleton skeleton-text" :style="{ width: (100 - (i - 1) * 15) + '%' }"&gt;&lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >  &lt;/div&gt;</span>
+  &lt;!-- Text skeletons --&gt;
+  &lt;div v-if="type === 'text'" class="skeleton-list"&gt;
+    &lt;div v-for="i in count" :key="i" class="skeleton skeleton-text" :style="{ width: (100 - (i - 1) * 15) + '%' }"&gt;&lt;/div&gt;
+  &lt;/div&gt;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  &lt;!-- Card skeletons --&gt;</span>
-<span class="cstat-no" title="statement not covered" >  &lt;div v-if="type === 'card'" class="skeleton-grid"&gt;</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div v-for="i in count" :key="i" class="skeleton skeleton-card" :style="height ? { height } : {}"&gt;&lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >  &lt;/div&gt;</span>
+  &lt;!-- Card skeletons --&gt;
+  &lt;div v-if="type === 'card'" class="skeleton-grid"&gt;
+    &lt;div v-for="i in count" :key="i" class="skeleton skeleton-card" :style="height ? { height } : {}"&gt;&lt;/div&gt;
+  &lt;/div&gt;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  &lt;!-- Chart skeleton --&gt;</span>
-<span class="cstat-no" title="statement not covered" >  &lt;div v-if="type === 'chart'" class="skeleton skeleton-chart"&gt;&lt;/div&gt;</span>
+  &lt;!-- Chart skeleton --&gt;
+  &lt;div v-if="type === 'chart'" class="skeleton skeleton-chart"&gt;&lt;/div&gt;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  &lt;!-- Stat cards --&gt;</span>
-<span class="cstat-no" title="statement not covered" >  &lt;div v-if="type === 'stats'" class="skeleton-stats"&gt;</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div v-for="i in 4" :key="i" class="skeleton skeleton-stat"&gt;&lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >  &lt;/div&gt;</span>
+  &lt;!-- Stat cards --&gt;
+  &lt;div v-if="type === 'stats'" class="skeleton-stats"&gt;
+    &lt;div v-for="i in 4" :key="i" class="skeleton skeleton-stat"&gt;&lt;/div&gt;
+  &lt;/div&gt;
 &lt;/template&gt;
 &nbsp;
 &lt;style scoped&gt;
@@ -250,7 +250,7 @@ defineProps({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-06T11:53:41.740Z
+                at 2026-08-06T12:11:34.315Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

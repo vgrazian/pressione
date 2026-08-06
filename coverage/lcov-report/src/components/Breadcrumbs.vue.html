@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>18/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>18/18</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -132,36 +132,36 @@
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
 <a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -200,10 +200,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&lt;script setup&gt;
-<span class="cstat-no" title="statement not covered" >import { computed } from 'vue'</span>
-<span class="cstat-no" title="statement not covered" >import { useRoute, useRouter } from 'vue-router'</span>
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 &nbsp;
-<span class="cstat-no" title="statement not covered" >const props = defineProps({</span>
+const props = defineProps({
     items: {
         type: Array,
         required: true
@@ -211,25 +211,25 @@
     }
 })
 &nbsp;
-<span class="cstat-no" title="statement not covered" >const router = useRouter()</span>
+const router = useRouter()
 &nbsp;
-<span class="cstat-no" title="statement not covered" >function navigate(to) {</span>
-<span class="cstat-no" title="statement not covered" >    if (to) router.push(to)</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+function navigate(to) {
+    if (to) router.push(to)
+}
 &lt;/script&gt;
 &nbsp;
 &lt;template&gt;
-<span class="cstat-no" title="statement not covered" >    &lt;nav class="breadcrumbs" aria-label="Breadcrumb"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;template v-for="(item, i) in items" :key="i"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;span v-if="i &gt; 0" class="breadcrumbs__sep"&gt;›&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;button</span>
-<span class="cstat-no" title="statement not covered" >                v-if="item.to"</span>
-<span class="cstat-no" title="statement not covered" >                class="breadcrumbs__link"</span>
-<span class="cstat-no" title="statement not covered" >                @click="navigate(item.to)"</span>
-<span class="cstat-no" title="statement not covered" >            &gt;{{ item.label }}&lt;/button&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;span v-else class="breadcrumbs__current"&gt;{{ item.label }}&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;/template&gt;</span>
-<span class="cstat-no" title="statement not covered" >    &lt;/nav&gt;</span>
+    &lt;nav class="breadcrumbs" aria-label="Breadcrumb"&gt;
+        &lt;template v-for="(item, i) in items" :key="i"&gt;
+            &lt;span v-if="i &gt; 0" class="breadcrumbs__sep"&gt;›&lt;/span&gt;
+            &lt;button
+                v-if="item.to"
+                class="breadcrumbs__link"
+                @click="navigate(item.to)"
+            &gt;{{ item.label }}&lt;/button&gt;
+            &lt;span v-else class="breadcrumbs__current"&gt;{{ item.label }}&lt;/span&gt;
+        &lt;/template&gt;
+    &lt;/nav&gt;
 &lt;/template&gt;
 &nbsp;
 &lt;style scoped&gt;
@@ -274,7 +274,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-06T11:53:41.740Z
+                at 2026-08-06T12:11:34.315Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
