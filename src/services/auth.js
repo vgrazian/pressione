@@ -44,6 +44,7 @@ export function useAuth() {
         requestPasswordResetByEmail,
         completePasswordRecovery,
         adminResetUserPassword,
+        adminUpdateUserEmail,
         fetchUsers,
         updateUserRole,
         deactivateUser,
@@ -403,6 +404,15 @@ async function requestPasswordReset(username) {
  */
 async function completePasswordReset(token, newPassword) {
     await resetPasswordWithToken(token, newPassword)
+}
+
+/**
+ * Admin updates another user's email
+ */
+async function adminUpdateUserEmail(username, newEmail) {
+    if (!state.user || state.user.role !== 'admin') throw new Error('Accesso non autorizzato')
+    if (!newEmail || !newEmail.includes('@')) throw new Error('Email non valida')
+    await updateEmail({ username, newEmail: newEmail.toLowerCase().trim() })
 }
 
 /**

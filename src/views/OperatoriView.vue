@@ -3,7 +3,7 @@ import { ref, onMounted, inject } from 'vue'
 import { useAuth } from '@/services/auth.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
-const { user, fetchUsers, updateUserRole, deactivateUser, activateUser, hardDeleteUser, adminResetUserPassword } = useAuth()
+const { user, fetchUsers, updateUserRole, deactivateUser, activateUser, hardDeleteUser, adminResetUserPassword, adminUpdateUserEmail } = useAuth()
 
 const confirm = inject('confirm-dialog', null)
 const users = ref([])
@@ -11,6 +11,8 @@ const isLoading = ref(true)
 const errorMessage = ref('')
 const resetUser = ref(null)
 const newPassword = ref('')
+const editingEmail = ref(null)
+const newEmail = ref('')
 
 onMounted(async () => {
   await loadUsers()
@@ -109,6 +111,32 @@ async function handleHardDelete(targetUser) {
   }
 }
 
+function startEditEmail(targetUser) {
+  editingEmail.value = targetUser.username
+  newEmail.value = targetUser.email || ''
+  errorMessage.value = ''
+}
+
+function cancelEditEmail() {
+  editingEmail.value = null
+  newEmail.value = ''
+}
+
+async function handleUpdateEmail(targetUser) {
+  if (!newEmail.value || !newEmail.value.includes('@')) {
+    errorMessage.value = 'Inserisci un indirizzo email valido'
+    return
+  }
+  try {
+    await adminUpdateUserEmail(targetUser.username, newEmail.value)
+    targetUser.email = newEmail.value.toLowerCase().trim()
+    editingEmail.value = null
+    newEmail.value = ''
+  } catch (e) {
+    errorMessage.value = e.message
+  }
+}
+
 function startResetPassword(targetUser) {
   resetUser.value = targetUser
   newPassword.value = ''
@@ -152,7 +180,21 @@ async function handleResetPassword() {
         <div v-for="u in users" :key="u.username" class="user-row" :class="{ 'user-row--disabled': u.disabled }">
           <div class="user-info">
             <span class="user-name">{{ u.username }}</span>
-            <span class="user-email">{{ u.email }}</span>
+            <!-- Editable email -->
+            <template v-if="!u.disabled && editingEmail === u.username">
+              <div class="email-edit-row">
+                <input v-model="newEmail" type="email" class="form-input" style="width:200px;font-size:0.8125rem;padding:0.25rem 0.5rem;min-height:28px"
+                  placeholder="nuova@email.com" @keyup.enter="handleUpdateEmail(u)" />
+                <button class="btn btn-sm btn-primary" style="padding:0.125rem 0.5rem;min-height:24px;font-size:0.6875rem" @click="handleUpdateEmail(u)">Salva</button>
+                <button class="btn btn-sm btn-ghost" style="padding:0.125rem 0.5rem;min-height:24px;font-size:0.6875rem" @click="cancelEditEmail">✕</button>
+              </div>
+            </template>
+            <template v-else>
+              <span class="user-email" :class="{ 'clickable': !u.disabled }" @click="!u.disabled && startEditEmail(u)">{{ u.email || '—' }}</span>
+              <button v-if="!u.disabled" class="btn-edit-email" title="Modifica email" @click="startEditEmail(u)">
+                ✎
+              </button>
+            </template>
             <span class="chip" :class="u.role === 'admin' ? 'chip-admin' : 'chip-user'">
               {{ u.role === 'admin' ? 'Admin' : 'Utente' }}
             </span>
@@ -245,6 +287,36 @@ async function handleResetPassword() {
 
 .user-row--disabled .user-name {
   text-decoration: line-through;
+}
+
+.user-email.clickable {
+  cursor: pointer;
+  color: var(--color-accent);
+}
+
+.user-email.clickable:hover {
+  text-decoration: underline;
+}
+
+.btn-edit-email {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.user-row:hover .btn-edit-email {
+  opacity: 1;
+}
+
+.email-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .user-name {
