@@ -1,6 +1,6 @@
 # Pressione — Progress & Conventions
 
-> Ultimo aggiornamento: 2026-08-04
+> Ultimo aggiornamento: 2026-08-06
 
 ---
 
@@ -128,3 +128,18 @@ I file SQL in `supabase/migrations/` vanno applicati tramite Supabase MCP:
 - Grafico BP con zona target verde tratteggiata, hover tooltip con categoria
 - Grafico derivate (dP/dt bar chart), doughnut distribuzione, card fasce orarie
 - Filtro date (Tutto/30gg/7gg) nel report condiviso
+
+### 2026-08-06
+
+**Deploy script:**
+
+- `scripts/deploy.sh`: aggiunto step [0/5] pre-flight GitHub Status (controlla status Pages via `githubstatus.com/api/v2/components.json`)
+- Step [5/5]: verifica build Pages via GitHub API (se `GITHUB_TOKEN` in `.env`) o fallback HTTP poll
+- Lo script ora source `.env` per leggere `GITHUB_TOKEN`
+
+**⚠️ Deploy status:**
+
+- **v1.2.1 NON è live** — GitHub Pages in `major_outage` dal 06/08/2026 ~15:22 UTC
+- Commit pronti: `53ee850` (deploy script), `4cab61b` (bump 1.2.1)
+- Da deployare con `./scripts/deploy.sh` quando Pages torna operational
+- Monitor: <https://www.githubstatus.com/>
