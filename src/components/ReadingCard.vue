@@ -53,8 +53,8 @@ function formatTime(ts) {
       <button class="btn btn-sm btn-ghost" @click="$emit('edit', reading)">
         <AppIcon name="edit" :size="14" /> Modifica
       </button>
-      <button class="btn btn-sm btn-ghost" @click="$emit('delete', reading)" style="color: var(--color-error);">
-        <AppIcon name="trash" :size="14" color="var(--color-error)" /> Elimina
+      <button class="btn btn-sm btn-ghost-error" @click="$emit('delete', reading)">
+        <AppIcon name="trash" :size="14" color="currentColor" /> Elimina
       </button>
     </div>
   </div>

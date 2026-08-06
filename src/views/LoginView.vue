@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { useSWUpdate } from '@/services/swUpdate.js'
+import AppIcon from '@/components/AppIcon.vue'
 import { APP_VERSION, BUILD_TIME, BUILD_NUMBER } from '@/services/version.js'
 
 const router = useRouter()
@@ -174,10 +175,10 @@ async function handleForgotPassword() {
     <div class="version-bar">
       <span class="version-text">v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}</span>
       <button class="btn btn-sm btn-ghost version-btn" title="Copia versione" @click="copyVersion">
-        {{ copied ? '✓ Copiato' : '📋 Copia' }}
+        <AppIcon name="copy" :size="14" /> {{ copied ? 'Copiato' : 'Copia' }}
       </button>
       <button class="btn btn-sm btn-ghost version-btn" title="Forza aggiornamento" :disabled="updating" @click="handleForceUpdate">
-        {{ updating ? '🔄 Aggiorno...' : '🔄 Aggiorna' }}
+        <AppIcon name="refresh" :size="14" /> {{ updating ? 'Aggiorno...' : 'Aggiorna' }}
       </button>
     </div>
   </div>

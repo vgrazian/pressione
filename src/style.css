@@ -55,6 +55,11 @@
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  /* Icon scale */
+  --icon-sm: 14px;
+  --icon-md: 18px;
+  --icon-lg: 24px;
 }
 
 /* --- Dark Mode --- */
@@ -229,6 +234,33 @@ a {
   line-height: 1;
 }
 
+.btn-xs {
+  padding: 0.1875rem 0.5rem;
+  min-height: 24px;
+  font-size: 0.6875rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-strong);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-surface-overlay);
+  color: var(--color-text-primary);
+}
+
+.btn-ghost-error {
+  background: transparent;
+  color: var(--color-error);
+}
+
+.btn-ghost-error:hover {
+  background-color: var(--color-error-muted);
+}
+
 /* Cards — consistent radius, tinted shadows, subtle hover */
 .card {
   background: var(--color-surface-raised);
@@ -394,7 +426,7 @@ input[type="checkbox"]:checked::after {
   right: 1.5rem;
   width: 52px;
   height: 52px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   background-color: var(--color-accent);
   color: var(--color-on-accent);
   border: none;

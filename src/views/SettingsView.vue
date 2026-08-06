@@ -605,7 +605,7 @@ async function handleInstall() {
 
     <!-- Time Bands Configuration -->
     <div class="card mb-md">
-      <h3 class="mb-sm">⏰ Fasce Orarie</h3>
+      <h3 class="mb-sm"><AppIcon name="clock" :size="18" /> Fasce Orarie</h3>
       <p class="text-secondary mb-sm" style="font-size:0.8125rem">
         Trascina i separatori per regolare le fasce. Le fasce non possono sovrapporsi.
       </p>
@@ -621,11 +621,11 @@ async function handleInstall() {
     <div class="card mb-md">
       <h3 class="mb-sm">Dati</h3>
       <div class="flex flex-col gap-sm">
-        <button class="btn btn-sm btn-secondary" @click="handleExportCSV">📥 {{ t('export_csv') }}</button>
-        <button class="btn btn-sm btn-secondary" @click="handleBackup">💾 Backup (JSON)</button>
-        <button class="btn btn-sm btn-secondary" @click="triggerRestore">📂 Ripristina Backup</button>
+        <button class="btn btn-sm btn-secondary" @click="handleExportCSV"><AppIcon name="download" :size="16" /> {{ t('export_csv') }}</button>
+        <button class="btn btn-sm btn-secondary" @click="handleBackup"><AppIcon name="download" :size="16" /> Backup (JSON)</button>
+        <button class="btn btn-sm btn-secondary" @click="triggerRestore"><AppIcon name="upload" :size="16" /> Ripristina Backup</button>
         <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
-        <button class="btn btn-sm btn-secondary" @click="triggerImportCsv">📥 Importa CSV (bp-tracker)</button>
+        <button class="btn btn-sm btn-secondary" @click="triggerImportCsv"><AppIcon name="upload" :size="16" /> Importa CSV (bp-tracker)</button>
         <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsv" />
         <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData"><AppIcon name="robot" :size="16" /> {{ t('generate_test_data') }}</button>
       </div>
@@ -635,7 +635,7 @@ async function handleInstall() {
     <!-- Database Keep-Alive -->
     <div class="card mb-md">
       <div class="flex justify-between items-center mb-sm">
-        <h3>🔄 Keep-Alive Database</h3>
+        <h3 class="mb-sm"><AppIcon name="refresh" :size="18" /> Keep-Alive Database</h3>
         <label class="toggle-switch">
           <input type="checkbox" :checked="keepAliveOn" @change="toggleKeepAlive" />
           <span class="toggle-slider"></span>
@@ -708,7 +708,7 @@ async function handleInstall() {
 
     <!-- Cache & Updates -->
     <div class="card mb-md">
-      <h3 class="mb-sm">🔄 Cache & Aggiornamenti</h3>
+      <h3 class="mb-sm"><AppIcon name="refresh" :size="18" /> Cache & Aggiornamenti</h3>
       <p class="text-secondary mb-sm" style="font-size:0.8125rem">
         Se l'app mostra una versione vecchia, svuota la cache per forzare il caricamento dell'ultima versione.
       </p>
@@ -719,15 +719,15 @@ async function handleInstall() {
 
     <!-- Diagnostica -->
     <div class="card mb-md">
-      <h3 class="mb-sm">🔧 Diagnostica</h3>
+      <h3 class="mb-sm"><AppIcon name="settings" :size="18" /> Diagnostica</h3>
       <p class="text-secondary mb-sm" style="font-size:0.8125rem">
         Condividi le informazioni di diagnostica per aiutare a risolvere i problemi.
       </p>
       <button class="btn btn-sm btn-secondary" @click="handleShareDiagnostics">
-        📋 Condividi diagnostica
+        <AppIcon name="share" :size="16" /> Condividi diagnostica
       </button>
       <button class="btn btn-sm btn-secondary mt-sm" @click="handleForceSyncToSupabase" :disabled="syncInProgress">
-        {{ syncInProgress ? 'Sincronizzazione...' : '🔄 Forza sync a Supabase' }}
+        <AppIcon name="refresh" :size="16" /> {{ syncInProgress ? 'Sincronizzazione...' : 'Forza sync a Supabase' }}
       </button>
       <div v-if="diagMessage" class="form-success mt-sm">{{ diagMessage }}</div>
     </div>

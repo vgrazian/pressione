@@ -5,6 +5,7 @@ import { useAuth } from '@/services/auth.js'
 import { upsertReading, getReadingById, getReadings } from '@/services/dataService.js'
 import { classifyReading, getCategoryColor, getCategoryLabel } from '@/services/categories.js'
 import Breadcrumbs from '@/components/Breadcrumbs.vue'
+import AppIcon from '@/components/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -142,7 +143,7 @@ function goBack() {
 
     <div class="page-header flex items-center gap-md">
       <button class="btn btn-sm btn-outline back-btn" @click="goBack" aria-label="Indietro">
-        ←
+        <AppIcon name="chevron-left" :size="18" />
       </button>
       <h1>{{ isEdit ? 'Modifica' : 'Nuova' }} Misurazione</h1>
     </div>
@@ -200,10 +201,10 @@ function goBack() {
       <!-- Action buttons -->
       <div class="form-actions">
         <button type="button" class="btn btn-error" @click="goBack">
-          ✕ Annulla
+          <AppIcon name="trash" :size="16" color="var(--color-on-error)" /> Annulla
         </button>
         <button type="submit" class="btn btn-primary btn--full-mobile" :disabled="isSaving">
-          {{ isSaving ? 'Salvataggio...' : '✓ Salva' }}
+          {{ isSaving ? 'Salvataggio...' : 'Salva' }}
         </button>
       </div>
     </form>

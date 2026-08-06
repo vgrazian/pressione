@@ -622,8 +622,8 @@ function copyActiveLink(token) {
               Scade {{ new Date(link.expiresAt).toLocaleString('it-IT') }}
             </span>
             <div class="flex gap-sm">
-              <button class="btn btn-sm btn-ghost" @click="copyActiveLink(link.token)" style="font-size:0.6875rem;padding:2px 8px;min-height:24px">Copia</button>
-              <button class="btn btn-sm btn-error" @click="revokeLink(link.token)" style="font-size:0.6875rem;padding:2px 8px;min-height:24px">Revoca</button>
+              <button class="btn btn-xs btn-ghost" @click="copyActiveLink(link.token)">Copia</button>
+              <button class="btn btn-xs btn-error" @click="revokeLink(link.token)">Revoca</button>
             </div>
           </div>
         </div>
