@@ -10,7 +10,8 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 ### Autenticazione e Utenti
 
 - Login/Logout con password hashed (SHA-256), sessione persistente 8 ore
-- **Recupero password via email**: link con token (30 min) → pagina reset dedicata
+- **Recupero password via email**: link con token (30 min) → pagina reset dedicata (`/reset-password?token=...`)
+- **Strumenti versione in login**: pulsanti 📋 Copia (debug) e 🔄 Aggiorna (force clear cache + SW reload)
 - RBAC: admin (gestione utenti, reset password) e user
 - 9 utenti pre-configurati (2 admin, 7 user)
 
@@ -100,7 +101,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 - Retry automatico con backoff esponenziale
 - Keep-alive database: ping Supabase ogni 5 min + navigator.storage.persist()
 - Gestione errori resiliente (try/catch su tutte le operazioni)
-- 79 test (79 unit Vitest + 15 E2E Playwright)
+- 81 test (81 unit Vitest + 15 E2E Playwright)
 
 ## Tecnologie
 
@@ -111,7 +112,7 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 | PDF | jsPDF (A4) |
 | Backend | Supabase (PostgreSQL + REST API) |
 | Database locale | Dexie (IndexedDB v1) + localStorage bridge |
-| Test | Vitest (79) + Playwright (15) |
+| Test | Vitest (81) + Playwright (15) |
 | PWA | Vite PWA Plugin (generateSW, autoUpdate) |
 | UI | Inter font, CSS custom properties, 18 SVG icons |
 
@@ -175,7 +176,7 @@ src/
 ├── components/      # AppNav, AppIcon (18 SVG), ReadingCard, SkeletonLoader, CollapsibleSection, etc.
 ├── views/           # Home, Login, AddEdit, List, Analisi (Stats+Report unificati), Settings, Operators, SharedReport
 tests/
-├── unit/            # 79 Vitest tests
+├── unit/            # 81 Vitest tests
 ├── e2e/             # 15 Playwright tests
 supabase/migrations/ # SQL schema
 ```

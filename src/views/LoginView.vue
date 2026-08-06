@@ -2,10 +2,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
+import { useSWUpdate } from '@/services/swUpdate.js'
 import { APP_VERSION, BUILD_TIME, BUILD_NUMBER } from '@/services/version.js'
 
 const router = useRouter()
 const { login, requestPasswordResetByEmail, supportsEmailReset } = useAuth()
+const { forceClearCache } = useSWUpdate()
 
 const username = ref('')
 const password = ref('')
@@ -17,6 +19,40 @@ const forgotEmail = ref('')
 const forgotMessage = ref('')
 const forgotBusy = ref(false)
 const forgotResetUrl = ref('')
+const copied = ref(false)
+const updating = ref(false)
+
+const versionString = `v${APP_VERSION} — build ${BUILD_NUMBER} — ${new Date(BUILD_TIME).toLocaleString('it-IT')}`
+
+async function copyVersion() {
+  try {
+    await navigator.clipboard.writeText(versionString)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  } catch {
+    // Fallback for non-HTTPS contexts
+    const ta = document.createElement('textarea')
+    ta.value = versionString
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  }
+}
+
+async function handleForceUpdate() {
+  updating.value = true
+  try {
+    await forceClearCache()
+  } catch {
+    // forceClearCache does a hard reload, but just in case
+    window.location.reload(true)
+  }
+}
 
 async function handleSubmit() {
   errorMessage.value = ''
@@ -135,7 +171,15 @@ async function handleForgotPassword() {
       </template>
     </div>
 
-    <p class="version-info">v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}</p>
+    <div class="version-bar">
+      <span class="version-text">v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}</span>
+      <button class="btn btn-sm btn-ghost version-btn" title="Copia versione" @click="copyVersion">
+        {{ copied ? '✓ Copiato' : '📋 Copia' }}
+      </button>
+      <button class="btn btn-sm btn-ghost version-btn" title="Forza aggiornamento" :disabled="updating" @click="handleForceUpdate">
+        {{ updating ? '🔄 Aggiorno...' : '🔄 Aggiorna' }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -184,5 +228,31 @@ async function handleForgotPassword() {
   color: var(--color-text-tertiary);
   margin-top: var(--space-lg);
   opacity: 0.7;
+}
+
+.version-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.version-text {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+}
+
+.version-btn {
+  font-size: 0.6875rem !important;
+  padding: 2px 6px !important;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.version-btn:hover {
+  opacity: 1;
 }
 </style>
