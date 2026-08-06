@@ -9,6 +9,8 @@ import {
     getAllUsers,
     setUserRoleWithTable,
     deleteUserWithTable,
+    enableUserWithTable,
+    hardDeleteUserWithTable,
     updateEmail,
     createRecoveryToken,
     resetPasswordWithToken,
@@ -45,6 +47,8 @@ export function useAuth() {
         fetchUsers,
         updateUserRole,
         deactivateUser,
+        activateUser,
+        hardDeleteUser,
         refreshSession,
         updateUserProfile,
         supportsEmailReset: isSupabaseConfigured
@@ -337,6 +341,20 @@ async function updateUserRole(username, role) {
  */
 async function deactivateUser(username) {
     await deleteUserWithTable({ username })
+}
+
+/**
+ * Re-activate a disabled user (admin only)
+ */
+async function activateUser(username) {
+    await enableUserWithTable({ username })
+}
+
+/**
+ * Hard-delete a user permanently (admin only)
+ */
+async function hardDeleteUser(username) {
+    await hardDeleteUserWithTable({ username })
 }
 
 /**

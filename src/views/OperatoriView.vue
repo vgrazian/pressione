@@ -3,7 +3,7 @@ import { ref, onMounted, inject } from 'vue'
 import { useAuth } from '@/services/auth.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
-const { user, fetchUsers, updateUserRole, deactivateUser, adminResetUserPassword } = useAuth()
+const { user, fetchUsers, updateUserRole, deactivateUser, activateUser, hardDeleteUser, adminResetUserPassword } = useAuth()
 
 const confirm = inject('confirm-dialog', null)
 const users = ref([])
@@ -65,6 +65,50 @@ async function handleDeactivate(targetUser) {
   }
 }
 
+async function handleActivate(targetUser) {
+  if (!confirm) {
+    if (!window.confirm(`Riattivare l'utente "${targetUser.username}"?`)) return
+  } else {
+    const confirmed = await confirm({
+      title: 'Riattiva utente',
+      message: `Riattivare l'utente "${targetUser.username}"? Potrà nuovamente accedere.`,
+      confirmText: 'Riattiva',
+      variant: 'default'
+    })
+    if (!confirmed) return
+  }
+  try {
+    await activateUser(targetUser.username)
+    targetUser.disabled = false
+  } catch (e) {
+    errorMessage.value = e.message
+  }
+}
+
+async function handleHardDelete(targetUser) {
+  if (targetUser.username === user.value.username) {
+    errorMessage.value = 'Non puoi eliminare il tuo account'
+    return
+  }
+  if (!confirm) {
+    if (!window.confirm(`Eliminare PERMANENTEMENTE l'utente "${targetUser.username}"? Questa azione è irreversibile.`)) return
+  } else {
+    const confirmed = await confirm({
+      title: 'Elimina utente',
+      message: `Eliminare PERMANENTEMENTE l'utente "${targetUser.username}"? Tutti i suoi dati andranno persi.`,
+      confirmText: 'Elimina',
+      variant: 'danger'
+    })
+    if (!confirmed) return
+  }
+  try {
+    await hardDeleteUser(targetUser.username)
+    users.value = users.value.filter(u => u.username !== targetUser.username)
+  } catch (e) {
+    errorMessage.value = e.message
+  }
+}
+
 function startResetPassword(targetUser) {
   resetUser.value = targetUser
   newPassword.value = ''
@@ -105,7 +149,7 @@ async function handleResetPassword() {
 
     <div v-else class="card">
       <div class="users-list">
-        <div v-for="u in users" :key="u.username" class="user-row">
+        <div v-for="u in users" :key="u.username" class="user-row" :class="{ 'user-row--disabled': u.disabled }">
           <div class="user-info">
             <span class="user-name">{{ u.username }}</span>
             <span class="user-email">{{ u.email }}</span>
@@ -115,26 +159,43 @@ async function handleResetPassword() {
             <span v-if="u.disabled" class="chip chip-inactive">Disattivato</span>
           </div>
           <div class="user-actions flex gap-sm">
+            <!-- Active user actions -->
+            <template v-if="!u.disabled">
+              <button
+                class="btn btn-sm btn-outline"
+                @click="toggleRole(u)"
+              >
+                {{ u.role === 'admin' ? 'Rendi Utente' : 'Rendi Admin' }}
+              </button>
+              <button
+                class="btn btn-sm btn-ghost"
+                @click="startResetPassword(u)"
+              >
+                Reset PW
+              </button>
+              <button
+                class="btn btn-sm btn-secondary"
+                @click="handleDeactivate(u)"
+              >
+                Disattiva
+              </button>
+            </template>
+            <!-- Disabled user actions -->
+            <template v-else>
+              <button
+                class="btn btn-sm btn-primary"
+                @click="handleActivate(u)"
+              >
+                Attiva
+              </button>
+            </template>
+            <!-- Delete (always available for other users) -->
             <button
-              v-if="!u.disabled"
-              class="btn btn-sm btn-outline"
-              @click="toggleRole(u)"
+              v-if="u.username !== user?.username"
+              class="btn btn-sm btn-error"
+              @click="handleHardDelete(u)"
             >
-              {{ u.role === 'admin' ? 'Rendi Utente' : 'Rendi Admin' }}
-            </button>
-            <button
-              v-if="!u.disabled"
-              class="btn btn-sm btn-ghost"
-              @click="startResetPassword(u)"
-            >
-              Reset PW
-            </button>
-            <button
-              v-if="!u.disabled"
-              class="btn btn-sm btn-secondary"
-              @click="handleDeactivate(u)"
-            >
-              Disattiva
+              Elimina
             </button>
           </div>
         </div>
@@ -176,6 +237,14 @@ async function handleResetPassword() {
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
+}
+
+.user-row--disabled {
+  opacity: 0.55;
+}
+
+.user-row--disabled .user-name {
+  text-decoration: line-through;
 }
 
 .user-name {

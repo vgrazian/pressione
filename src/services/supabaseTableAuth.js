@@ -134,6 +134,34 @@ export async function deleteUserWithTable({ username }) {
 }
 
 /**
+ * Re-enable a disabled user
+ */
+export async function enableUserWithTable({ username }) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+
+    const { error } = await supabase
+        .from('users')
+        .update({ disabled: false, updated_at: new Date().toISOString() })
+        .eq('username', username)
+
+    if (error) throw new Error('Errore nella riattivazione utente')
+}
+
+/**
+ * Hard-delete a user (permanent removal)
+ */
+export async function hardDeleteUserWithTable({ username }) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+
+    const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('username', username)
+
+    if (error) throw new Error('Errore nella cancellazione utente')
+}
+
+/**
  * Get all users (admin only)
  */
 export async function getAllUsers() {
