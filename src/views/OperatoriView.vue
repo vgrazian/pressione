@@ -2,6 +2,7 @@
 import { ref, onMounted, inject } from 'vue'
 import { useAuth } from '@/services/auth.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import AppIcon from '@/components/AppIcon.vue'
 
 const { user, fetchUsers, updateUserRole, deactivateUser, activateUser, hardDeleteUser, adminResetUserPassword, adminUpdateUserEmail } = useAuth()
 
@@ -13,6 +14,7 @@ const resetUser = ref(null)
 const newPassword = ref('')
 const editingEmail = ref(null)
 const newEmail = ref('')
+const successMessage = ref('')
 
 onMounted(async () => {
   await loadUsers()
@@ -150,10 +152,11 @@ async function handleResetPassword() {
   }
   try {
     await adminResetUserPassword(resetUser.value.username, newPassword.value)
+    successMessage.value = `Password reimpostata per ${resetUser.value.username}`
     errorMessage.value = ''
     resetUser.value = null
     newPassword.value = ''
-    alert(`Password reimpostata per ${resetUser.value?.username || 'utente'}`)
+    setTimeout(() => { successMessage.value = '' }, 3000)
   } catch (e) {
     errorMessage.value = e.message
   }
@@ -164,11 +167,15 @@ async function handleResetPassword() {
   <div class="page">
     <div class="page-header">
       <h1>Gestione Utenti</h1>
-      <router-link to="/settings" class="btn btn-sm btn-outline mt-sm">← Impostazioni</router-link>
+      <router-link to="/settings" class="btn btn-sm btn-outline mt-sm"><AppIcon name="chevron-left" :size="16" /> Impostazioni</router-link>
     </div>
 
-    <div v-if="errorMessage" class="card mb-md" style="border-color: var(--color-error);">
-      <p style="color: var(--color-error);">{{ errorMessage }}</p>
+    <div v-if="successMessage" class="card card--success mb-md">
+      <p class="text-success">{{ successMessage }}</p>
+    </div>
+
+    <div v-if="errorMessage" class="card card--error mb-md">
+      <p class="text-error">{{ errorMessage }}</p>
     </div>
 
     <div v-if="isLoading" class="p-lg">
@@ -183,16 +190,16 @@ async function handleResetPassword() {
             <!-- Editable email -->
             <template v-if="!u.disabled && editingEmail === u.username">
               <div class="email-edit-row">
-                <input v-model="newEmail" type="email" class="form-input" style="width:200px;font-size:0.8125rem;padding:0.25rem 0.5rem;min-height:28px"
+                <input v-model="newEmail" type="email" class="form-input email-edit-input"
                   placeholder="nuova@email.com" @keyup.enter="handleUpdateEmail(u)" />
-                <button class="btn btn-sm btn-primary" style="padding:0.125rem 0.5rem;min-height:24px;font-size:0.6875rem" @click="handleUpdateEmail(u)">Salva</button>
-                <button class="btn btn-sm btn-ghost" style="padding:0.125rem 0.5rem;min-height:24px;font-size:0.6875rem" @click="cancelEditEmail">✕</button>
+                <button class="btn btn-xs btn-primary" @click="handleUpdateEmail(u)">Salva</button>
+                <button class="btn btn-xs btn-ghost" @click="cancelEditEmail"><AppIcon name="trash" :size="14" /></button>
               </div>
             </template>
             <template v-else>
               <span class="user-email" :class="{ 'clickable': !u.disabled }" @click="!u.disabled && startEditEmail(u)">{{ u.email || '—' }}</span>
               <button v-if="!u.disabled" class="btn-edit-email" title="Modifica email" @click="startEditEmail(u)">
-                ✎
+                <AppIcon name="edit" :size="12" />
               </button>
             </template>
             <span class="chip" :class="u.role === 'admin' ? 'chip-admin' : 'chip-user'">
@@ -213,7 +220,7 @@ async function handleResetPassword() {
                 class="btn btn-sm btn-ghost"
                 @click="startResetPassword(u)"
               >
-                Reset PW
+                <AppIcon name="refresh" :size="14" /> Reset PW
               </button>
               <button
                 class="btn btn-sm btn-secondary"
@@ -317,6 +324,37 @@ async function handleResetPassword() {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.email-edit-input {
+  width: 200px;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.5rem;
+  min-height: 28px;
+}
+
+.card--error {
+  border-color: var(--color-error);
+}
+
+.card--error p {
+  color: var(--color-error);
+}
+
+.card--success {
+  border-color: var(--color-accent);
+}
+
+.card--success p {
+  color: var(--color-accent);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-success {
+  color: var(--color-accent);
 }
 
 .user-name {
