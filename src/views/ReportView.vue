@@ -421,15 +421,6 @@ function copyActiveLink(token) {
         <span class="text-secondary">—</span>
         <input type="date" v-model="customTo" class="form-input" style="width:140px" />
       </div>
-      <label class="flex items-center gap-sm mb-sm" style="cursor:pointer">
-        <input type="checkbox" v-model="includeCharts" /> Includi grafici
-      </label>
-      <label class="flex items-center gap-sm mb-sm" style="cursor:pointer">
-        <input type="checkbox" v-model="includeHistory" /> Includi storico completo
-      </label>
-      <label class="flex items-center gap-sm" style="cursor:pointer">
-        <input type="checkbox" v-model="anonymize" /> Anonimizza report
-      </label>
     </div>
 
     <div v-if="isLoading" class="p-lg"><SkeletonLoader type="text" :count="8" /></div>
@@ -587,6 +578,17 @@ function copyActiveLink(token) {
       <!-- Share Actions -->
       <div class="card mb-md">
         <h3 class="mb-sm">Condividi</h3>
+        <div class="mb-sm">
+          <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
+            <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF
+          </label>
+          <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
+            <input type="checkbox" v-model="includeHistory" /> Includi storico completo
+          </label>
+          <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
+            <input type="checkbox" v-model="anonymize" /> Anonimizza report
+          </label>
+        </div>
         <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
           <AppIcon name="copy" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
         </button>

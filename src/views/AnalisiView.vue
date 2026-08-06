@@ -355,12 +355,6 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
           <input type="date" v-model="customTo" class="form-input" style="width:140px" @change="applyCustomRange" />
         </template>
       </div>
-      <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
-        <input type="checkbox" v-model="includeCharts" /> Includi grafici
-      </label>
-      <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
-        <input type="checkbox" v-model="anonymize" /> Anonimizza (nasconde nome, genere, età e anagrafica se selezionata e presente)
-      </label>
     </div>
 
     <div v-if="isLoading" class="p-lg"><SkeletonLoader type="text" :count="8" /></div>
@@ -411,7 +405,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
           <canvas v-show="chartTab === 'deriv'" ref="derivChartEl"></canvas>
           <canvas v-show="chartTab === 'dist'" ref="pieChartEl"></canvas>
         </div>
-        <p class="text-secondary mt-sm" style="font-size:0.6875rem">Zona verde: target ESC/ESH (&lt;140/90 mmHg).</p>
+        <p v-if="chartTab === 'bp'" class="text-secondary mt-sm" style="font-size:0.6875rem">Zona verde: target ESC/ESH (&lt;140/90 mmHg).</p>
       </div>
 
       <div class="card mb-md">
@@ -501,6 +495,14 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
 
       <div class="card mb-md">
         <h3 class="mb-sm">Scarica / Condividi</h3>
+        <div class="mb-sm">
+          <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
+            <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF
+          </label>
+          <label class="flex items-center gap-sm" style="cursor:pointer;font-size:0.8125rem">
+            <input type="checkbox" v-model="anonymize" /> Anonimizza (nasconde nome, genere, età e anagrafica)
+          </label>
+        </div>
         <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
           <AppIcon name="copy" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
         </button>
