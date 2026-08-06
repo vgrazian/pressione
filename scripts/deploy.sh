@@ -30,6 +30,9 @@ git clone --branch gh-pages --single-branch --depth 2 https://github.com/vgrazia
 git -C "$TMP_CLONE" rm -rf --quiet . 2>/dev/null || true
 cp -R dist/* "$TMP_CLONE"/
 touch "$TMP_CLONE/.nojekyll"
+# Copy GitHub Actions workflows for Pages deployment
+mkdir -p "$TMP_CLONE/.github/workflows"
+cp "$PROJECT_DIR/.github/workflows/pages-deploy.yml" "$TMP_CLONE/.github/workflows/" 2>/dev/null || true
 git -C "$TMP_CLONE" add -A
 git -C "$TMP_CLONE" commit -m "$COMMIT_MSG" --quiet
 git -C "$TMP_CLONE" push origin gh-pages --force --quiet
