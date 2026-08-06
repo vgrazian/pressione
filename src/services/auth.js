@@ -14,7 +14,9 @@ import {
     resetPasswordWithToken,
     adminResetPassword,
     updateProfile,
-    getProfile
+    getProfile,
+    requestPasswordResetWithTable,
+    completePasswordRecoveryWithTable
 } from './supabaseTableAuth'
 
 const SESSION_KEY = 'pressione_session'
@@ -37,12 +39,15 @@ export function useAuth() {
         updateUserEmail,
         requestPasswordReset,
         completePasswordReset,
+        requestPasswordResetByEmail,
+        completePasswordRecovery,
         adminResetUserPassword,
         fetchUsers,
         updateUserRole,
         deactivateUser,
         refreshSession,
-        updateUserProfile
+        updateUserProfile,
+        supportsEmailReset: isSupabaseConfigured
     }
 }
 
@@ -388,4 +393,45 @@ async function completePasswordReset(token, newPassword) {
 async function adminResetUserPassword(targetUsername, newPassword) {
     if (!state.user || state.user.role !== 'admin') throw new Error('Accesso non autorizzato')
     await adminResetPassword(state.user.username, targetUsername, newPassword)
+}
+
+/**
+ * Request password reset by email (new flow).
+ * Returns { resetUrl, emailSent }. When no email API is configured,
+ * the reset URL is returned directly so the UI can display it.
+ */
+async function requestPasswordResetByEmail(email) {
+    if (!email || !email.includes('@')) {
+        throw new Error('Inserisci un indirizzo email valido')
+    }
+
+    const payload = await requestPasswordResetWithTable({
+        email: email.toLowerCase().trim(),
+        redirectTo: window.location.origin + '/#/reset-password',
+        resetTtlMinutes: 30
+    })
+
+    // No email API configured — return the URL for display in the UI
+    return {
+        resetUrl: payload.resetUrl,
+        emailSent: false
+    }
+}
+
+/**
+ * Complete password recovery using a token from the reset link.
+ */
+async function completePasswordRecovery({ token, newPassword, confirmPassword }) {
+    if (!token) throw new Error('Token reset non valido')
+    if (!newPassword || newPassword.length < 8) {
+        throw new Error('La password deve essere di almeno 8 caratteri')
+    }
+    if (newPassword !== confirmPassword) {
+        throw new Error('Le password non coincidono')
+    }
+
+    await completePasswordRecoveryWithTable({
+        token: String(token).trim(),
+        newPassword
+    })
 }

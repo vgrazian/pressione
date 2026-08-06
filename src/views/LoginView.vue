@@ -5,7 +5,7 @@ import { useAuth } from '@/services/auth.js'
 import { APP_VERSION, BUILD_TIME, BUILD_NUMBER } from '@/services/version.js'
 
 const router = useRouter()
-const { login, requestPasswordReset, completePasswordReset } = useAuth()
+const { login, requestPasswordResetByEmail, supportsEmailReset } = useAuth()
 
 const username = ref('')
 const password = ref('')
@@ -13,12 +13,10 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const isLoading = ref(false)
 const showRecovery = ref(false)
-const recoveryStep = ref('request') // 'request' | 'token'
-const recoveryUsername = ref('')
-const recoveryToken = ref('')
-const recoveryNewPassword = ref('')
-const recoveryError = ref('')
-const recoverySuccess = ref('')
+const forgotEmail = ref('')
+const forgotMessage = ref('')
+const forgotBusy = ref(false)
+const forgotResetUrl = ref('')
 
 async function handleSubmit() {
   errorMessage.value = ''
@@ -38,49 +36,30 @@ async function handleSubmit() {
   }
 }
 
-async function handleRequestRecovery() {
-  recoveryError.value = ''
-  recoverySuccess.value = ''
-  if (!recoveryUsername.value) {
-    recoveryError.value = 'Inserisci il tuo username'
-    return
-  }
-  try {
-    const token = await requestPasswordRecovery(recoveryUsername.value)
-    recoveryToken.value = token
-    recoverySuccess.value = 'Token generato. Copialo e incollalo qui sotto per reimpostare la password.'
-    recoveryStep.value = 'token'
-  } catch (e) {
-    recoveryError.value = e.message || 'Errore nella richiesta'
-  }
-}
+async function handleForgotPassword() {
+  forgotMessage.value = ''
+  forgotResetUrl.value = ''
 
-async function handleCompleteRecovery() {
-  recoveryError.value = ''
-  recoverySuccess.value = ''
-  if (!recoveryToken.value || !recoveryNewPassword.value) {
-    recoveryError.value = 'Inserisci token e nuova password'
+  const email = forgotEmail.value.trim()
+  if (!email || !email.includes('@')) {
+    forgotMessage.value = 'Inserisci un indirizzo email valido'
     return
   }
-  if (recoveryNewPassword.value.length < 8) {
-    recoveryError.value = 'La password deve essere di almeno 8 caratteri'
-    return
-  }
+
+  forgotBusy.value = true
   try {
-    await completePasswordReset(recoveryToken.value, recoveryNewPassword.value)
-    recoverySuccess.value = 'Password reimpostata! Ora puoi accedere.'
-    setTimeout(() => {
-      showRecovery.value = false
-      recoveryStep.value = 'request'
-      recoveryUsername.value = ''
-      recoveryToken.value = ''
-      recoveryNewPassword.value = ''
-      recoveryError.value = ''
-      recoverySuccess.value = ''
-      username.value = recoveryUsername.value
-    }, 2000)
-  } catch (e) {
-    recoveryError.value = e.message || 'Errore nel reset'
+    const result = await requestPasswordResetByEmail(email)
+    if (result.resetUrl) {
+      forgotResetUrl.value = result.resetUrl
+      forgotMessage.value = 'Usa il link qui sotto per reimpostare la password (valido 30 minuti):'
+    } else {
+      forgotMessage.value = '✅ Se l\'indirizzo è registrato, riceverai un\'email con il link per reimpostare la password.'
+      forgotEmail.value = ''
+    }
+  } catch (err) {
+    forgotMessage.value = err.message
+  } finally {
+    forgotBusy.value = false
   }
 }
 </script>
@@ -120,36 +99,38 @@ async function handleCompleteRecovery() {
         </p>
       </template>
 
-      <!-- Recovery Flow -->
+      <!-- Recovery Flow (email-based) -->
       <template v-else>
-        <div v-if="recoveryStep === 'request'">
-          <p class="mb-md text-secondary">Inserisci il tuo username per ricevere un token di recupero.</p>
-          <div class="form-group">
-            <label class="form-label" for="rec-username">Username</label>
-            <input id="rec-username" v-model="recoveryUsername" type="text" class="form-input" placeholder="Il tuo username" />
-          </div>
-          <div v-if="recoveryError" class="form-error mb-sm">{{ recoveryError }}</div>
-          <div v-if="recoverySuccess" class="form-success mb-sm">{{ recoverySuccess }}</div>
-          <button class="btn btn-primary btn-block" @click="handleRequestRecovery">Invia Richiesta</button>
+        <p class="mb-md text-secondary">Inserisci l'email del tuo account per ricevere un link di reset password.</p>
+        <div class="form-group">
+          <label class="form-label" for="forgot-email">Email</label>
+          <input
+            id="forgot-email"
+            v-model="forgotEmail"
+            type="email"
+            class="form-input"
+            autocomplete="email"
+            placeholder="La tua email"
+            :disabled="forgotBusy"
+            @keyup.enter="handleForgotPassword"
+          />
         </div>
 
-        <div v-if="recoveryStep === 'token'">
-          <p class="mb-md text-secondary">Inserisci il token ricevuto e la nuova password.</p>
-          <div class="form-group">
-            <label class="form-label" for="rec-token">Token di recupero</label>
-            <input id="rec-token" v-model="recoveryToken" type="text" class="form-input" placeholder="Incolla il token" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="rec-password">Nuova password</label>
-            <input id="rec-password" v-model="recoveryNewPassword" type="password" class="form-input" placeholder="Minimo 8 caratteri" />
-          </div>
-          <div v-if="recoveryError" class="form-error mb-sm">{{ recoveryError }}</div>
-          <div v-if="recoverySuccess" class="form-success mb-sm">{{ recoverySuccess }}</div>
-          <button class="btn btn-primary btn-block mb-sm" @click="handleCompleteRecovery">Reimposta Password</button>
+        <div v-if="forgotMessage" class="mb-sm" :class="forgotResetUrl ? 'form-success' : 'form-error'" style="word-break:break-all">{{ forgotMessage }}</div>
+
+        <div v-if="forgotResetUrl" class="mb-md">
+          <a :href="forgotResetUrl" class="btn btn-primary btn-block" style="font-size:0.8125rem;word-break:break-all">
+            {{ forgotResetUrl }}
+          </a>
+          <p class="text-secondary mt-sm" style="font-size:0.75rem">Clicca il link sopra per impostare una nuova password.</p>
         </div>
+
+        <button v-if="!forgotResetUrl" class="btn btn-primary btn-block" :disabled="forgotBusy || !forgotEmail.trim()" @click="handleForgotPassword">
+          {{ forgotBusy ? 'Invio in corso...' : 'Invia richiesta' }}
+        </button>
 
         <p class="text-center mt-md">
-          <button class="btn btn-sm btn-ghost" @click="showRecovery = false; recoveryStep = 'request'">← Torna al login</button>
+          <button class="btn btn-sm btn-ghost" @click="showRecovery = false; forgotEmail = ''; forgotMessage = ''; forgotResetUrl = ''">← Torna al login</button>
         </p>
       </template>
     </div>

@@ -22,8 +22,11 @@ test.describe('Workflow: Complete User Journey', () => {
         await page.fill('#diastolic', '82')
         await page.fill('#heartRate', '72')
         await page.locator('button:has-text("Salva")').first().click()
-        // Wait for redirect after save
-        await page.waitForTimeout(3000)
+        // Wait for redirect after save (Supabase may fail gracefully)
+        await page.waitForTimeout(2000)
+        // Navigate back home for next step
+        await page.goto('/#/')
+        await page.waitForTimeout(1000)
 
         // ── 3. Add second reading (different time of day) ──────────
         await page.locator('button.fab').click()
@@ -32,7 +35,10 @@ test.describe('Workflow: Complete User Journey', () => {
         await page.fill('#diastolic', '95')
         await page.fill('#heartRate', '80')
         await page.locator('button:has-text("Salva")').first().click()
-        await page.waitForTimeout(3000)
+        await page.waitForTimeout(2000)
+        // Navigate back home
+        await page.goto('/#/')
+        await page.waitForTimeout(1000)
 
         // ── 4. Reading List ────────────────────────────────────────
         await page.locator('nav a:has-text("Lista")').click()
@@ -41,8 +47,8 @@ test.describe('Workflow: Complete User Journey', () => {
         const cards = page.locator('.reading-card, .swipe-container, .readings-list > *')
         const hasContent = await cards.first().isVisible({ timeout: 5000 }).catch(() => false)
         expect(hasContent).toBe(true)
-        await page.locator('nav a:has-text("Report")').click()
-        await expect(page).toHaveURL(/\/#\/report/, { timeout: 5000 })
+        await page.locator('nav a:has-text("Analisi")').click()
+        await expect(page).toHaveURL(/\/#\/analisi/, { timeout: 5000 })
         await page.waitForTimeout(2000)
 
         // Check that stats summary is visible
@@ -267,12 +273,12 @@ test.describe('Workflow: Error & Edge Cases', () => {
         }
     })
 
-    test('E-11: Report page handles empty data gracefully', async ({ page }) => {
-        // Navigate to report — should show empty state or skeleton
-        await page.locator('nav a:has-text("Report")').click()
+    test('E-11: Analisi page handles empty data gracefully', async ({ page }) => {
+        // Navigate to analisi — should show empty state or skeleton
+        await page.locator('nav a:has-text("Analisi")').click()
         await page.waitForTimeout(2000)
         // Should not crash — just verify page loaded
-        await expect(page.locator('h1')).toContainText('Report', { timeout: 5000 })
+        await expect(page.locator('h1')).toContainText('Analisi', { timeout: 5000 })
     })
 
     test('E-12: Cancel reading addition (navigate back without saving)', async ({ page }) => {

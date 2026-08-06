@@ -13,13 +13,13 @@ test.describe('Navigation', () => {
   })
 
   test('should navigate to statistics', async ({ page }) => {
-    await page.click('.nav-item:has-text("Statistiche")')
-    await page.waitForURL(/\/#\/statistics/, { timeout: 5000 })
-    await expect(page.locator('h1')).toContainText('Statistiche')
+    await page.click('.nav-item:has-text("Analisi")')
+    await page.waitForURL(/\/#\/analisi/, { timeout: 5000 })
+    await expect(page.locator('h1')).toContainText('Analisi')
   })
 
   test('should navigate to settings', async ({ page }) => {
-    await page.click('.nav-item:has-text("Impostazioni")')
+    await page.click('.nav-item:has-text("Altro")')
     await page.waitForURL(/\/#\/settings/, { timeout: 5000 })
     await expect(page.locator('h1')).toContainText('Impostazioni')
   })
@@ -31,10 +31,8 @@ test.describe('Navigation', () => {
   })
 
   test('should have a visible logout button', async ({ page }) => {
-    await page.goto('/#/settings')
-    await page.waitForTimeout(500)
-    // Just verify the logout button exists
-    const count = await page.locator('button').filter({ hasText: /Logout|Esci/i }).count()
+    // Logout button is in the top bar with title="Logout"
+    const count = await page.locator('.topbar-btn[title="Logout"]').count()
     expect(count).toBeGreaterThanOrEqual(1)
   })
 })

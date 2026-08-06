@@ -56,6 +56,11 @@ const routes = [
         path: '/share/:token',
         name: 'sharedReport',
         component: () => import('@/views/SharedReportView.vue')
+    },
+    {
+        path: '/reset-password',
+        name: 'resetPassword',
+        component: () => import('@/views/ResetPasswordView.vue')
     }
 ]
 

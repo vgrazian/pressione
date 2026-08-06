@@ -256,3 +256,44 @@ export async function getProfile(username) {
         .maybeSingle()
     return data ? JSON.parse(data.value) : {}
 }
+
+/**
+ * Request password reset by email.
+ * Returns { email, resetUrl, expiresAt } — resetUrl is null if email not found.
+ */
+export async function requestPasswordResetWithTable({ email, redirectTo, resetTtlMinutes = 30 }) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+
+    const { data: payload, error } = await supabase.rpc('app_request_password_reset', {
+        p_email: email,
+        p_reset_base_url: redirectTo || '',
+        p_reset_ttl_minutes: resetTtlMinutes
+    })
+
+    if (error) throw new Error('Errore richiesta reset: ' + error.message)
+
+    if (!payload || typeof payload !== 'object') {
+        return { email, resetUrl: null, expiresAt: null }
+    }
+
+    return {
+        email: String(payload.email ?? email ?? '').trim().toLowerCase(),
+        resetUrl: String(payload.reset_url ?? payload.resetUrl ?? '').trim() || null,
+        expiresAt: String(payload.expires_at ?? payload.expiresAt ?? '').trim() || null
+    }
+}
+
+/**
+ * Complete password recovery using a reset token.
+ */
+export async function completePasswordRecoveryWithTable({ token, newPassword }) {
+    if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
+
+    const { data: user, error } = await supabase.rpc('app_complete_password_recovery', {
+        p_token: token,
+        p_new_password: newPassword
+    })
+
+    if (error) throw new Error(error.message)
+    return user
+}
