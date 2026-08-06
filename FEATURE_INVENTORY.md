@@ -1,9 +1,9 @@
 # Pressione — Feature Inventory & Review
 
-> **Versione:** 1.2.0 | **Data:** 2026-08-05  
+> **Versione:** 1.3.0 | **Data:** 2026-08-06  
 > **URL:** <https://vgrazian.github.io/pressione/>  
 > **Stack:** Vue 3 + Vite PWA · Supabase · Dexie/IndexedDB (+ localStorage bridge) · Chart.js (theme-aware) · chartjs-plugin-annotation · jsPDF  
-> **Test:** 79 unit (Vitest) + 15 E2E (Playwright)
+> **Test:** 81 unit (Vitest) + 60 E2E (Playwright)
 
 ---
 
@@ -13,12 +13,12 @@
 | --- | --- |
 | Login/Logout | Table-based auth, SHA-256 |
 | Sessione TTL 8h | localStorage + IndexedDB fallback |
-| Recupero password | Token-based flow su login |
+| **Recupero password via email** | **NUOVO** — Link con token UUID (30 min), pagina `/reset-password` dedicata, RPC `app_request_password_reset` + `app_complete_password_recovery` |
 | Cambio password | Da Impostazioni (richiede pw attuale) |
 | Modifica email | Da Impostazioni → Account |
 | RBAC admin/user | Admin: gestione utenti, reset pw |
 | Topbar logout | Icona in alto a destra su ogni pagina |
-| 8 utenti seed | nadia, valerio (admin) + 6 user + bot |
+| 9 utenti seed | admin, valerio (admin) + 7 user |
 | **Profilo utente** | Data di nascita + genere, età calcolata dinamicamente |
 | **Prompt profilo** | Mostrato solo se incompleto, mai più se skippato/salvato |
 
@@ -148,7 +148,7 @@
 | **Release script** | `scripts/deploy.sh` — git worktree isolato, safety gate .env, idempotente |
 | **Version from package.json** | Single source of truth, build number da git hash |
 | **Force cache clear** | `forceClearCache()` — deregistra SW, svuota caches, reload |
-| **79 test** | 79 unit + 15 E2E |
+| **81 test** | 81 unit + 60 E2E |
 
 ## 10. Nuove Feature (Agosto 2026) — Portabili su BP-Tracker
 
@@ -178,7 +178,8 @@
 | 22 | **Grafici con zone target ESC/ESH** — zona verde tratteggiata <140/90, hover tooltip con categoria | `AnalisiView.vue`, `SharedReportView.vue` |
 | 23 | **Release script automatizzato** — `scripts/deploy.sh` (verifica .env → build → deploy con worktree) | `scripts/deploy.sh` |
 | 24 | **Versione da package.json** — single source of truth, visibile in login e impostazioni | `vite.config.js`, `version.js`, `LoginView.vue`, `SettingsView.vue` |
+| 25 | **Reset password via email** — link con token UUID, pagina `/reset-password`, RPC Supabase `app_request_password_reset` + `app_complete_password_recovery`, tabella `user_password_recovery_tokens` | `LoginView.vue`, `ResetPasswordView.vue`, `auth.js`, `supabaseTableAuth.js`, `router/index.js`, `supabase/migrations/005_email_password_recovery.sql` |
 
 ---
 
-*Documento generato per revisione — ultimo aggiornamento 2026-08-05*
+*Documento generato per revisione — ultimo aggiornamento 2026-08-06*

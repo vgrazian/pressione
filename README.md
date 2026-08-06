@@ -10,9 +10,9 @@ Multi-utente, offline-first, con sincronizzazione cloud via Supabase.
 ### Autenticazione e Utenti
 
 - Login/Logout con password hashed (SHA-256), sessione persistente 8 ore
-- Recupero password via token, modifica email
+- **Recupero password via email**: link con token (30 min) → pagina reset dedicata
 - RBAC: admin (gestione utenti, reset password) e user
-- 8 utenti pre-configurati
+- 9 utenti pre-configurati (2 admin, 7 user)
 
 ### Navigazione
 
