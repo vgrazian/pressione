@@ -39,6 +39,8 @@ vi.mock('@/services/supabaseTableAuth.js', () => ({
     getAllUsers: vi.fn(),
     setUserRoleWithTable: vi.fn(),
     deleteUserWithTable: vi.fn(),
+    enableUserWithTable: vi.fn(),
+    hardDeleteUserWithTable: vi.fn(),
     updateEmail: vi.fn(),
     createRecoveryToken: vi.fn(),
     resetPasswordWithToken: vi.fn(),
@@ -307,6 +309,185 @@ describe('completePasswordRecovery — validation', () => {
         expect(completePasswordRecoveryWithTable).toHaveBeenCalledWith({
             token: 'token-with-spaces',
             newPassword: '12345678'
+        })
+    })
+})
+
+describe('admin user management', () => {
+    // Helper: authenticate as admin before each admin test
+    const loginAsAdmin = async () => {
+        const { loginWithTable } = await import('@/services/supabaseTableAuth.js')
+        loginWithTable.mockResolvedValue({
+            username: 'admin',
+            email: 'admin@test.com',
+            role: 'admin',
+            birthDate: null,
+            gender: null,
+            profileCompleted: false,
+            skipProfilePrompt: false
+        })
+        const { login } = useAuth()
+        await login('admin', 'password')
+    }
+
+    it('fetchUsers calls getAllUsers and returns list', async () => {
+        await loginAsAdmin()
+
+        const { getAllUsers } = await import('@/services/supabaseTableAuth.js')
+        const mockUsers = [
+            { username: 'admin1', email: 'a@b.com', role: 'admin', disabled: false },
+            { username: 'user1', email: 'u@b.com', role: 'user', disabled: false },
+            { username: 'disabled1', email: 'd@b.com', role: 'user', disabled: true }
+        ]
+        getAllUsers.mockResolvedValue(mockUsers)
+
+        const { fetchUsers } = useAuth()
+        const users = await fetchUsers()
+
+        expect(getAllUsers).toHaveBeenCalled()
+        expect(users).toHaveLength(3)
+        expect(users[0].username).toBe('admin1')
+        expect(users[2].disabled).toBe(true)
+    })
+
+    it('fetchUsers throws for non-admin user', async () => {
+        // Login as regular user (not admin)
+        const { loginWithTable } = await import('@/services/supabaseTableAuth.js')
+        loginWithTable.mockResolvedValue({
+            username: 'user',
+            email: 'user@test.com',
+            role: 'user',
+            birthDate: null,
+            gender: null,
+            profileCompleted: false,
+            skipProfilePrompt: false
+        })
+        const { login } = useAuth()
+        await login('user', 'password')
+
+        const { fetchUsers } = useAuth()
+        await expect(fetchUsers()).rejects.toThrow('Accesso non autorizzato')
+    })
+
+    it('updateUserRole calls setUserRoleWithTable', async () => {
+        await loginAsAdmin()
+
+        const { setUserRoleWithTable } = await import('@/services/supabaseTableAuth.js')
+        setUserRoleWithTable.mockResolvedValue()
+
+        const { updateUserRole } = useAuth()
+        await updateUserRole('testuser', 'admin')
+
+        expect(setUserRoleWithTable).toHaveBeenCalledWith({
+            username: 'testuser',
+            role: 'admin'
+        })
+    })
+
+    it('deactivateUser calls deleteUserWithTable (soft delete)', async () => {
+        await loginAsAdmin()
+
+        const { deleteUserWithTable } = await import('@/services/supabaseTableAuth.js')
+        deleteUserWithTable.mockResolvedValue()
+
+        const { deactivateUser } = useAuth()
+        await deactivateUser('testuser')
+
+        expect(deleteUserWithTable).toHaveBeenCalledWith({
+            username: 'testuser'
+        })
+    })
+
+    it('activateUser calls enableUserWithTable', async () => {
+        await loginAsAdmin()
+
+        const { enableUserWithTable } = await import('@/services/supabaseTableAuth.js')
+        enableUserWithTable.mockResolvedValue()
+
+        const { activateUser } = useAuth()
+        await activateUser('testuser')
+
+        expect(enableUserWithTable).toHaveBeenCalledWith({
+            username: 'testuser'
+        })
+    })
+
+    it('hardDeleteUser calls hardDeleteUserWithTable (permanent delete)', async () => {
+        await loginAsAdmin()
+
+        const { hardDeleteUserWithTable } = await import('@/services/supabaseTableAuth.js')
+        hardDeleteUserWithTable.mockResolvedValue()
+
+        const { hardDeleteUser } = useAuth()
+        await hardDeleteUser('testuser')
+
+        expect(hardDeleteUserWithTable).toHaveBeenCalledWith({
+            username: 'testuser'
+        })
+    })
+
+    it('adminResetUserPassword calls adminResetPassword', async () => {
+        await loginAsAdmin()
+
+        const { adminResetPassword } = await import('@/services/supabaseTableAuth.js')
+        adminResetPassword.mockResolvedValue()
+
+        const { adminResetUserPassword } = useAuth()
+        await adminResetUserPassword('testuser', 'newpassword123')
+
+        expect(adminResetPassword).toHaveBeenCalledWith('admin', 'testuser', 'newpassword123')
+    })
+
+    it('adminUpdateUserEmail calls updateEmail', async () => {
+        await loginAsAdmin()
+
+        const { updateEmail } = await import('@/services/supabaseTableAuth.js')
+        updateEmail.mockResolvedValue()
+
+        const { adminUpdateUserEmail } = useAuth()
+        await adminUpdateUserEmail('testuser', 'new@email.com')
+
+        expect(updateEmail).toHaveBeenCalledWith({
+            username: 'testuser',
+            newEmail: 'new@email.com'
+        })
+    })
+
+    it('register creates user with default role "user"', async () => {
+        const { createUserWithTable } = await import('@/services/supabaseTableAuth.js')
+        createUserWithTable.mockResolvedValue({
+            username: 'newuser',
+            email: 'new@test.com',
+            role: 'user'
+        })
+
+        const { register } = useAuth()
+        await register('newuser', 'new@test.com', 'password123')
+
+        expect(createUserWithTable).toHaveBeenCalledWith({
+            username: 'newuser',
+            email: 'new@test.com',
+            password: 'password123',
+            role: 'user'
+        })
+    })
+
+    it('register creates user with admin role when specified', async () => {
+        const { createUserWithTable } = await import('@/services/supabaseTableAuth.js')
+        createUserWithTable.mockResolvedValue({
+            username: 'admin2',
+            email: 'admin2@test.com',
+            role: 'admin'
+        })
+
+        const { register } = useAuth()
+        await register('admin2', 'admin2@test.com', 'password123', 'admin')
+
+        expect(createUserWithTable).toHaveBeenCalledWith({
+            username: 'admin2',
+            email: 'admin2@test.com',
+            password: 'password123',
+            role: 'admin'
         })
     })
 })
