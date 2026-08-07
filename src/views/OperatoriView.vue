@@ -211,10 +211,10 @@ async function handleResetPassword() {
             <!-- Active user actions -->
             <template v-if="!u.disabled">
               <button
-                class="btn btn-sm btn-outline"
+                class="btn btn-sm btn-ghost"
                 @click="toggleRole(u)"
               >
-                {{ u.role === 'admin' ? 'Rendi Utente' : 'Rendi Admin' }}
+                <AppIcon name="users" :size="14" /> {{ u.role === 'admin' ? 'Rendi Utente' : 'Rendi Admin' }}
               </button>
               <button
                 class="btn btn-sm btn-ghost"
@@ -235,16 +235,16 @@ async function handleResetPassword() {
                 class="btn btn-sm btn-primary"
                 @click="handleActivate(u)"
               >
-                Attiva
+                <AppIcon name="refresh" :size="14" /> Attiva
               </button>
             </template>
             <!-- Delete (always available for other users) -->
             <button
               v-if="u.username !== user?.username"
-              class="btn btn-sm btn-error"
+              class="btn btn-sm btn-ghost-error"
               @click="handleHardDelete(u)"
             >
-              Elimina
+              <AppIcon name="trash" :size="14" color="currentColor" /> Elimina
             </button>
           </div>
         </div>
@@ -271,10 +271,9 @@ async function handleResetPassword() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-md) 0;
-  border-bottom: 1px solid var(--color-surface-overlay);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
   gap: var(--space-md);
-  flex-wrap: wrap;
 }
 
 .user-row:last-child {
@@ -286,6 +285,11 @@ async function handleResetPassword() {
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
+  min-width: 0;
+}
+
+.user-actions {
+  flex-shrink: 0;
 }
 
 .user-row--disabled .user-info {
