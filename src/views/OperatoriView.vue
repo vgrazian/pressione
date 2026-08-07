@@ -288,7 +288,7 @@ async function handleResetPassword() {
   flex-wrap: wrap;
 }
 
-.user-row--disabled {
+.user-row--disabled .user-info {
   opacity: 0.55;
 }
 
