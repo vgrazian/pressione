@@ -259,7 +259,7 @@ async function handleResetPassword() {
         <div v-for="u in users" :key="u.username" class="user-row" :class="{ 'user-row--disabled': u.disabled }">
           <div class="user-info">
             <span class="user-name">{{ u.username }}</span>
-            <!-- Editable email -->
+            <div class="user-meta">
             <template v-if="!u.disabled && editingEmail === u.username">
               <div class="email-edit-row">
                 <input v-model="newEmail" type="email" class="form-input email-edit-input"
@@ -278,8 +278,9 @@ async function handleResetPassword() {
               {{ u.role === 'admin' ? 'Admin' : 'Utente' }}
             </span>
             <span v-if="u.disabled" class="chip chip-inactive">Disattivato</span>
+            </div>
           </div>
-          <div class="user-actions flex gap-sm">
+          <div class="user-actions">
             <!-- Active user actions -->
             <template v-if="!u.disabled">
               <button
@@ -352,12 +353,12 @@ async function handleResetPassword() {
 }
 
 .user-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  gap: var(--space-md);
   padding: var(--space-md);
   border-bottom: 1px solid var(--color-border);
-  gap: var(--space-md);
 }
 
 .user-row:last-child {
@@ -366,14 +367,37 @@ async function handleResetPassword() {
 
 .user-info {
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 
+.user-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.user-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
 .user-actions {
-  flex-shrink: 0;
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .user-row {
+    grid-template-columns: 1fr;
+  }
+  .user-actions {
+    justify-content: flex-start;
+  }
 }
 
 .user-row--disabled .user-info {
