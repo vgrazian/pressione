@@ -151,7 +151,7 @@ function renderPieChart() {
   const C3 = getChartColors()
   const colors = { 'Normale': C3.catNormal, 'Elevata': C3.catElevated, 'Ipert. Stadio 1': C3.catStage1, 'Ipert. Stadio 2': C3.catStage2, 'Crisi Ipertensiva': C3.catCrisis, 'Ipotensione': C3.catHypotension }
   pieChart = new Chart(pieChartEl.value, {
-    type: 'doughnut', data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: Object.keys(cats).map(k => colors[k] || 'var(--color-text-tertiary)'), borderWidth: 1, borderColor: C3.surfaceRaised }] },
+    type: 'doughnut', data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: Object.keys(cats).map(k => colors[k] || C3.textTertiary), borderWidth: 1, borderColor: C3.surfaceRaised }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } } } }
   })
 }
