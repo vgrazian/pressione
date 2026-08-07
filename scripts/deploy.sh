@@ -32,12 +32,21 @@ except: print('${default}')
 " 2>/dev/null
 }
 
-# GitHub API call (authenticated if GITHUB_TOKEN is set)
+# GitHub API call (authenticated if GITHUB_TOKEN is set).
+# Usage: _gh_api "/endpoint"           → GET
+#        _gh_api -X POST "/endpoint"   → POST
 _gh_api() {
-  local endpoint="$1"
+  local method="GET"
+  local endpoint=""
+  if [ "$1" = "-X" ]; then
+    method="$2"
+    endpoint="$3"
+  else
+    endpoint="$1"
+  fi
   local auth_args=()
   [ -n "$GITHUB_TOKEN" ] && auth_args=(-H "Authorization: Bearer $GITHUB_TOKEN")
-  curl -s --max-time 15 \
+  curl -s --max-time 15 -X "$method" \
     "${auth_args[@]}" \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -134,11 +143,10 @@ echo -e "${CYAN}🔎 [5/5] Pages Build Verification...${NC}"
 
 if [ -z "$GITHUB_TOKEN" ]; then
   echo -e "${YELLOW}   ⚠️  GITHUB_TOKEN not set — skipping API verification${NC}"
-  echo -e "${YELLOW}   Set GITHUB_TOKEN (repo scope) for automatic build checks.${NC}"
+  echo -e "${YELLOW}   Set GITHUB_TOKEN (repo + Pages:read scope) for build checks.${NC}"
   echo -e "${YELLOW}   Falling back to HTTP check of ${PAGES_URL}${NC}"
 
-  # Simple HTTP poll: wait for the live page to respond with a 200
-  HTTP_ATTEMPT=0; HTTP_MAX=18
+  HTTP_ATTEMPT=0; HTTP_MAX=30
   while [ "$HTTP_ATTEMPT" -lt "$HTTP_MAX" ]; do
     HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
       "${PAGES_URL}?t=$(date +%s)" 2>/dev/null || echo "000")
@@ -152,21 +160,40 @@ if [ -z "$GITHUB_TOKEN" ]; then
   done
   if [ "$HTTP_ATTEMPT" -ge "$HTTP_MAX" ]; then
     echo ""
-    echo -e "${YELLOW}   ⚠️  Page not yet responding (HTTP ${HTTP_CODE})${NC}"
+    echo -e "${YELLOW}   ⚠️  Page not yet responding after 5 min${NC}"
     echo -e "${YELLOW}   Check: ${PAGES_URL}${NC}"
-    echo -e "${YELLOW}   Or: https://github.com/${OWNER}/${REPO}/deployments${NC}"
   fi
 else
   # Authenticated: poll Pages build API
-  MAX_ATTEMPTS=12
+  MAX_ATTEMPTS=30      # up to 5 minutes
   ATTEMPT=1
   BUILD_STATUS="unknown"
+  TRIED_REBUILD=false
 
   while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
     BUILD_JSON=$(_gh_api "/repos/${OWNER}/${REPO}/pages/builds/latest")
     BUILD_STATUS=$(_json_val "$BUILD_JSON" "status" "unknown")
     BUILD_SHA=$(_json_val "$BUILD_JSON" "commit" "")
     BUILD_SHA="${BUILD_SHA:0:7}"
+    BUILD_CREATED=$(_json_val "$BUILD_JSON" "created_at" "")
+
+    # Detect stuck build: building but SHA doesn't match what we just pushed
+    if [ "$BUILD_STATUS" = "building" ] && [ -n "$BUILD_SHA" ] && [ "$BUILD_SHA" != "$DEPLOYED_SHA" ]; then
+      if [ "$TRIED_REBUILD" = false ] && [ "$ATTEMPT" -ge 5 ]; then
+        echo ""
+        echo -e "${YELLOW}   ⚠️  Stale build (${BUILD_SHA}) stuck since ${BUILD_CREATED} — requesting rebuild...${NC}"
+        REBUILD_RESULT=$(_gh_api -X POST "/repos/${OWNER}/${REPO}/pages/builds")
+        REBUILD_STATUS=$(_json_val "$REBUILD_RESULT" "status" "")
+        if [ "$REBUILD_STATUS" = "queued" ] || [ "$REBUILD_STATUS" = "building" ]; then
+          echo -e "${GREEN}   ✅ Rebuild queued (${REBUILD_STATUS}) — waiting for new build...${NC}"
+        else
+          REBUILD_ERROR=$(_json_val "$REBUILD_RESULT" "message" "check token scope")
+          echo -e "${YELLOW}   ⚠️  Rebuild failed: ${REBUILD_ERROR}${NC}"
+          echo -e "${YELLOW}   Token needs Pages:read-write scope to trigger rebuilds.${NC}"
+        fi
+        TRIED_REBUILD=true
+      fi
+    fi
 
     case "$BUILD_STATUS" in
       "built")
@@ -181,7 +208,7 @@ else
         break
         ;;
       "building"|"queued")
-        echo -ne "   ⏳ Build: ${BUILD_STATUS} (attempt ${ATTEMPT}/${MAX_ATTEMPTS})...\r"
+        echo -ne "   ⏳ Build: ${BUILD_STATUS} | sha: ${BUILD_SHA:-?} (attempt ${ATTEMPT}/${MAX_ATTEMPTS})...\r"
         sleep 10
         ATTEMPT=$((ATTEMPT + 1))
         ;;
@@ -190,7 +217,13 @@ else
         echo -e "${RED}   ❌ Pages build errored!${NC}"
         ERROR_MSG=$(_json_val "$BUILD_JSON" "error.message" "Unknown error")
         echo -e "${RED}      ${ERROR_MSG}${NC}"
-        echo -e "${RED}   Check: https://github.com/${OWNER}/${REPO}/deployments${NC}"
+        if [ "$TRIED_REBUILD" = false ]; then
+          echo -e "${YELLOW}   Attempting rebuild...${NC}"
+          _gh_api -X POST "/repos/${OWNER}/${REPO}/pages/builds" > /dev/null 2>&1 || true
+          TRIED_REBUILD=true
+          ATTEMPT=1
+          continue
+        fi
         break
         ;;
       *)
@@ -204,7 +237,7 @@ else
   if [ "$ATTEMPT" -gt "$MAX_ATTEMPTS" ] && [ "$BUILD_STATUS" != "built" ]; then
     echo ""
     echo -e "${YELLOW}   ⚠️  Timed out waiting for Pages build (last status: ${BUILD_STATUS})${NC}"
-    echo -e "${YELLOW}   Check manually: https://github.com/${OWNER}/${REPO}/deployments${NC}"
+    echo -e "${YELLOW}   Check: https://github.com/${OWNER}/${REPO}/settings/pages${NC}"
   fi
 fi
 echo ""
