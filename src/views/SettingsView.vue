@@ -479,8 +479,9 @@ async function handleInstall() {
       <h1>{{ t('settings') }}</h1>
     </div>
 
-    <!-- Account + Profile -->
-    <CollapsibleSection title="👤 Profilo e Account" :open="true" class="mb-md">
+    <!-- Account (always visible) -->
+    <div class="card mb-md">
+      <h3 class="mb-sm">{{ t('account') }}</h3>
       <p><strong>{{ t('username') }}:</strong> {{ user?.username }}</p>
       <div class="flex items-center gap-sm">
         <span><strong>{{ t('email') }}:</strong> {{ user?.email || t('email_not_set') }}</span>
@@ -493,9 +494,11 @@ async function handleInstall() {
         <button class="btn btn-primary btn-sm" @click="handleEmailChange">{{ t('update_email') }}</button>
       </div>
       <div v-if="emailSuccess" class="form-success mt-sm">{{ emailSuccess }}</div>
+    </div>
 
-      <hr style="margin:var(--space-md) 0;border-color:var(--color-border)" />
-      <p class="text-secondary mb-sm" style="font-size:0.8125rem">Data di nascita e genere aiutano a personalizzare il report con riferimenti clinici adeguati.</p>
+    <!-- Anagrafica -->
+    <CollapsibleSection title="📋 Anagrafica" class="mb-md">
+      <p class="text-secondary mb-sm" style="font-size:0.8125rem">Data di nascita e genere aiutano a personalizzare il report.</p>
       <div class="profile-row mb-sm">
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Data di nascita</label>
@@ -560,16 +563,13 @@ async function handleInstall() {
     </CollapsibleSection>
 
     <!-- Password -->
-    <div class="card mb-md">
-      <h3 class="mb-sm" role="button" tabindex="0" @click="showPasswordForm = !showPasswordForm" @keydown.enter="showPasswordForm = !showPasswordForm" style="cursor:pointer;" :aria-expanded="showPasswordForm">{{ t('change_password') }} {{ showPasswordForm ? '▾' : '▸' }}</h3>
-      <div v-if="showPasswordForm">
-        <div class="form-group"><label class="form-label">{{ t('current_password') }}</label><input v-model="currentPassword" type="password" class="form-input" /></div>
-        <div class="form-group"><label class="form-label">{{ t('new_password') }}</label><input v-model="newPassword" type="password" class="form-input" placeholder="Minimo 8 caratteri" /></div>
-        <div v-if="passwordError" class="form-error mb-sm">{{ passwordError }}</div>
-        <div v-if="passwordSuccess" class="form-success mb-sm">{{ passwordSuccess }}</div>
-        <button class="btn btn-primary btn-sm" @click="handlePasswordChange">{{ t('update_password') }}</button>
-      </div>
-    </div>
+    <CollapsibleSection :title="'🔒 ' + t('change_password')" class="mb-md">
+      <div class="form-group"><label class="form-label">{{ t('current_password') }}</label><input v-model="currentPassword" type="password" class="form-input" /></div>
+      <div class="form-group"><label class="form-label">{{ t('new_password') }}</label><input v-model="newPassword" type="password" class="form-input" placeholder="Minimo 8 caratteri" /></div>
+      <div v-if="passwordError" class="form-error mb-sm">{{ passwordError }}</div>
+      <div v-if="passwordSuccess" class="form-success mb-sm">{{ passwordSuccess }}</div>
+      <button class="btn btn-primary btn-sm" @click="handlePasswordChange">{{ t('update_password') }}</button>
+    </CollapsibleSection>
 
     <!-- Reminders -->
     <CollapsibleSection :title="'🔔 ' + t('reminders')" class="mb-md">

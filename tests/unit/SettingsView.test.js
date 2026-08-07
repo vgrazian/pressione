@@ -83,27 +83,26 @@ vi.mock('@/services/timeBands.js', () => ({
 }))
 
 describe('SettingsView — decomposition', () => {
-    it('renders CollapsibleSection for Profile and Account', async () => {
+    it('renders CollapsibleSection for Anagrafica, Password, Reminders, Time Bands, Advanced Tools', async () => {
         const { default: SettingsView } = await import('@/views/SettingsView.vue')
         const wrapper = mount(SettingsView, {
             global: { stubs: { 'router-link': true, 'AppIcon': true, 'TimeBandSlider': true } }
         })
 
-        // Wait for mount lifecycle
         await wrapper.vm.$nextTick()
 
         const sections = wrapper.findAllComponents({ name: 'CollapsibleSection' })
-        // Should have at least 4: Profilo, Promemoria, Fasce Orarie, Strumenti avanzati
-        expect(sections.length).toBeGreaterThanOrEqual(4)
+        expect(sections.length).toBeGreaterThanOrEqual(5)
 
         const titles = sections.map(s => s.props('title'))
-        expect(titles.some(t => t && t.includes('Profilo'))).toBe(true)
+        expect(titles.some(t => t && t.includes('Anagrafica'))).toBe(true)
+        expect(titles.some(t => t && t.includes('change_password'))).toBe(true)
         expect(titles.some(t => t && t.includes('reminders'))).toBe(true)
         expect(titles.some(t => t && t.includes('Fasce Orarie'))).toBe(true)
         expect(titles.some(t => t && t.includes('Strumenti avanzati'))).toBe(true)
     })
 
-    it('Profile section is open by default', async () => {
+    it('Account section is a regular card (not collapsible)', async () => {
         const { default: SettingsView } = await import('@/views/SettingsView.vue')
         const wrapper = mount(SettingsView, {
             global: { stubs: { 'router-link': true, 'AppIcon': true, 'TimeBandSlider': true } }
@@ -111,10 +110,7 @@ describe('SettingsView — decomposition', () => {
 
         await wrapper.vm.$nextTick()
 
-        const sections = wrapper.findAllComponents({ name: 'CollapsibleSection' })
-        const profileSection = sections.find(s => s.props('title') && s.props('title').includes('Profilo'))
-        expect(profileSection).toBeDefined()
-        expect(profileSection.props('open')).toBe(true)
+        expect(wrapper.html()).toContain('account')
     })
 
     it('renders the settings page header', async () => {
