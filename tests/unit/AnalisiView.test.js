@@ -58,8 +58,8 @@ vi.mock('@/services/timeBands.js', () => ({
 // Mock chart.js properly
 vi.mock('chart.js', () => {
     const MockChart = class {
-        static register() {}
-        destroy() {}
+        static register() { }
+        destroy() { }
     }
     return {
         Chart: MockChart,
