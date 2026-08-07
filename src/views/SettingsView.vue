@@ -12,6 +12,7 @@ import { APP_VERSION, BUILD_NUMBER, BUILD_TIME } from '@/services/version.js'
 import { getUserBands, saveUserBands, getDefaultBands } from '@/services/timeBands.js'
 import AppIcon from '@/components/AppIcon.vue'
 import TimeBandSlider from '@/components/TimeBandSlider.vue'
+import CollapsibleSection from '@/components/CollapsibleSection.vue'
 
 const router = useRouter()
 const { user, changePassword, updateUserEmail, updateUserProfile } = useAuth()
@@ -623,120 +624,55 @@ async function handleInstall() {
       <router-link to="/operators" class="btn btn-ghost btn-sm">{{ t('user_management') }}</router-link>
     </div>
 
-    <!-- Data Management -->
-    <div class="card mb-md">
-      <h3 class="mb-sm">Dati</h3>
-      <div class="flex flex-col gap-sm">
-        <button class="btn btn-sm btn-secondary" @click="handleExportCSV"><AppIcon name="download" :size="16" /> {{ t('export_csv') }}</button>
-        <button class="btn btn-sm btn-secondary" @click="handleBackup"><AppIcon name="download" :size="16" /> Backup (JSON)</button>
-        <button class="btn btn-sm btn-secondary" @click="triggerRestore"><AppIcon name="upload" :size="16" /> Ripristina Backup</button>
-        <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
-        <button class="btn btn-sm btn-secondary" @click="triggerImportCsv"><AppIcon name="upload" :size="16" /> Importa CSV (bp-tracker)</button>
-        <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsv" />
-        <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData"><AppIcon name="robot" :size="16" /> {{ t('generate_test_data') }}</button>
-      </div>
-      <div v-if="message" class="form-success mt-sm">{{ message }}</div>
-    </div>
-
-    <!-- Database Keep-Alive -->
-    <div class="card mb-md">
-      <div class="flex justify-between items-center mb-sm">
-        <h3 class="mb-sm"><AppIcon name="refresh" :size="18" /> Keep-Alive Database</h3>
-        <label class="toggle-switch">
-          <input type="checkbox" :checked="keepAliveOn" @change="toggleKeepAlive" />
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <p class="text-secondary" style="font-size:0.875rem">
-        Mantiene il database attivo con ping periodici a Supabase e richiede archiviazione persistente per evitare che i dati vengano eliminati dal browser.
-      </p>
-      <div v-if="keepAliveOn && storageInfo" class="mt-sm" style="font-size:0.875rem">
-        <p><strong>Stato archiviazione:</strong> {{ storageInfo.persisted ? '✅ Persistente' : '☁️ Sincronizzato su Supabase' }}</p>
-        <p class="text-secondary" style="font-size:0.75rem">
-          I dati sono sempre salvati in cloud. La cache locale accelera il caricamento.
-        </p>
-        <p><strong>Spazio usato:</strong> {{ formatBytes(storageInfo.usage) }} / {{ formatBytes(storageInfo.quota) }}
-          <span v-if="storageInfo.percent !== null">({{ storageInfo.percent }}%)</span>
-        </p>
-      </div>
-    </div>
-
-    <!-- PWA Install -->
-    <div v-if="!appInstalled" class="card mb-md">
-      <h3 class="mb-sm">📲 Installa App</h3>
-      <p class="text-secondary mb-sm" style="font-size:0.875rem">
-        Aggiungi Pressione alla schermata Home per un accesso rapido come una vera app.
-      </p>
-
-      <!-- Android / Chrome -->
-      <div v-if="installAvailable">
-        <button class="btn btn-primary" @click="handleInstall">
-          <AppIcon name="copy" :size="16" /> Installa su Home
-        </button>
-        <div v-if="installMessage" class="form-success mt-sm">{{ installMessage }}</div>
-      </div>
-
-      <!-- iOS Safari -->
-      <div v-else-if="isIOS()">
-        <div class="ios-install-steps">
-          <p class="mb-sm" style="font-weight:600">Per installare su iOS:</p>
-          <ol style="padding-left:1.25rem;line-height:1.8;font-size:0.875rem">
-            <li>Tocca il pulsante <strong>Condividi</strong> <span style="font-size:1.1rem">⎋</span> nella barra di Safari</li>
-            <li>Scorri e seleziona <strong>"Aggiungi a Home"</strong></li>
-            <li>Tocca <strong>Aggiungi</strong> per confermare</li>
-          </ol>
+    <!-- Advanced Tools (collapsed by default) -->
+    <CollapsibleSection title="🛠️ Strumenti avanzati" class="mb-md">
+      <!-- Data Management -->
+      <div class="mb-md">
+        <h3 class="mb-sm">Dati</h3>
+        <div class="flex flex-col gap-sm">
+          <button class="btn btn-sm btn-secondary" @click="handleExportCSV"><AppIcon name="download" :size="16" /> {{ t('export_csv') }}</button>
+          <button class="btn btn-sm btn-secondary" @click="handleBackup"><AppIcon name="download" :size="16" /> Backup (JSON)</button>
+          <button class="btn btn-sm btn-secondary" @click="triggerRestore"><AppIcon name="upload" :size="16" /> Ripristina Backup</button>
+          <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
+          <button class="btn btn-sm btn-secondary" @click="triggerImportCsv"><AppIcon name="upload" :size="16" /> Importa CSV (bp-tracker)</button>
+          <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsv" />
+          <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData"><AppIcon name="robot" :size="16" /> {{ t('generate_test_data') }}</button>
         </div>
+        <div v-if="message" class="form-success mt-sm">{{ message }}</div>
       </div>
 
-      <!-- Desktop Chrome -->
-      <div v-else>
-        <p class="text-secondary" style="font-size:0.8125rem">
-          Su desktop, usa l'icona <strong>Installa</strong> nella barra degli indirizzi del browser.
+      <!-- Cache & Updates -->
+      <div class="mb-md">
+        <h4 class="mb-sm"><AppIcon name="refresh" :size="16" /> Cache & Aggiornamenti</h4>
+        <p class="text-secondary mb-sm" style="font-size:0.8125rem">
+          Se l'app mostra una versione vecchia, svuota la cache per forzare il caricamento dell'ultima versione.
         </p>
-      </div>
-    </div>
-
-    <!-- Language -->
-    <div class="card mb-md">
-      <h3 class="mb-sm">🌐 Lingua / Language</h3>
-      <div class="flex gap-sm">
-        <button v-for="lang in availableLangs" :key="lang" class="chip" :class="{ 'chip--active': currentLang === lang }" @click="changeLanguage(lang)">
-          {{ lang === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English' }}
+        <button class="btn btn-sm btn-secondary" @click="handleForceClearCache" :disabled="cacheClearing">
+          {{ cacheClearing ? 'Aggiornamento...' : 'Forza aggiornamento' }}
         </button>
       </div>
-    </div>
 
-    <!-- Cache & Updates -->
-    <div class="card mb-md">
-      <h3 class="mb-sm"><AppIcon name="refresh" :size="18" /> Cache & Aggiornamenti</h3>
-      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
-        Se l'app mostra una versione vecchia, svuota la cache per forzare il caricamento dell'ultima versione.
-      </p>
-      <button class="btn btn-sm btn-secondary" @click="handleForceClearCache" :disabled="cacheClearing">
-        {{ cacheClearing ? 'Aggiornamento...' : 'Forza aggiornamento' }}
-      </button>
-    </div>
+      <!-- Diagnostica -->
+      <div class="mb-md">
+        <h4 class="mb-sm"><AppIcon name="settings" :size="16" /> Diagnostica</h4>
+        <p class="text-secondary mb-sm" style="font-size:0.8125rem">
+          Condividi le informazioni di diagnostica per aiutare a risolvere i problemi.
+        </p>
+        <button class="btn btn-sm btn-secondary" @click="handleShareDiagnostics">
+          <AppIcon name="share" :size="16" /> Condividi diagnostica
+        </button>
+        <button class="btn btn-sm btn-secondary mt-sm" @click="handleForceSyncToSupabase" :disabled="syncInProgress">
+          <AppIcon name="refresh" :size="16" /> {{ syncInProgress ? 'Sincronizzazione...' : 'Forza sync a Supabase' }}
+        </button>
+        <div v-if="diagMessage" class="form-success mt-sm">{{ diagMessage }}</div>
+      </div>
 
-    <!-- Diagnostica -->
-    <div class="card mb-md">
-      <h3 class="mb-sm"><AppIcon name="settings" :size="18" /> Diagnostica</h3>
-      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
-        Condividi le informazioni di diagnostica per aiutare a risolvere i problemi.
-      </p>
-      <button class="btn btn-sm btn-secondary" @click="handleShareDiagnostics">
-        <AppIcon name="share" :size="16" /> Condividi diagnostica
-      </button>
-      <button class="btn btn-sm btn-secondary mt-sm" @click="handleForceSyncToSupabase" :disabled="syncInProgress">
-        <AppIcon name="refresh" :size="16" /> {{ syncInProgress ? 'Sincronizzazione...' : 'Forza sync a Supabase' }}
-      </button>
-      <div v-if="diagMessage" class="form-success mt-sm">{{ diagMessage }}</div>
-    </div>
-
-    <!-- Danger Zone -->
-    <div class="card mb-md" style="border:1px solid var(--color-error)">
-      <h3 class="mb-sm" style="color:var(--color-error)">{{ t('danger_zone') }}</h3>
-      <button class="btn btn-error btn-sm" @click="handleDeleteAll">{{ t('delete_all_data') }}</button>
-    </div>
+      <!-- Danger Zone -->
+      <div>
+        <h4 class="mb-sm" style="color:var(--color-error)">{{ t('danger_zone') }}</h4>
+        <button class="btn btn-error btn-sm" @click="handleDeleteAll">{{ t('delete_all_data') }}</button>
+      </div>
+    </CollapsibleSection>
 
     <p class="text-center" style="color:var(--color-text-secondary);font-size:0.75rem;padding:var(--space-lg)">
       Pressione v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}

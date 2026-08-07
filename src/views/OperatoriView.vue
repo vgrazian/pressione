@@ -4,7 +4,7 @@ import { useAuth } from '@/services/auth.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 
-const { user, fetchUsers, updateUserRole, deactivateUser, activateUser, hardDeleteUser, adminResetUserPassword, adminUpdateUserEmail } = useAuth()
+const { user, fetchUsers, updateUserRole, deactivateUser, activateUser, hardDeleteUser, adminResetUserPassword, adminUpdateUserEmail, register } = useAuth()
 
 const confirm = inject('confirm-dialog', null)
 const users = ref([])
@@ -15,6 +15,9 @@ const newPassword = ref('')
 const editingEmail = ref(null)
 const newEmail = ref('')
 const successMessage = ref('')
+const showNewUserForm = ref(false)
+const newUser = ref({ username: '', email: '', password: '', role: 'user' })
+const creatingUser = ref(false)
 
 onMounted(async () => {
   await loadUsers()
@@ -113,6 +116,35 @@ async function handleHardDelete(targetUser) {
   }
 }
 
+async function handleCreateUser() {
+  errorMessage.value = ''
+  if (!newUser.value.username || !newUser.value.email || !newUser.value.password) {
+    errorMessage.value = 'Compila tutti i campi'
+    return
+  }
+  if (newUser.value.password.length < 8) {
+    errorMessage.value = 'La password deve essere di almeno 8 caratteri'
+    return
+  }
+  if (!newUser.value.email.includes('@')) {
+    errorMessage.value = 'Inserisci un indirizzo email valido'
+    return
+  }
+  creatingUser.value = true
+  try {
+    await register(newUser.value.username, newUser.value.email, newUser.value.password, newUser.value.role)
+    successMessage.value = `Utente "${newUser.value.username}" creato`
+    showNewUserForm.value = false
+    newUser.value = { username: '', email: '', password: '', role: 'user' }
+    setTimeout(() => { successMessage.value = '' }, 3000)
+    await loadUsers()
+  } catch (e) {
+    errorMessage.value = e.message
+  } finally {
+    creatingUser.value = false
+  }
+}
+
 function startEditEmail(targetUser) {
   editingEmail.value = targetUser.username
   newEmail.value = targetUser.email || ''
@@ -167,7 +199,44 @@ async function handleResetPassword() {
   <div class="page">
     <div class="page-header">
       <h1>Gestione Utenti</h1>
-      <router-link to="/settings" class="btn btn-sm btn-outline mt-sm"><AppIcon name="chevron-left" :size="16" /> Impostazioni</router-link>
+      <div class="flex gap-sm">
+        <button class="btn btn-primary btn-sm" @click="showNewUserForm = !showNewUserForm">
+          <AppIcon name="plus" :size="16" /> Nuovo Utente
+        </button>
+        <router-link to="/settings" class="btn btn-sm btn-outline"><AppIcon name="chevron-left" :size="16" /> Impostazioni</router-link>
+      </div>
+    </div>
+
+    <!-- New User Form -->
+    <div v-if="showNewUserForm" class="card mb-md" style="border-color: var(--color-accent);">
+      <h3 class="mb-sm"><AppIcon name="users" :size="18" /> Nuovo Utente</h3>
+      <div class="new-user-form">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input v-model="newUser.username" class="form-input" placeholder="nome.cognome" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input v-model="newUser.email" type="email" class="form-input" placeholder="nome@email.com" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input v-model="newUser.password" type="password" class="form-input" placeholder="Minimo 8 caratteri" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ruolo</label>
+          <select v-model="newUser.role" class="form-input">
+            <option value="user">Utente</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-sm mt-sm">
+        <button class="btn btn-sm btn-primary" @click="handleCreateUser" :disabled="creatingUser">
+          <AppIcon name="plus" :size="14" /> {{ creatingUser ? 'Creazione...' : 'Crea Utente' }}
+        </button>
+        <button class="btn btn-sm btn-ghost" @click="showNewUserForm = false">Annulla</button>
+      </div>
     </div>
 
     <div v-if="successMessage" class="card card--success mb-md">
@@ -267,6 +336,18 @@ async function handleResetPassword() {
 </template>
 
 <style scoped>
+.new-user-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+@media (max-width: 480px) {
+  .new-user-form {
+    grid-template-columns: 1fr;
+  }
+}
+
 .user-row {
   display: flex;
   justify-content: space-between;

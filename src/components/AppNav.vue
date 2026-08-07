@@ -11,6 +11,7 @@ const navItems = [
   { name: 'home', label: 'Home', icon: 'home', path: '/' },
   { name: 'readingList', label: 'Lista', icon: 'list', path: '/list' },
   { name: 'analisi', label: 'Analisi', icon: 'chart', path: '/analisi' },
+  { name: 'operators', label: 'Gestione', icon: 'users', path: '/operators', adminOnly: true },
   { name: 'settings', label: 'Altro', icon: 'settings', path: '/settings' },
 ]
 
@@ -27,7 +28,7 @@ async function handleLogout() {
 <template>
   <nav class="app-nav">
     <router-link
-      v-for="item in navItems"
+      v-for="item in navItems.filter(i => !i.adminOnly || user?.role === 'admin')"
       :key="item.name"
       :to="item.path"
       class="nav-item"
