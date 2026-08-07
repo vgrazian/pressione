@@ -686,3 +686,23 @@ input[type="checkbox"]:checked::after {
 .fade-leave-to {
   opacity: 0;
 }
+
+/* ── Tablet (≥768px) ── */
+@media (min-width: 768px) {
+  .page {
+    padding: var(--space-xl) var(--space-2xl);
+  }
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .user-row {
+    flex-wrap: nowrap;
+  }
+}
+
+/* ── Desktop (≥1024px) ── */
+@media (min-width: 1024px) {
+  .page {
+    max-width: 960px;
+  }
+}

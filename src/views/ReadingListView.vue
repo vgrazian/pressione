@@ -20,6 +20,8 @@ const categoryFilter = ref('')
 const dateFilter = ref('all')
 const customFrom = ref('')
 const customTo = ref('')
+const undoReading = ref(null)
+let undoTimer = null
 
 const filteredReadings = computed(() => {
   let result = allReadings.value
@@ -78,7 +80,6 @@ function editReading(reading) {
 
 async function handleDelete(reading) {
   if (!confirm) {
-    // Fallback: use native confirm
     if (!window.confirm(`Eliminare la misurazione di ${new Date(reading.timestamp).toLocaleDateString('it-IT')}?`)) return
   } else {
     const confirmed = await confirm({
@@ -89,8 +90,22 @@ async function handleDelete(reading) {
     })
     if (!confirmed) return
   }
-  await deleteReading(reading.id, user.value.username)
+  // Soft-delete with undo: hide from list, show toast, delete after timeout
+  clearTimeout(undoTimer)
   allReadings.value = allReadings.value.filter(r => r.id !== reading.id)
+  undoReading.value = reading
+  undoTimer = setTimeout(async () => {
+    await deleteReading(reading.id, user.value.username)
+    undoReading.value = null
+  }, 5000)
+}
+
+function undoDelete() {
+  clearTimeout(undoTimer)
+  if (undoReading.value) {
+    allReadings.value = [...allReadings.value, undoReading.value].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    undoReading.value = null
+  }
 }
 
 function goToAdd() {
@@ -125,7 +140,11 @@ function onTouchEnd(id, reading) {
       <button class="btn btn-primary btn-sm" @click="goToAdd">+ Nuova</button>
     </div>
 
-    <!-- Search & Filters -->
+    <!-- Undo toast -->
+    <div v-if="undoReading" class="undo-toast mb-md">
+      <span>Misurazione eliminata</span>
+      <button class="btn btn-sm btn-ghost" @click="undoDelete">Annulla</button>
+    </div>
     <div class="filters mb-md">
       <input v-model="searchQuery" type="search" class="form-input" aria-label="Cerca misurazioni"
         placeholder="Cerca per note o valori..." />
@@ -169,6 +188,21 @@ function onTouchEnd(id, reading) {
 </template>
 
 <style scoped>
+.undo-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  animation: slideDown 0.2s ease-out;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .filters {
   position: sticky;
   top: 0;

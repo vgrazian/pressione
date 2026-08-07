@@ -479,9 +479,8 @@ async function handleInstall() {
       <h1>{{ t('settings') }}</h1>
     </div>
 
-    <!-- Account -->
-    <div class="card mb-md">
-      <h3 class="mb-sm">{{ t('account') }}</h3>
+    <!-- Account + Profile -->
+    <CollapsibleSection title="👤 Profilo e Account" :open="true" class="mb-md">
       <p><strong>{{ t('username') }}:</strong> {{ user?.username }}</p>
       <div class="flex items-center gap-sm">
         <span><strong>{{ t('email') }}:</strong> {{ user?.email || t('email_not_set') }}</span>
@@ -495,7 +494,6 @@ async function handleInstall() {
       </div>
       <div v-if="emailSuccess" class="form-success mt-sm">{{ emailSuccess }}</div>
 
-      <!-- Birth Date & Gender -->
       <hr style="margin:var(--space-md) 0;border-color:var(--color-border)" />
       <p class="text-secondary mb-sm" style="font-size:0.8125rem">Data di nascita e genere aiutano a personalizzare il report con riferimenti clinici adeguati.</p>
       <div class="profile-row mb-sm">
@@ -516,9 +514,7 @@ async function handleInstall() {
           </select>
         </div>
       </div>
-
-      <!-- Anagrafica completa (per report) -->
-      <p class="text-secondary mb-sm mt-md" style="font-size:0.75rem">Dati anagrafici per il report (opzionali). Se compilati, sostituiscono il nome utente nel PDF.</p>
+      <p class="text-secondary mb-sm mt-md" style="font-size:0.75rem">Dati anagrafici per il report (opzionali).</p>
       <div class="profile-row mb-sm">
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Nome</label>
@@ -541,7 +537,7 @@ async function handleInstall() {
       </div>
       <div class="profile-row mb-sm">
         <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Indirizzo (via/piazza)</label>
+          <label class="form-label">Indirizzo</label>
           <input v-model="profileStreet" type="text" class="form-input" placeholder="Via Roma" />
         </div>
         <div class="form-group" style="margin-bottom:0">
@@ -559,10 +555,9 @@ async function handleInstall() {
           <input v-model="profilePostalCode" type="text" class="form-input" placeholder="20100" maxlength="5" style="max-width:100px" inputmode="numeric" />
         </div>
       </div>
-
       <button class="btn btn-sm btn-primary" @click="handleSaveProfile" :disabled="!profileDirty">Salva profilo</button>
       <div v-if="profileMessage" class="form-success mt-sm">{{ profileMessage }}</div>
-    </div>
+    </CollapsibleSection>
 
     <!-- Password -->
     <div class="card mb-md">
@@ -577,7 +572,7 @@ async function handleInstall() {
     </div>
 
     <!-- Reminders -->
-    <div class="card mb-md">
+    <CollapsibleSection title="🔔 {{ t('reminders') }}" class="mb-md">
       <div class="flex justify-between items-center mb-sm">
         <h3>{{ t('reminders') }}</h3>
         <button class="btn btn-sm btn-ghost" @click="addReminder">{{ t('add_reminder') }}</button>
@@ -601,10 +596,10 @@ async function handleInstall() {
         </div>
         <hr v-if="i < reminders.length - 1" style="margin:var(--space-md) 0;border-color:var(--color-surface-overlay)" />
       </div>
-    </div>
+    </CollapsibleSection>
 
     <!-- Time Bands Configuration -->
-    <div class="card mb-md">
+    <CollapsibleSection title="⏰ Fasce Orarie" class="mb-md">
       <h3 class="mb-sm"><AppIcon name="clock" :size="18" /> Fasce Orarie</h3>
       <p class="text-secondary mb-sm" style="font-size:0.8125rem">
         Trascina i separatori per regolare le fasce. Le fasce non possono sovrapporsi.
@@ -615,7 +610,7 @@ async function handleInstall() {
         <button class="btn btn-sm btn-ghost" @click="resetBands">Ripristina default</button>
       </div>
       <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
-    </div>
+    </CollapsibleSection>
 
     <CollapsibleSection title="🛠️ Strumenti avanzati" class="mb-md">
       <!-- Data Management -->

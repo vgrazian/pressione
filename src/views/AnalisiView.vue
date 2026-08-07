@@ -382,7 +382,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
           <span class="stat-card__value">{{ stats.readingsCount }}</span>
         </div>
         <div class="stat-card card card--flat">
-          <span class="stat-card__label">Carico Ipert.</span>
+          <span class="stat-card__label" title="Percentuale di misurazioni con pressione ≥ 140/90 mmHg">Carico Ipert.</span>
           <span class="stat-card__value" :class="{ 'text-error': htnLoad.percentage > 30 }">{{ htnLoad.percentage }}%</span>
         </div>
       </div>
@@ -419,9 +419,9 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
               <tr><td>BPM medio</td><td>{{ stats7.avgHeartRate }}</td><td>{{ stats30.avgHeartRate }}</td></tr>
               <tr><td>Variazione max ↑</td><td class="text-error">{{ derivatives7.maxPositiveRate > 0 ? '+' + Math.round(derivatives7.maxPositiveRate) : '0' }} mmHg/h</td><td class="text-error">{{ derivatives30.maxPositiveRate > 0 ? '+' + Math.round(derivatives30.maxPositiveRate) : '0' }} mmHg/h</td></tr>
               <tr><td>Variazione max ↓</td><td class="text-warning">{{ derivatives7.maxNegativeRate < 0 ? Math.round(derivatives7.maxNegativeRate) : '0' }} mmHg/h</td><td class="text-warning">{{ derivatives30.maxNegativeRate < 0 ? Math.round(derivatives30.maxNegativeRate) : '0' }} mmHg/h</td></tr>
-              <tr><td>Allarmi dP/dt</td><td :class="{ 'text-error': derivatives7.alarmSegments.length > 0 }">{{ derivatives7.alarmSegments.length }}</td><td :class="{ 'text-error': derivatives30.alarmSegments.length > 0 }">{{ derivatives30.alarmSegments.length }}</td></tr>
-              <tr><td>Carico ipertensivo</td><td :class="{ 'text-error': htnLoad7.percentage > 30 }">{{ htnLoad7.percentage }}%</td><td :class="{ 'text-error': htnLoad30.percentage > 30 }">{{ htnLoad30.percentage }}%</td></tr>
-              <tr><td>Picco mattutino</td><td>{{ surge7.delta !== null ? (surge7.delta > 0 ? '+' : '') + surge7.delta + ' mmHg' : 'N/D' }}</td><td>{{ surge30.delta !== null ? (surge30.delta > 0 ? '+' : '') + surge30.delta + ' mmHg' : 'N/D' }}</td></tr>
+              <tr><td title="Episodi di variazione rapida della pressione (>10 mmHg/ora)">Allarmi dP/dt</td><td :class="{ 'text-error': derivatives7.alarmSegments.length > 0 }">{{ derivatives7.alarmSegments.length }}</td><td :class="{ 'text-error': derivatives30.alarmSegments.length > 0 }">{{ derivatives30.alarmSegments.length }}</td></tr>
+              <tr><td title="Percentuale di letture oltre la soglia 140/90 mmHg">Carico ipertensivo</td><td :class="{ 'text-error': htnLoad7.percentage > 30 }">{{ htnLoad7.percentage }}%</td><td :class="{ 'text-error': htnLoad30.percentage > 30 }">{{ htnLoad30.percentage }}%</td></tr>
+              <tr><td title="Differenza tra la pressione media al mattino e le altre fasce orarie. Un picco elevato indica rischio cardiovascolare.">Picco mattutino</td><td>{{ surge7.delta !== null ? (surge7.delta > 0 ? '+' : '') + surge7.delta + ' mmHg' : 'N/D' }}</td><td>{{ surge30.delta !== null ? (surge30.delta > 0 ? '+' : '') + surge30.delta + ' mmHg' : 'N/D' }}</td></tr>
             </tbody>
           </table>
         </div>
