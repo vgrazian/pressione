@@ -572,7 +572,7 @@ async function handleInstall() {
     </div>
 
     <!-- Reminders -->
-    <CollapsibleSection title="🔔 {{ t('reminders') }}" class="mb-md">
+    <CollapsibleSection :title="'🔔 ' + t('reminders')" class="mb-md">
       <div class="flex justify-between items-center mb-sm">
         <h3>{{ t('reminders') }}</h3>
         <button class="btn btn-sm btn-ghost" @click="addReminder">{{ t('add_reminder') }}</button>
