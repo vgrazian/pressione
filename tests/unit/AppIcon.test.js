@@ -44,6 +44,17 @@ describe('AppIcon', () => {
         expect(wrapper.find('svg').exists()).toBe(true)
     })
 
+    it('renders x icon (cancel/close)', () => {
+        const wrapper = shallowMount(AppIcon, { props: { name: 'x' } })
+        expect(wrapper.find('svg').exists()).toBe(true)
+    })
+
+    it('x icon has two lines', () => {
+        const wrapper = shallowMount(AppIcon, { props: { name: 'x' } })
+        const lines = wrapper.findAll('line')
+        expect(lines).toHaveLength(2)
+    })
+
     it('renders fallback dot for unknown icon', () => {
         const wrapper = shallowMount(AppIcon, { props: { name: 'nonexistent' } })
         expect(wrapper.find('.icon-fallback').exists()).toBe(true)
