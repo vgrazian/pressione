@@ -20,6 +20,10 @@ const isLoading = ref(true)
 const syncStatus = ref('idle')
 const syncError = ref('')
 
+const displayName = computed(() => {
+  return user.value?.firstName?.trim() || user.value?.username || ''
+})
+
 const greeting = computed(() => {
   const h = new Date().getHours()
   if (h < 6) return 'Buonanotte'
@@ -113,7 +117,7 @@ function editReading(reading) {
   <div class="page">
     <!-- Greeting -->
     <div class="greeting mb-lg">
-      <h1>{{ greeting }}, {{ user?.username }}</h1>
+      <h1>{{ greeting }}, {{ displayName }}</h1>
       <p class="greeting__sub" v-if="latestReading">
         Ultima lettura: {{ new Date(latestReading.timestamp).toLocaleString('it-IT', { weekday: 'long', hour: '2-digit', minute: '2-digit' }) }}
       </p>
