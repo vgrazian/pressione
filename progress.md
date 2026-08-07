@@ -137,9 +137,17 @@ I file SQL in `supabase/migrations/` vanno applicati tramite Supabase MCP:
 - Step [5/5]: verifica build Pages via GitHub API (se `GITHUB_TOKEN` in `.env`) o fallback HTTP poll
 - Lo script ora source `.env` per leggere `GITHUB_TOKEN`
 
-**⚠️ Deploy status:**
+### 2026-08-07
 
-- **v1.2.1 NON è live** — GitHub Pages in `major_outage` dal 06/08/2026 ~15:22 UTC
-- Commit pronti: `53ee850` (deploy script), `4cab61b` (bump 1.2.1)
-- Da deployare con `./scripts/deploy.sh` quando Pages torna operational
-- Monitor: <https://www.githubstatus.com/>
+**Deploy script (miglioramenti):**
+
+- Step [5/5]: timeout aumentato a 30 tentativi (5 min), mostra SHA del build in polling
+- Stuck-build detection: se il build è `building` con SHA sbagliato, richiede rebuild via API
+- Auto-retry su build `errored`
+- `_gh_api()` supporta `-X POST` per triggerare rebuild
+
+**✅ v1.2.1 live:**
+
+- Deployato il 07/08/2026 ~07:32 UTC dopo risoluzione outage GitHub Pages (06/08 ~15:22–07/08 ~07:00)
+- Build SHA: `84f43a5` (gh-pages) — versione: `5f9dfc7e` (main)
+- Root cause outage: Pages config passato a `build_type: workflow` senza workflow file — risolto switchando a `legacy` (Deploy from a branch) nelle impostazioni repo
