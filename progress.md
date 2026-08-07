@@ -1,6 +1,6 @@
 # Pressione — Progress & Conventions
 
-> Ultimo aggiornamento: 2026-08-06
+> Ultimo aggiornamento: 2026-08-07
 
 ---
 
@@ -151,3 +151,50 @@ I file SQL in `supabase/migrations/` vanno applicati tramite Supabase MCP:
 - Deployato il 07/08/2026 ~07:32 UTC dopo risoluzione outage GitHub Pages (06/08 ~15:22–07/08 ~07:00)
 - Build SHA: `84f43a5` (gh-pages) — versione: `5f9dfc7e` (main)
 - Root cause outage: Pages config passato a `build_type: workflow` senza workflow file — risolto switchando a `legacy` (Deploy from a branch) nelle impostazioni repo
+
+---
+
+### 2026-08-07 (sessione pomeridiana)
+
+**Impeccable skill install & audit:**
+
+- Installato `pbakaus/impeccable@impeccable` (223K installs)
+- Eseguito `$impeccable init` → creato `PRODUCT.md` con contesto prodotto
+- Eseguito `$impeccable critique` → design review completa (27/40 Design Health Score)
+- Eseguito `$impeccable audit` → audit tecnico (11/20 → ~16/20 dopo fix)
+
+**Wellness-first redesign:**
+
+- HomeView: greeting time-aware, wellness status card con messaggi contestuali per categoria (✅ ottimale → 🆘 crisi), insights chips, trend line positivo
+- Messaggio di crisi ipertensiva con guida (ripetere misurazione, contattare medico se sintomi)
+- Greeting usa `firstName` se presente, fallback a `username`
+
+**Nuovo utente + Gestione nav:**
+
+- OperatoriView: form creazione nuovo utente (username, email, password, ruolo)
+- AppNav: tab "Gestione" visibile solo admin, rimosso link da Settings
+
+**Audit fixes (4 fasi):**
+
+- P0: SharedReportView dark mode — ~60 colori hardcoded → CSS tokens, aggiunti `--color-warning`/`--color-warning-muted`
+- P1: aria-labels, focus-visible su 6 tipi elemento, keyboard accessibility, ~15 input labels, cancel button fix
+- P2: transition:all→specific, touch targets 24→32/36px, vite chunk splitting (jspdf+chart.js)
+- P3: `--color-overlay` token, prefers-reduced-motion per :active
+
+**Icon audit:**
+
+- `copy`→`download` per "Scarica PDF", `trash`→`x` per cancel, aggiunta icona `x`, `plus` standardizzato a 16px
+- Rimosso link admin da Settings (ora solo in Gestione nav)
+
+**Deferred features:**
+
+- SettingsView decomposition: CollapsibleSection per Profilo, Promemoria, Fasce Orarie
+- Undo per eliminazione misurazioni: toast 5 secondi con "Annulla"
+- Clinical tooltips: title su "Carico Ipert.", "dP/dt", "Picco mattutino"
+- Tablet breakpoints: @media (min-width: 768px) e (min-width: 1024px)
+
+**Test suite:**
+
+- 3 nuovi file test: ReadingListView (undo), SettingsView (decomposition), AnalisiView (tooltips)
+- AppIcon esteso con test icona `x`
+- Totale: 27 file, 241 test — tutti green

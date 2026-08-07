@@ -1,9 +1,9 @@
 # Pressione — Feature Inventory & Review
 
-> **Versione:** 1.3.0 | **Data:** 2026-08-06  
+> **Versione:** 1.2.1 | **Data:** 2026-08-07  
 > **URL:** <https://vgrazian.github.io/pressione/>  
 > **Stack:** Vue 3 + Vite PWA · Supabase · Dexie/IndexedDB (+ localStorage bridge) · Chart.js (theme-aware) · chartjs-plugin-annotation · jsPDF  
-> **Test:** 81 unit (Vitest) + 60 E2E (Playwright)
+> **Test:** 241 unit (Vitest) + 60 E2E (Playwright)
 
 ---
 
