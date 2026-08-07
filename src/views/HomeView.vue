@@ -151,14 +151,14 @@ function editReading(reading) {
         </div>
         <div class="wellness-value wellness-value--bpm">
           <span class="wellness-value__num">{{ latestReading.heartRate }}</span>
-          <span class="wellness-value__lbl"><AppIcon name="heart" :size="11" /> BPM</span>
+          <span class="wellness-value__lbl"><AppIcon name="heart" :size="14" /> BPM</span>
         </div>
       </div>
     </div>
 
     <!-- Quick Add -->
     <button class="btn btn-primary btn-block mb-md" @click="goToAdd">
-      <AppIcon name="plus" :size="18" /> Registra una misurazione
+      <AppIcon name="plus" :size="16" /> Registra una misurazione
     </button>
 
     <!-- Insights Row -->

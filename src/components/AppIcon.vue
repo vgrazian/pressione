@@ -242,6 +242,15 @@ const props = defineProps({
     <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
   </svg>
 
+  <svg
+    v-else-if="name === 'x'"
+    :width="size" :height="size" viewBox="0 0 24 24"
+    fill="none" :stroke="color" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+  >
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+
   <span v-else class="icon-fallback">●</span>
 </template>
 

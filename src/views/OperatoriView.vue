@@ -236,7 +236,7 @@ async function handleResetPassword() {
       </div>
       <div class="flex gap-sm mt-sm">
         <button class="btn btn-sm btn-primary" @click="handleCreateUser" :disabled="creatingUser">
-          <AppIcon name="plus" :size="14" /> {{ creatingUser ? 'Creazione...' : 'Crea Utente' }}
+          <AppIcon name="plus" :size="16" /> {{ creatingUser ? 'Creazione...' : 'Crea Utente' }}
         </button>
         <button class="btn btn-sm btn-ghost" @click="showNewUserForm = false">Annulla</button>
       </div>
@@ -265,7 +265,7 @@ async function handleResetPassword() {
                 <input v-model="newEmail" type="email" class="form-input email-edit-input"
                   placeholder="nuova@email.com" @keyup.enter="handleUpdateEmail(u)" />
                 <button class="btn btn-xs btn-primary" @click="handleUpdateEmail(u)">Salva</button>
-                <button class="btn btn-xs btn-ghost" @click="cancelEditEmail"><AppIcon name="trash" :size="14" /></button>
+                <button class="btn btn-xs btn-ghost" @click="cancelEditEmail"><AppIcon name="x" :size="14" /></button>
               </div>
             </template>
             <template v-else>

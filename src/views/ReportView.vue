@@ -426,7 +426,7 @@ function copyActiveLink(token) {
     <div v-if="isLoading" class="p-lg"><SkeletonLoader type="text" :count="8" /></div>
 
     <div v-else-if="!filteredReadings.length" class="empty-state">
-      <AppIcon name="copy" :size="40" color="var(--color-text-tertiary)" />
+      <AppIcon name="chart" :size="40" color="var(--color-text-tertiary)" />
       <h3>Nessun dato nel periodo</h3>
       <p>Aggiungi misurazioni per generare un report.</p>
     </div>
@@ -590,7 +590,7 @@ function copyActiveLink(token) {
           </label>
         </div>
         <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
-          <AppIcon name="copy" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
+          <AppIcon name="download" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
         </button>
       </div>
 

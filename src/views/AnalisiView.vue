@@ -504,7 +504,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
           </label>
         </div>
         <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
-          <AppIcon name="copy" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
+          <AppIcon name="download" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
         </button>
       </div>
 
