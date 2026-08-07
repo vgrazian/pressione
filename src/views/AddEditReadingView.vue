@@ -200,7 +200,7 @@ function goBack() {
 
       <!-- Action buttons -->
       <div class="form-actions">
-        <button type="button" class="btn btn-error" @click="goBack">
+        <button type="button" class="btn btn-ghost" @click="goBack" aria-label="Indietro">
           <AppIcon name="trash" :size="16" color="var(--color-on-error)" /> Annulla
         </button>
         <button type="submit" class="btn btn-primary btn--full-mobile" :disabled="isSaving">

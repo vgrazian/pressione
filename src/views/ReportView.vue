@@ -687,7 +687,7 @@ function copyActiveLink(token) {
 .banded-table tbody tr td { padding: 4px 8px; border-bottom: 1px solid var(--color-border); font-size: 0.75rem; }
 
 /* Chip toggle (reused for view mode) */
-.chip { padding: 4px 12px; border-radius: 16px; border: 1px solid var(--color-border); background: var(--color-surface-raised); font-size: 0.75rem; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+.chip { padding: 4px 12px; border-radius: 16px; border: 1px solid var(--color-border); background: var(--color-surface-raised); font-size: 0.75rem; cursor: pointer; color: var(--color-text-secondary); transition: color 0.15s, background-color 0.15s; }
 .chip--active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
 
 /* Interactive chart wrapper */

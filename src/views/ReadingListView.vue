@@ -127,7 +127,7 @@ function onTouchEnd(id, reading) {
 
     <!-- Search & Filters -->
     <div class="filters mb-md">
-      <input v-model="searchQuery" type="search" class="form-input"
+      <input v-model="searchQuery" type="search" class="form-input" aria-label="Cerca misurazioni"
         placeholder="Cerca per note o valori..." />
       <CollapsibleSection title="Filtri" class="mt-sm">
         <div class="flex gap-sm flex-wrap">

@@ -213,13 +213,16 @@ async function handleResetPassword() {
       <div class="new-user-form">
         <div class="form-group">
           <label class="form-label">Username</label>
+          <label class="form-label">Username</label>
           <input v-model="newUser.username" class="form-input" placeholder="nome.cognome" autocomplete="off" />
         </div>
         <div class="form-group">
           <label class="form-label">Email</label>
+          <label class="form-label">Email</label>
           <input v-model="newUser.email" type="email" class="form-input" placeholder="nome@email.com" autocomplete="off" />
         </div>
         <div class="form-group">
+          <label class="form-label">Password</label>
           <label class="form-label">Password</label>
           <input v-model="newUser.password" type="password" class="form-input" placeholder="Minimo 8 caratteri" autocomplete="new-password" />
         </div>
@@ -266,7 +269,7 @@ async function handleResetPassword() {
               </div>
             </template>
             <template v-else>
-              <span class="user-email" :class="{ 'clickable': !u.disabled }" @click="!u.disabled && startEditEmail(u)">{{ u.email || '—' }}</span>
+              <span class="user-email" :class="{ 'clickable': !u.disabled }" role="button" tabindex="0" @click="!u.disabled && startEditEmail(u)" @keydown.enter="!u.disabled && startEditEmail(u)">{{ u.email || '—' }}</span>
               <button v-if="!u.disabled" class="btn-edit-email" title="Modifica email" @click="startEditEmail(u)">
                 <AppIcon name="edit" :size="12" />
               </button>

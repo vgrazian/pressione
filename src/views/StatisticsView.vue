@@ -5,7 +5,7 @@ import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
 import { computeStatistics, computeDerivatives, computeMorningSurge, computeHypertensiveLoad, computeHRV } from '@/services/statistics.js'
 import { getCategoryLabel } from '@/services/categories.js'
-import { useI18n } from '@/services/i18n.js'
+
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { Chart, registerables } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
@@ -14,7 +14,6 @@ Chart.register(...registerables, annotationPlugin)
 
 const router = useRouter()
 const { user } = useAuth()
-const { t } = useI18n()
 
 const readings = ref([])
 const isLoading = ref(true)

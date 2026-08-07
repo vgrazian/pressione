@@ -567,7 +567,7 @@ async function handleInstall() {
 
     <!-- Password -->
     <div class="card mb-md">
-      <h3 class="mb-sm" @click="showPasswordForm = !showPasswordForm" style="cursor:pointer;">{{ t('change_password') }} {{ showPasswordForm ? '▾' : '▸' }}</h3>
+      <h3 class="mb-sm" role="button" tabindex="0" @click="showPasswordForm = !showPasswordForm" @keydown.enter="showPasswordForm = !showPasswordForm" style="cursor:pointer;" :aria-expanded="showPasswordForm">{{ t('change_password') }} {{ showPasswordForm ? '▾' : '▸' }}</h3>
       <div v-if="showPasswordForm">
         <div class="form-group"><label class="form-label">{{ t('current_password') }}</label><input v-model="currentPassword" type="password" class="form-input" /></div>
         <div class="form-group"><label class="form-label">{{ t('new_password') }}</label><input v-model="newPassword" type="password" class="form-input" placeholder="Minimo 8 caratteri" /></div>

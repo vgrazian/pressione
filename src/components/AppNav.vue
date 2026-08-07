@@ -32,6 +32,7 @@ async function handleLogout() {
       :key="item.name"
       :to="item.path"
       class="nav-item"
+      :aria-label="item.label"
       :class="{ active: isActive(item) }"
     >
       <AppIcon :name="item.icon" :size="22" />

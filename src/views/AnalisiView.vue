@@ -543,7 +543,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
 
 <style scoped>
 .chart-tabs { display: flex; gap: 4px; background: var(--color-surface-overlay); border-radius: var(--radius-sm); padding: 3px; }
-.chart-tab { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border: none; background: transparent; border-radius: 6px; font-size: 0.75rem; font-family: var(--font-sans); color: var(--color-text-secondary); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.chart-tab { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border: none; background: transparent; border-radius: 6px; font-size: 0.75rem; font-family: var(--font-sans); color: var(--color-text-secondary); cursor: pointer; transition: color 0.15s, background-color 0.15s; white-space: nowrap; }
 .chart-tab--active { background: var(--color-surface-raised); color: var(--color-accent); font-weight: 600; box-shadow: var(--shadow-sm); }
 .chart-wrap { position: relative; height: 260px; width: 100%; }
 @media (max-width: 480px) { .chart-wrap { height: 200px; } }
