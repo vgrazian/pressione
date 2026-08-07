@@ -573,8 +573,7 @@ async function handleInstall() {
 
     <!-- Reminders -->
     <CollapsibleSection :title="'🔔 ' + t('reminders')" class="mb-md">
-      <div class="flex justify-between items-center mb-sm">
-        <h3>{{ t('reminders') }}</h3>
+      <div class="flex justify-end mb-sm">
         <button class="btn btn-sm btn-ghost" @click="addReminder">{{ t('add_reminder') }}</button>
       </div>
       <div v-if="reminders.length === 0" class="text-center p-md"><p class="text-secondary">{{ t('no_reminders') }}</p></div>
@@ -590,7 +589,7 @@ async function handleInstall() {
         </div>
         <div class="flex gap-sm">
           <button class="btn btn-sm btn-primary" @click="saveReminder(r)">{{ t('save') }}</button>
-          <button class="btn btn-sm btn-error btn-icon" @click="removeReminder(r)" :title="t('remove')">
+          <button class="btn btn-sm btn-ghost-error btn-icon" @click="removeReminder(r)" :title="t('remove')">
             <AppIcon name="trash" :size="16" color="currentColor" />
           </button>
         </div>
@@ -600,8 +599,7 @@ async function handleInstall() {
 
     <!-- Time Bands Configuration -->
     <CollapsibleSection title="⏰ Fasce Orarie" class="mb-md">
-      <h3 class="mb-sm"><AppIcon name="clock" :size="18" /> Fasce Orarie</h3>
-      <p class="text-secondary mb-sm" style="font-size:0.8125rem">
+      <p class="text-secondary mb-sm mt-sm" style="font-size:0.8125rem">
         Trascina i separatori per regolare le fasce. Le fasce non possono sovrapporsi.
       </p>
       <TimeBandSlider :bands="timeBands" @update:bands="timeBands = $event" />
@@ -613,9 +611,8 @@ async function handleInstall() {
     </CollapsibleSection>
 
     <CollapsibleSection title="🛠️ Strumenti avanzati" class="mb-md">
-      <!-- Data Management -->
       <div class="mb-md">
-        <h3 class="mb-sm">Dati</h3>
+        <h4 class="mb-sm">Dati</h4>
         <div class="flex flex-col gap-sm">
           <button class="btn btn-sm btn-secondary" @click="handleExportCSV"><AppIcon name="download" :size="16" /> {{ t('export_csv') }}</button>
           <button class="btn btn-sm btn-secondary" @click="handleBackup"><AppIcon name="download" :size="16" /> Backup (JSON)</button>
