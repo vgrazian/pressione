@@ -20,6 +20,45 @@ const isLoading = ref(true)
 const syncStatus = ref('idle')
 const syncError = ref('')
 
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 6) return 'Buonanotte'
+  if (h < 12) return 'Buongiorno'
+  if (h < 18) return 'Buon pomeriggio'
+  if (h < 22) return 'Buonasera'
+  return 'Buonanotte'
+})
+
+const wellnessMessage = computed(() => {
+  if (!latestReading.value) return null
+  const cat = latestReading.value.category
+  const messages = {
+    optimal: { text: 'La tua pressione è ottimale', icon: '✅', tone: 'positive' },
+    normal: { text: 'La tua pressione è nella norma', icon: '👍', tone: 'positive' },
+    elevated: { text: 'La pressione è leggermente elevata', icon: '💡', tone: 'caution' },
+    hypertension_stage1: { text: 'Pressione alta — monitora con attenzione', icon: '⚠️', tone: 'warning' },
+    hypertension_stage2: { text: 'Pressione molto alta — consulta il medico', icon: '🔴', tone: 'serious' },
+    hypertensive_crisis: { text: 'Valori critici — se hai sintomi contatta subito un medico. Altrimenti ripeti la misurazione dopo 5 minuti di riposo.', icon: '🆘', tone: 'crisis' },
+    hypotension: { text: 'La pressione è più bassa del normale', icon: 'ℹ️', tone: 'info' }
+  }
+  return messages[cat] || messages.normal
+})
+
+const trendMessage = computed(() => {
+  if (!weeklyTrend.value) return null
+  const s = weeklyTrend.value.systolicRate
+  const d = weeklyTrend.value.diastolicRate
+  if (Math.abs(s) < 1 && Math.abs(d) < 1) return { text: 'Andamento stabile ✅', tone: 'stable' }
+  if (s < -2 || d < -1.5) return { text: 'In miglioramento 👍', tone: 'improving' }
+  if (s > 2 || d > 1.5) return { text: 'In lieve aumento — tienila d\'occhio', tone: 'watching' }
+  return { text: 'Andamento stabile ✅', tone: 'stable' }
+})
+
+const daysMonitored = computed(() => {
+  if (!statistics.value) return 0
+  return statistics.value.readingsCount > 0 ? Math.max(1, Math.round(statistics.value.readingsCount / 2)) : 0
+})
+
 onMounted(async () => {
   await loadData()
 })
@@ -39,7 +78,6 @@ async function loadData() {
       statistics.value = computeStatistics(allReadings)
       recentReadings.value = allReadings.slice(0, 5)
 
-      // Weekly trend: compute derivative on last 7 days
       const weekAgo = new Date(Date.now() - 7 * 86400000)
       const weekReadings = allReadings.filter(r => new Date(r.timestamp) >= weekAgo)
       if (weekReadings.length >= 2) {
@@ -73,12 +111,12 @@ function editReading(reading) {
 
 <template>
   <div class="page">
-    <div class="page-header flex justify-between items-center">
-      <div>
-        <h1>Ciao, {{ user?.username }}</h1>
-        <p class="text-secondary" v-if="latestReading">Ultima misurazione: {{ new Date(latestReading.timestamp).toLocaleDateString('it-IT') }}</p>
-      </div>
-      <button class="btn btn-primary" @click="goToAdd">+ Nuova</button>
+    <!-- Greeting -->
+    <div class="greeting mb-lg">
+      <h1>{{ greeting }}, {{ user?.username }}</h1>
+      <p class="greeting__sub" v-if="latestReading">
+        Ultima lettura: {{ new Date(latestReading.timestamp).toLocaleString('it-IT', { weekday: 'long', hour: '2-digit', minute: '2-digit' }) }}
+      </p>
     </div>
 
     <!-- Sync Status -->
@@ -90,79 +128,57 @@ function editReading(reading) {
       <button class="btn btn-sm btn-ghost" @click="loadData">Riprova</button>
     </div>
 
-    <!-- Latest Reading Card -->
-    <div v-if="latestReading" class="latest-card card mb-md">
-      <div class="latest-card__header">
-        <h2>Ultima Misurazione</h2>
+    <!-- Wellness Status Card -->
+    <div v-if="latestReading && wellnessMessage" class="wellness-card card mb-md" :class="`wellness-card--${wellnessMessage.tone}`">
+      <div class="wellness-card__header">
+        <span class="wellness-card__icon">{{ wellnessMessage.icon }}</span>
         <CategoryBadge :category="latestReading.category" />
       </div>
-      <div class="latest-card__values">
-        <div class="latest-value">
-          <span class="latest-value__number">{{ latestReading.systolic }}</span>
-          <span class="latest-value__label">Sistolica</span>
+      <p class="wellness-card__message">{{ wellnessMessage.text }}</p>
+      <div class="wellness-card__values">
+        <div class="wellness-value">
+          <span class="wellness-value__num">{{ latestReading.systolic }}</span>
+          <span class="wellness-value__lbl">SYS</span>
         </div>
-        <span class="latest-value__sep">/</span>
-        <div class="latest-value">
-          <span class="latest-value__number">{{ latestReading.diastolic }}</span>
-          <span class="latest-value__label">Diastolica</span>
+        <span class="wellness-value__sep">/</span>
+        <div class="wellness-value">
+          <span class="wellness-value__num">{{ latestReading.diastolic }}</span>
+          <span class="wellness-value__lbl">DIA</span>
         </div>
-        <div class="latest-value">
-          <span class="latest-value__number">{{ latestReading.heartRate }}</span>
-          <span class="latest-value__label"><AppIcon name="heart" :size="12" /> BPM</span>
+        <div class="wellness-value wellness-value--bpm">
+          <span class="wellness-value__num">{{ latestReading.heartRate }}</span>
+          <span class="wellness-value__lbl"><AppIcon name="heart" :size="11" /> BPM</span>
         </div>
-      </div>
-      <div class="latest-card__info">
-        {{ new Date(latestReading.timestamp).toLocaleString('it-IT') }}
-        <span v-if="latestReading.notes"> — {{ latestReading.notes }}</span>
       </div>
     </div>
 
-    <!-- Statistics Summary -->
-    <div v-if="statistics && statistics.readingsCount > 0" class="stats-grid mb-md">
-      <div class="stat-card card card--flat">
-        <span class="stat-card__label">Media Sistolica</span>
-        <span class="stat-card__value">{{ statistics.avgSystolic }}</span>
-        <span class="stat-card__unit">mmHg</span>
+    <!-- Quick Add -->
+    <button class="btn btn-primary btn-block mb-md" @click="goToAdd">
+      <AppIcon name="plus" :size="18" /> Registra una misurazione
+    </button>
+
+    <!-- Insights Row -->
+    <div v-if="statistics && statistics.readingsCount > 0" class="insights-row mb-md">
+      <div class="insight-chip">
+        <span class="insight-chip__val">{{ statistics.avgSystolic }}/{{ statistics.avgDiastolic }}</span>
+        <span class="insight-chip__lbl">Media pressione</span>
       </div>
-      <div class="stat-card card card--flat">
-        <span class="stat-card__label">Media Diastolica</span>
-        <span class="stat-card__value">{{ statistics.avgDiastolic }}</span>
-        <span class="stat-card__unit">mmHg</span>
+      <div class="insight-chip">
+        <span class="insight-chip__val">{{ statistics.readingsCount }}</span>
+        <span class="insight-chip__lbl">Misurazioni totali</span>
       </div>
-      <div class="stat-card card card--flat">
-        <span class="stat-card__label">Media BPM</span>
-        <span class="stat-card__value">{{ statistics.avgHeartRate }}</span>
-        <span class="stat-card__unit">BPM</span>
-      </div>
-      <div class="stat-card card card--flat">
-        <span class="stat-card__label">Totale Misurazioni</span>
-        <span class="stat-card__value">{{ statistics.readingsCount }}</span>
+      <div class="insight-chip">
+        <span class="insight-chip__val">{{ statistics.avgHeartRate }}</span>
+        <span class="insight-chip__lbl">BPM medi</span>
       </div>
     </div>
 
-    <!-- Weekly Trend -->
-    <div v-if="weeklyTrend" class="trend-card card mb-md">
-      <h3 class="mb-sm">Trend Settimanale (7 giorni)</h3>
-      <div class="trend-row">
-        <div class="trend-item">
-          <span class="trend-label">Sistolica</span>
-          <span class="trend-value" :class="{ 'trend-up': weeklyTrend.systolicRate > 2, 'trend-down': weeklyTrend.systolicRate < -2 }">
-            {{ weeklyTrend.systolicRate > 0 ? '+' : '' }}{{ weeklyTrend.systolicRate }}
-          </span>
-          <span class="trend-unit">mmHg/giorno</span>
-        </div>
-        <div class="trend-item">
-          <span class="trend-label">Diastolica</span>
-          <span class="trend-value" :class="{ 'trend-up': weeklyTrend.diastolicRate > 1.5, 'trend-down': weeklyTrend.diastolicRate < -1.5 }">
-            {{ weeklyTrend.diastolicRate > 0 ? '+' : '' }}{{ weeklyTrend.diastolicRate }}
-          </span>
-          <span class="trend-unit">mmHg/giorno</span>
-        </div>
-      </div>
-      <div v-if="weeklyTrend.alarmCount > 0" class="trend-alert mt-sm">
-        ⚠️ {{ weeklyTrend.alarmCount }} {{ weeklyTrend.alarmCount === 1 ? 'picco pressorio' : 'picchi pressori' }} nella settimana
-      </div>
-      <p v-else class="trend-stable mt-sm">✅ Andamento stabile</p>
+    <!-- Trend -->
+    <div v-if="trendMessage" class="trend-line mb-md" :class="`trend-line--${trendMessage.tone}`">
+      <span>{{ trendMessage.text }}</span>
+      <span v-if="weeklyTrend" class="trend-line__detail">
+        SYS {{ weeklyTrend.systolicRate > 0 ? '+' : '' }}{{ weeklyTrend.systolicRate }} · DIA {{ weeklyTrend.diastolicRate > 0 ? '+' : '' }}{{ weeklyTrend.diastolicRate }} mmHg/giorno
+      </span>
     </div>
 
     <!-- Recent Readings -->
@@ -171,7 +187,7 @@ function editReading(reading) {
         <h3>Recenti</h3>
         <router-link to="/list" class="btn btn-sm btn-outline">Vedi tutte</router-link>
       </div>
-      <div class="recent-list flex flex-col gap-sm">
+      <div class="flex flex-col gap-sm">
         <ReadingCard
           v-for="reading in recentReadings"
           :key="reading.id"
@@ -194,123 +210,132 @@ function editReading(reading) {
       <div class="empty-state__illustration">
         <AppIcon name="heart" :size="48" color="var(--color-accent-muted)" />
       </div>
-      <h3>Nessuna misurazione</h3>
-      <p>Inizia a monitorare la tua pressione aggiungendo la prima misurazione.</p>
+      <h3>Inizia a prenderti cura di te</h3>
+      <p class="text-secondary">Registra la tua prima misurazione per iniziare a monitorare la pressione.</p>
       <div class="empty-state__steps">
-        <div class="empty-step"><span class="empty-step__num">1</span><span>Tocca il pulsante qui sotto</span></div>
-        <div class="empty-step"><span class="empty-step__num">2</span><span>Inserisci i valori misurati</span></div>
-        <div class="empty-step"><span class="empty-step__num">3</span><span>Salva e monitora l'andamento</span></div>
+        <div class="empty-step"><span class="empty-step__num">1</span><span>Misura la pressione con lo sfigmomanometro</span></div>
+        <div class="empty-step"><span class="empty-step__num">2</span><span>Tocca "Registra una misurazione"</span></div>
+        <div class="empty-step"><span class="empty-step__num">3</span><span>Inserisci i valori e salva</span></div>
       </div>
-      <button class="btn btn-primary mt-md" @click="goToAdd">Aggiungi Misurazione</button>
+      <button class="btn btn-primary mt-md" @click="goToAdd">Registra la prima misurazione</button>
     </div>
   </div>
 </template>
 
 <style scoped>
-.text-secondary {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
+/* ── Greeting ── */
+.greeting { padding-top: var(--space-sm); }
+.greeting h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 2px; }
+.greeting__sub { font-size: 0.8125rem; color: var(--color-text-tertiary); }
 
-/* Sync banner */
+/* ── Sync banner ── */
 .sync-banner { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); background: var(--color-accent-muted); color: var(--color-accent); font-size: 0.8125rem; }
 .sync-banner--error { background: var(--color-error-muted); color: var(--color-error); justify-content: space-between; }
 
-/* Empty state steps */
-.empty-state__illustration { margin-bottom: var(--space-sm); opacity: 0.6; }
-.empty-state__steps { display: flex; flex-direction: column; gap: var(--space-sm); margin-top: var(--space-md); text-align: left; width: 100%; max-width: 260px; }
-.empty-step { display: flex; align-items: center; gap: var(--space-sm); font-size: 0.8125rem; color: var(--color-text-secondary); }
-.empty-step__num { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--color-accent-muted); color: var(--color-accent); font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
+/* ── Wellness Card ── */
+.wellness-card { padding: var(--space-lg); }
+.wellness-card--positive { border-left: 4px solid var(--color-accent); }
+.wellness-card--caution { border-left: 4px solid #F9A825; }
+.wellness-card--warning { border-left: 4px solid #EF6C00; }
+.wellness-card--serious,
+.wellness-card--crisis { border-left: 4px solid var(--color-error); }
+.wellness-card--info { border-left: 4px solid var(--color-border-strong); }
 
-.latest-card {
-  border-left: 4px solid var(--color-accent);
-}
-
-.latest-card__header {
+.wellness-card__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--space-sm);
+}
+.wellness-card__icon { font-size: 1.5rem; }
+.wellness-card__message {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.5;
   margin-bottom: var(--space-md);
 }
-
-.latest-card__header h2 {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
+.wellness-card--crisis .wellness-card__message {
+  color: var(--color-error);
 }
 
-.latest-card__values {
+.wellness-card__values {
   display: flex;
   align-items: flex-end;
   gap: var(--space-md);
-  margin-bottom: var(--space-sm);
 }
-
-.latest-value {
+.wellness-value {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
-.latest-value__number {
+.wellness-value__num {
   font-size: 2rem;
   font-weight: 700;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
-
-.latest-value__label {
-  font-size: 0.6875rem;
-  color: var(--color-text-secondary);
+.wellness-value__lbl {
+  font-size: 0.625rem;
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
-
-.latest-value__sep {
+.wellness-value__sep {
   font-size: 2rem;
   color: var(--color-text-tertiary);
   padding-bottom: 1.25rem;
 }
+.wellness-value--bpm .wellness-value__num { font-size: 1.5rem; }
 
-.latest-card__info {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* ── Insights Row ── */
+.insights-row {
+  display: flex;
   gap: var(--space-sm);
 }
-
-.stat-card {
+.insight-chip {
+  flex: 1;
+  background: var(--color-surface-overlay);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  text-align: center;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  gap: 1px;
 }
-
-.stat-card__label {
-  font-size: 0.6875rem;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-}
-
-.stat-card__value {
-  font-size: 1.5rem;
+.insight-chip__val {
+  font-size: 1.125rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.insight-chip__lbl {
+  font-size: 0.625rem;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.stat-card__unit {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
+/* ── Trend Line ── */
+.trend-line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
+.trend-line--improving { background: var(--color-accent-muted); color: var(--color-accent); }
+.trend-line--stable { background: var(--color-surface-overlay); color: var(--color-text-secondary); }
+.trend-line--watching { background: #FFF3E0; color: #E65100; }
+.trend-line__detail { font-size: 0.75rem; font-weight: 400; opacity: 0.75; }
 
-.trend-card { border-left: 4px solid var(--color-accent); }
-.trend-row { display: flex; gap: var(--space-xl); }
-.trend-item { display: flex; flex-direction: column; }
-.trend-label { font-size: 0.6875rem; color: var(--color-text-secondary); text-transform: uppercase; }
-.trend-value { font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); }
-.trend-value.trend-up { color: #BA1A1A; }
-.trend-value.trend-down { color: #006C4C; }
-.trend-unit { font-size: 0.625rem; color: var(--color-text-tertiary); }
-.trend-alert { font-size: 0.8125rem; color: var(--color-error); font-weight: 500; }
-.trend-stable { font-size: 0.8125rem; color: var(--color-accent); }
+/* ── Empty State ── */
+.empty-state { text-align: center; padding: var(--space-2xl) var(--space-md); }
+.empty-state__illustration { margin-bottom: var(--space-md); opacity: 0.6; }
+.empty-state h3 { margin-bottom: var(--space-xs); }
+.text-secondary { color: var(--color-text-secondary); font-size: 0.875rem; }
+.empty-state__steps { display: flex; flex-direction: column; gap: var(--space-sm); margin: var(--space-lg) auto 0; text-align: left; max-width: 280px; }
+.empty-step { display: flex; align-items: center; gap: var(--space-sm); font-size: 0.8125rem; color: var(--color-text-secondary); }
+.empty-step__num { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--color-accent-muted); color: var(--color-accent); font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
 </style>
