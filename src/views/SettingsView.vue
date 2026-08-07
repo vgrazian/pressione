@@ -3,7 +3,6 @@ import { ref, onMounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, importCSV, generateTestData, refreshFromServer, backupData, restoreData } from '@/services/dataService.js'
-import { isAdmin } from '@/services/rbac.js'
 import { useI18n } from '@/services/i18n.js'
 import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, getStorageInfo, formatBytes } from '@/services/keepAlive.js'
 import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/services/pwaInstall.js'
@@ -618,13 +617,6 @@ async function handleInstall() {
       <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
     </div>
 
-    <!-- Admin -->
-    <div v-if="isAdmin(user)" class="card mb-md">
-      <h3 class="mb-sm">{{ t('admin') }}</h3>
-      <router-link to="/operators" class="btn btn-ghost btn-sm">{{ t('user_management') }}</router-link>
-    </div>
-
-    <!-- Advanced Tools (collapsed by default) -->
     <CollapsibleSection title="🛠️ Strumenti avanzati" class="mb-md">
       <!-- Data Management -->
       <div class="mb-md">
