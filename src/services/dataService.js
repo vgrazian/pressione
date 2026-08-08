@@ -327,23 +327,33 @@ export async function refreshFromServer(username) {
 
             console.log('[refreshFromServer] Supabase returned', readings ? readings.length : 0, 'readings for', username)
 
-            // Clear existing IndexedDB data for this user to properly reflect deletions
-            // (bulkPut only upserts, it never removes records missing from Supabase)
-            await db.readings.where('username').equals(username).delete()
-
-            if (readings && readings.length > 0) {
-                const mapped = readings.map(r => ({
+            const mapped = readings && readings.length > 0
+                ? readings.map(r => ({
                     id: r.id, username: r.username, timestamp: r.timestamp,
                     systolic: r.systolic, diastolic: r.diastolic,
                     heartRate: r.heart_rate, notes: r.notes || '',
                     category: classifyReading(r.systolic, r.diastolic),
                     updatedAt: r.updated_at
                 }))
+                : []
+
+            // Safety: if Supabase returns 0 but we have local data, don't wipe (Supabase may be unreachable)
+            if (mapped.length === 0) {
+                const localCount = await db.readings.where('username').equals(username).count()
+                if (localCount > 0) {
+                    console.log('[refreshFromServer] Supabase returned 0 but local has', localCount, '— keeping local data')
+                    return
+                }
+            }
+
+            // Clear existing IndexedDB data for this user to properly reflect deletions
+            await db.readings.where('username').equals(username).delete()
+
+            if (mapped.length > 0) {
                 await db.readings.bulkPut(mapped)
                 saveReadingsToLocalStorage(username, mapped)
                 console.log('[refreshFromServer] Synced', mapped.length, 'readings to IndexedDB + localStorage')
             } else {
-                // Also clear localStorage when no readings remain
                 try { localStorage.removeItem(lsReadingsKey(username)) } catch { }
                 console.log('[refreshFromServer] No readings on server, cleared local cache')
             }
@@ -661,12 +671,12 @@ export async function generateTestData(username, count = 30) {
         })
     }
 
-    // Batch sync to Supabase
+    // Batch sync to Supabase (note: category is computed client-side, not a DB column)
     if (isSupabaseConfigured) {
-        try {
-            await supabase.from('readings').upsert(readings)
-        } catch (e) {
-            console.warn('Test data sync to Supabase failed, saved locally:', e)
+        const { error } = await supabase.from('readings').upsert(readings)
+        if (error) {
+            console.error('Test data sync to Supabase failed:', error.message)
+            throw new Error('Errore nel salvataggio su Supabase: ' + error.message)
         }
     }
 
