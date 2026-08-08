@@ -202,7 +202,7 @@ function addClinicalSummary(doc, y, stats, readings, opts) {
     const cardW = (doc.internal.pageSize.getWidth() - S.m * 2 - S.in * 2) / 3
     const cardY = y + 10
     const cards = [
-        { label: 'Pressione media', value: `${avgSys}/${avgDia}`, unit: 'mmHg', alert: classification !== 'Normale' },
+        { label: 'IperTeso media', value: `${avgSys}/${avgDia}`, unit: 'mmHg', alert: classification !== 'Normale' },
         { label: 'Frequenza cardiaca', value: String(stats.avgHeartRate), unit: 'BPM', alert: stats.avgHeartRate > 100 || stats.avgHeartRate < 50 },
         { label: 'Letture totali', value: String(stats.readingsCount), unit: 'misurazioni', alert: false }
     ]
@@ -497,7 +497,7 @@ function addFooter(doc, pageNum, totalPages) {
     doc.setFontSize(6)
     doc.setTextColor(180, 180, 180)
     const pw = doc.internal.pageSize.getWidth()
-    doc.text(`Report Pressione App — Non costituisce diagnosi medica. Consultare sempre un medico.`, S.m, 290)
+    doc.text(`Report IperTeso App — Non costituisce diagnosi medica. Consultare sempre un medico.`, S.m, 290)
     doc.text(`Pagina ${pageNum} di ${totalPages}`, pw - S.m, 290, { align: 'right' })
 }
 

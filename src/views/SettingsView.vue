@@ -431,10 +431,10 @@ async function handleShareDiagnostics() {
     } catch { info.localStorageReadings = 'error' }
 
     const text = Object.entries(info).map(([k, v]) => `${k}: ${v}`).join('\n')
-    const fullText = `Pressione Diagnostics\n${new Date().toISOString()}\n\n${text}`
+    const fullText = `IperTeso Diagnostics\n${new Date().toISOString()}\n\n${text}`
 
     if (navigator.share) {
-      await navigator.share({ title: 'Pressione Diagnostica', text: fullText })
+      await navigator.share({ title: 'IperTeso Diagnostica', text: fullText })
     } else {
       await navigator.clipboard.writeText(fullText)
       diagMessage.value = 'Diagnostica copiata negli appunti!'
@@ -695,8 +695,27 @@ async function handleInstall() {
       </div>
     </CollapsibleSection>
 
+    <!-- About -->
+    <CollapsibleSection title="ℹ️ Informazioni su IperTeso" class="mb-md">
+      <p style="font-size:0.875rem;line-height:1.6;color:var(--color-text-secondary)">
+        <strong>Ti senti una pentola a pressione pronta a fischiare? Il medico ti ha detto di "stare tranquillo", ma vivi in Italia nel 2026? Benvenuto su IperTeso!</strong>
+      </p>
+      <p style="font-size:0.8125rem;line-height:1.6;color:var(--color-text-secondary);margin-top:var(--space-sm)">
+        <strong>IperTeso</strong> è l'unica app di monitoraggio cardiaco che non ti giudica se hai appena urlato nel traffico o se hai mangiato un etto di bresaola salatissima a pranzo. Noi non ti diamo consigli noiosi sulla meditazione: ti aiutiamo solo a capire se è il caso di sederti un attimo o di cambiare direttamente pianeta.
+      </p>
+      <p style="font-size:0.8125rem;line-height:1.6;color:var(--color-text-secondary);margin-top:var(--space-sm)"><strong>Cosa puoi fare con IperTeso:</strong></p>
+      <ul style="font-size:0.8125rem;line-height:1.6;color:var(--color-text-secondary);padding-left:1.25rem">
+        <li><strong>Registrazione dei picchi di rabbia:</strong> Segna i tuoi valori subito dopo aver letto le email del capo o aver parlato con i parenti.</li>
+        <li><strong>Grafici della disperazione:</strong> Guarda la tua pressione salire e scendere in base ai giorni della settimana (spoiler: il lunedì è tutto rosso).</li>
+        <li><strong>Modalità "Ansia da Camice Bianco":</strong> Un algoritmo speciale che sottrae automaticamente 20 punti alla massima se scopre che ti sei spaventato guardando lo schermo.</li>
+      </ul>
+      <p style="font-size:0.75rem;line-height:1.6;color:var(--color-text-tertiary);margin-top:var(--space-md);font-style:italic">
+        Nota medica (seria ma non troppo): IperTeso non sostituisce un medico vero. Se vedi i numeri della tua pressione superare i chilometri orari consentiti in autostrada, posa lo smartphone e chiama un dottore!
+      </p>
+    </CollapsibleSection>
+
     <p class="text-center" style="color:var(--color-text-secondary);font-size:0.75rem;padding:var(--space-lg)">
-      Pressione v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}
+      IperTeso v{{ APP_VERSION }} — build {{ BUILD_NUMBER }} — {{ new Date(BUILD_TIME).toLocaleString('it-IT') }}
     </p>
     <p class="text-center" style="color:var(--color-text-secondary);font-size:0.8rem;padding-bottom:var(--space-lg)">
       fatto con ❤️ per i miei amici

@@ -81,7 +81,7 @@ async function submitRecovery() {
   <div class="login-page">
     <div class="login-card card">
       <div class="login-header text-center">
-        <img src="/logo.png" alt="Pressione" class="login-logo" />
+        <img src="/logo.png" alt="IperTeso" class="login-logo" />
         <h1>Reset Password</h1>
         <p>Imposta una nuova password per il tuo account</p>
       </div>

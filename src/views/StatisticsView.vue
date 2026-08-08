@@ -343,7 +343,7 @@ function goToAdd() { router.push('/add') }
 
       <!-- Main BP Line Chart -->
       <div class="card mb-md">
-        <h3 class="mb-sm">Andamento Pressione</h3>
+        <h3 class="mb-sm">Andamento IperTeso</h3>
         <div class="chart-wrap"><canvas ref="bpChartEl"></canvas></div>
       </div>
 

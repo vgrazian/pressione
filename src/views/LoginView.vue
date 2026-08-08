@@ -105,9 +105,9 @@ async function handleForgotPassword() {
   <div class="login-page">
     <div class="login-card card">
       <div class="login-header text-center">
-        <img src="/logo.png" alt="Pressione" class="login-logo" />
-        <h1>Pressione</h1>
-        <p>Monitoraggio pressione arteriosa</p>
+        <img src="/logo.png" alt="IperTeso" class="login-logo" />
+        <h1>IperTeso</h1>
+        <p class="login-subtitle">Quando la massima è alta, ma la pazienza è minima.</p>
       </div>
 
       <template v-if="!showRecovery">
@@ -211,6 +211,13 @@ async function handleForgotPassword() {
   height: 64px;
   margin: 0 auto var(--space-sm);
   border-radius: 12px;
+}
+.login-subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+  margin-top: 2px;
+  margin-bottom: var(--space-lg);
 }
 
 .login-header h1 {

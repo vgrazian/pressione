@@ -100,7 +100,7 @@ async function handleLogout() {
       <!-- Top Bar -->
       <header v-if="isAuthenticated" class="topbar">
         <span class="topbar-brand">
-          <img src="/logo.png" alt="Pressione" class="topbar-logo" />
+          <img src="/logo.png" alt="IperTeso" class="topbar-logo" />
         </span>
         <div class="topbar-actions">
           <button class="topbar-btn" @click="toggleTheme" :title="'Tema: ' + theme">

@@ -51,8 +51,8 @@ const wellnessMessage = computed(() => {
     optimal: { text: 'La tua pressione è ottimale', icon: '✅', tone: 'positive' },
     normal: { text: 'La tua pressione è nella norma', icon: '👍', tone: 'positive' },
     elevated: { text: 'La pressione è leggermente elevata', icon: '💡', tone: 'caution' },
-    hypertension_stage1: { text: 'Pressione alta — monitora con attenzione', icon: '⚠️', tone: 'warning' },
-    hypertension_stage2: { text: 'Pressione molto alta — consulta il medico', icon: '🔴', tone: 'serious' },
+    hypertension_stage1: { text: 'IperTeso alta — monitora con attenzione', icon: '⚠️', tone: 'warning' },
+    hypertension_stage2: { text: 'IperTeso molto alta — consulta il medico', icon: '🔴', tone: 'serious' },
     hypertensive_crisis: { text: 'Valori critici — se hai sintomi contatta subito un medico. Altrimenti ripeti la misurazione dopo 5 minuti di riposo.', icon: '🆘', tone: 'crisis' },
     hypotension: { text: 'La pressione è più bassa del normale', icon: 'ℹ️', tone: 'info' }
   }
@@ -137,7 +137,7 @@ function editReading(reading) {
     <!-- Welcome / First-time setup -->
     <div v-if="showWelcome && needsSetup" class="welcome-card mb-lg">
       <div class="flex justify-between items-start mb-sm">
-        <h3 style="font-size:1rem;font-weight:600">👋 Benvenuto in Pressione!</h3>
+        <h3 style="font-size:1rem;font-weight:600">👋 Benvenuto in IperTeso!</h3>
         <button class="btn btn-sm btn-ghost" @click="dismissWelcome" title="Non mostrare più">×</button>
       </div>
       <p class="text-secondary mb-sm" style="font-size:0.875rem">

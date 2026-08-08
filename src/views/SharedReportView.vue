@@ -184,7 +184,7 @@ const readingsByTimeOfDay = computed(() => {
     <template v-else-if="report && filteredReadings.length">
       <!-- Header -->
       <div style="background:var(--color-accent);color:var(--color-on-accent);padding:1.5rem;border-radius:12px 12px 0 0">
-        <h1 style="margin:0 0 4px;font-size:1.5rem">📊 Report Pressione Arteriosa</h1>
+        <h1 style="margin:0 0 4px;font-size:1.5rem">📊 Report IperTeso Arteriosa</h1>
         <p style="margin:0;opacity:0.85;font-size:0.875rem">{{ filteredReadings.length }} misurazioni — {{ new Date(filteredReadings[filteredReadings.length-1].timestamp).toLocaleDateString('it-IT') }} – {{ new Date(filteredReadings[0].timestamp).toLocaleDateString('it-IT') }}</p>
       </div>
 
@@ -224,7 +224,7 @@ const readingsByTimeOfDay = computed(() => {
 
       <!-- BP Chart -->
       <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1.5rem;margin-bottom:1rem">
-        <h3 style="margin:0 0 1rem;font-size:1rem;color:var(--color-text-primary)">Andamento Pressione</h3>
+        <h3 style="margin:0 0 1rem;font-size:1rem;color:var(--color-text-primary)">Andamento IperTeso</h3>
         <div style="position:relative;height:300px"><canvas ref="bpChartEl"></canvas></div>
         <p style="font-size:0.6875rem;color:var(--color-text-tertiary);margin-top:8px">Zona verde tratteggiata: range target ESC/ESH (&lt;140/90 mmHg). Passa il mouse sui punti per i dettagli.</p>
       </div>
@@ -276,7 +276,7 @@ const readingsByTimeOfDay = computed(() => {
         </div>
       </div>
 
-      <p style="color:var(--color-text-tertiary);font-size:0.75rem;margin:2rem 0;text-align:center">Report generato da Pressione App — Autodistruzione 48 ore<br>Riferimenti: linee guida ESC/ESH 2024</p>
+      <p style="color:var(--color-text-tertiary);font-size:0.75rem;margin:2rem 0;text-align:center">Report generato da IperTeso App — Autodistruzione 48 ore<br>Riferimenti: linee guida ESC/ESH 2024</p>
     </template>
 
     <template v-else-if="report">

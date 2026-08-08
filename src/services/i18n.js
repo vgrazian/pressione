@@ -5,7 +5,7 @@ const STORAGE_KEY = 'pressione_lang'
 
 const messages = {
     it: {
-        app_name: 'Pressione',
+        app_name: 'IperTeso',
         app_subtitle: 'Monitoraggio pressione arteriosa',
         login: 'Accedi',
         login_loading: 'Accesso in corso...',
@@ -52,7 +52,7 @@ const messages = {
         avg_bpm: 'Media BPM',
         total_readings: 'Totale Misurazioni',
         min_max_systolic: 'Min-Max Sistolica',
-        bp_trend: 'Andamento Pressione',
+        bp_trend: 'Andamento IperTeso',
         category_distribution: 'Distribuzione Categorie',
         time_distribution: 'Distribuzione Oraria',
         morning: 'Mattina',
@@ -110,7 +110,7 @@ const messages = {
         validation_diastolic: 'Diastolica non valida (1-200 mmHg)',
         validation_hr: 'Frequenza cardiaca non valida (1-300 BPM)',
         validation_dia_lt_sys: 'La diastolica deve essere inferiore alla sistolica',
-        version: 'Pressione',
+        version: 'IperTeso',
         day_mon: 'L',
         day_tue: 'M',
         day_wed: 'M',
@@ -120,7 +120,7 @@ const messages = {
         day_sun: 'D'
     },
     en: {
-        app_name: 'Pressione',
+        app_name: 'IperTeso',
         app_subtitle: 'Blood Pressure Monitor',
         login: 'Login',
         login_loading: 'Logging in...',
@@ -225,7 +225,7 @@ const messages = {
         validation_diastolic: 'Invalid diastolic (1-200 mmHg)',
         validation_hr: 'Invalid heart rate (1-300 BPM)',
         validation_dia_lt_sys: 'Diastolic must be lower than systolic',
-        version: 'Pressione',
+        version: 'IperTeso',
         day_mon: 'M',
         day_tue: 'T',
         day_wed: 'W',
