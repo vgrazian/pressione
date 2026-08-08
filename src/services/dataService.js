@@ -594,14 +594,59 @@ export async function generateTestData(username, count = 30) {
         if (!error) return count
     } catch { /* fall back to client-side */ }
 
-    // Client-side fallback: generate readings locally
+    // Client-side fallback: generate readings with realistic BP + time distribution
     const now = new Date().toISOString()
     const readings = []
+
+    // BP distribution weights (sum ≈ 100%)
+    const bpProfiles = [
+        // { weight, systolic range, diastolic range, desc }
+        { w: 40, sMin: 90, sMax: 119, dMin: 60, dMax: 79 },   // NORMAL
+        { w: 20, sMin: 120, sMax: 129, dMin: 65, dMax: 84 },  // ELEVATED
+        { w: 15, sMin: 130, sMax: 139, dMin: 80, dMax: 89 },  // STAGE 1
+        { w: 10, sMin: 140, sMax: 179, dMin: 90, dMax: 109 }, // STAGE 2
+        { w: 3, sMin: 180, sMax: 220, dMin: 110, dMax: 130 },// CRISIS
+        { w: 7, sMin: 70, sMax: 99, dMin: 40, dMax: 64 },  // HYPOTENSION
+        { w: 5, sMin: 80, sMax: 200, dMin: 40, dMax: 130 }, // UNCLASSIFIED (mixed)
+    ]
+    // Build cumulative weights for weighted random
+    const totalW = bpProfiles.reduce((s, p) => s + p.w, 0)
+    const cumulative = []
+    let sum = 0
+    for (const p of bpProfiles) { sum += p.w; cumulative.push(sum / totalW) }
+
+    function pickBPProfile() {
+        const r = Math.random()
+        for (let i = 0; i < cumulative.length; i++) {
+            if (r <= cumulative[i]) return bpProfiles[i]
+        }
+        return bpProfiles[0]
+    }
+
+    // Time-of-day distribution: morning(6-11) 30%, afternoon(12-17) 35%, evening(18-22) 25%, night(23-5) 10%
+    function randomHour() {
+        const r = Math.random()
+        if (r < 0.30) return 6 + Math.floor(Math.random() * 6)   // 6-11
+        if (r < 0.65) return 12 + Math.floor(Math.random() * 6)  // 12-17
+        if (r < 0.90) return 18 + Math.floor(Math.random() * 5)  // 18-22
+        return Math.random() < 0.5 ? 23 : Math.floor(Math.random() * 6) // 23,0,1,2,3,4,5
+    }
+
     for (let i = 0; i < count; i++) {
-        const systolic = 110 + Math.floor(Math.random() * 50)
-        const diastolic = 65 + Math.floor(Math.random() * 30)
+        const profile = pickBPProfile()
+        const systolic = profile.sMin + Math.floor(Math.random() * (profile.sMax - profile.sMin + 1))
+        const diastolic = profile.dMin + Math.floor(Math.random() * (profile.dMax - profile.dMin + 1))
         const heartRate = 60 + Math.floor(Math.random() * 30)
-        const ts = new Date(Date.now() - Math.random() * 30 * 86400000).toISOString()
+
+        // Random day in last 30, random time of day
+        const dayOffset = Math.floor(Math.random() * 30)
+        const hour = randomHour()
+        const minute = Math.floor(Math.random() * 60)
+        const d = new Date()
+        d.setDate(d.getDate() - dayOffset)
+        d.setHours(hour, minute, Math.floor(Math.random() * 60), 0)
+        const ts = d.toISOString()
+
         const category = classifyReading(systolic, diastolic)
         const id = generateId()
 
