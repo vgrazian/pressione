@@ -18,18 +18,30 @@ const PHRASES = {
         "Un po' altina. È il momento ideale per sedersi e delegare i problemi altrui."
     ],
     HYPERTENSION_STAGE_1: [
+        "Ok, il motore è caldo. Forse è il caso di scalare una marcia e rallentare.",
+        "La tua pressione sta cercando di scalare l'Everest. Rimandala a valle.",
+        "Valori vivaci. Respira, conta fino a dieci e ricordati che non sei un supereroe.",
+        "Zona arancione! Metti giù quel sale e allontani la persona che ti sta stressando.",
         "Pressione in modalità 'pentola a pressione'. Comincia a far uscire un po' di vapore.",
         "Sei leggermente su di giri. Hai per caso incrociato lo sguardo del tuo capo?",
         "I numeri salgono. È il momento di attivare la modalità aereo nella tua testa.",
         "Valori frizzanti. Meno caffeina, meno drammi e più respiri profondi, grazie."
     ],
     HYPERTENSION_STAGE_2: [
+        "Calma! Il tuo cuore sta correndo la Formula 1 ma tu sei ancora sul divano.",
+        "Decisamente alta. Fai finta di essere un bradipo per i prossimi venti minuti.",
+        "Valori bollenti. È il segnale ufficiale per smettere di fare qualsiasi cosa.",
+        "Il display è rosso. Diventa imperativo rilassarsi prima di trasformarsi in Hulk.",
         "Il tuo cuore sta battendo i record di velocità di Hamilton. Peccato che tu sia seduto.",
         "Sei a un passo dal trasformarti in un vulcano in eruzione. Trova un posto fresco e rilassati.",
         "La pressione è così alta che potresti gonfiare i pneumatici dell'auto. Fermati un attimo!",
         "Valori decisamente 'strong'. Metti giù il telecomando, chiudi gli occhi e fai finta di essere un sasso."
     ],
     HYPERTENSIVE_CRISIS: [
+        "Se fossi una pentola a pressione, faresti fischiare anche i vicini. Ti prego, rilassati subito!",
+        "Valori da record, ma di quelli che non vogliamo premiare. Mettiti comodo e avvisa un medico.",
+        "Il tuo cuore sta facendo un concerto heavy metal. È il momento di chiamare i soccorsi per sicurezza.",
+        "Allarme rosso scuro. Non è uno scherzo: siediti, respira e contatta subito il dottore.",
         "I sensori stanno ballando il samba. Non ignorare questo numero: chiama subito il medico.",
         "Ok, spegni tutto. Il tuo sistema è in surriscaldamento globale. Contatta il dottore adesso.",
         "Valori da codice rosso fisso. Niente panico, ma siediti, respira e fatti dare un'occhiata da un professionista.",
