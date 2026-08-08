@@ -659,7 +659,6 @@ export async function generateTestData(username, count = 30) {
             heart_rate: heartRate,
             timestamp: ts,
             notes: 'Dato test auto-generato',
-            category,
             created_at: ts,
             updated_at: now
         })
