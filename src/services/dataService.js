@@ -629,14 +629,14 @@ export async function generateTestData(username, count = 30) {
         const diastolic = profile.dMin + Math.floor(Math.random() * (profile.dMax - profile.dMin + 1))
         const heartRate = 60 + Math.floor(Math.random() * 30)
 
-        // Random day in last 30, random time of day
+        // Random day in last 30, random time of day (pure ms arithmetic, immune to DST)
         const dayOffset = Math.floor(Math.random() * 30)
         const hour = randomHour()
         const minute = Math.floor(Math.random() * 60)
-        const d = new Date()
-        d.setDate(d.getDate() - dayOffset)
-        d.setHours(hour, minute, Math.floor(Math.random() * 60), 0)
-        const ts = d.toISOString()
+        const second = Math.floor(Math.random() * 60)
+        const nowMs = Date.now()
+        const startOfToday = nowMs - (nowMs % 86400000)
+        const ts = new Date(startOfToday - dayOffset * 86400000 + hour * 3600000 + minute * 60000 + second * 1000).toISOString()
 
         const category = classifyReading(systolic, diastolic)
         const id = generateId()
