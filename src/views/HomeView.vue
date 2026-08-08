@@ -24,6 +24,17 @@ const displayName = computed(() => {
   return user.value?.firstName?.trim() || user.value?.username || ''
 })
 
+const showWelcome = ref(localStorage.getItem('pressione_welcome_dismissed') !== 'true')
+
+const needsSetup = computed(() => {
+  return !user.value?.email || user.value.email === user.value.username
+})
+
+function dismissWelcome() {
+  showWelcome.value = false
+  localStorage.setItem('pressione_welcome_dismissed', 'true')
+}
+
 const greeting = computed(() => {
   const h = new Date().getHours()
   if (h < 6) return 'Buonanotte'
@@ -121,6 +132,35 @@ function editReading(reading) {
       <p class="greeting__sub" v-if="latestReading">
         Ultima lettura: {{ new Date(latestReading.timestamp).toLocaleString('it-IT', { weekday: 'long', hour: '2-digit', minute: '2-digit' }) }}
       </p>
+    </div>
+
+    <!-- Welcome / First-time setup -->
+    <div v-if="showWelcome && needsSetup" class="welcome-card mb-lg">
+      <div class="flex justify-between items-start mb-sm">
+        <h3 style="font-size:1rem;font-weight:600">👋 Benvenuto in Pressione!</h3>
+        <button class="btn btn-sm btn-ghost" @click="dismissWelcome" title="Non mostrare più">×</button>
+      </div>
+      <p class="text-secondary mb-sm" style="font-size:0.875rem">
+        Per usare l'app al meglio e poter recuperare la password in futuro, completa questi due passaggi:
+      </p>
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <span class="welcome-step__num">1</span>
+          <div>
+            <strong>Imposta la tua email</strong>
+            <p class="text-secondary" style="font-size:0.8125rem">Serve per il recupero password. Ora è vuota o uguale allo username.</p>
+          </div>
+          <router-link to="/settings" class="btn btn-sm btn-primary" style="flex-shrink:0">Vai alle impostazioni</router-link>
+        </div>
+        <div class="welcome-step">
+          <span class="welcome-step__num">2</span>
+          <div>
+            <strong>Cambia la password</strong>
+            <p class="text-secondary" style="font-size:0.8125rem">Scegli una password personale per proteggere i tuoi dati.</p>
+          </div>
+          <router-link to="/settings" class="btn btn-sm btn-outline" style="flex-shrink:0">Cambia password</router-link>
+        </div>
+      </div>
     </div>
 
     <!-- Sync Status -->
@@ -231,6 +271,34 @@ function editReading(reading) {
 .greeting { padding-top: var(--space-sm); }
 .greeting h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 2px; }
 .greeting__sub { font-size: 0.8125rem; color: var(--color-text-tertiary); }
+
+/* ── Welcome card ── */
+.welcome-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+.welcome-steps { display: flex; flex-direction: column; gap: var(--space-md); }
+.welcome-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+.welcome-step__num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
 
 /* ── Sync banner ── */
 .sync-banner { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); background: var(--color-accent-muted); color: var(--color-accent); font-size: 0.8125rem; }
