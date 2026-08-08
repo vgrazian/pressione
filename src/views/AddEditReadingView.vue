@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { upsertReading, getReadingById, getReadings } from '@/services/dataService.js'
 import { classifyReading, getCategoryColor, getCategoryLabel } from '@/services/categories.js'
+import { getRandomPhrase } from '@/services/phrases.js'
 import Breadcrumbs from '@/components/Breadcrumbs.vue'
 import AppIcon from '@/components/AppIcon.vue'
 
@@ -120,6 +121,9 @@ async function handleSave() {
     }
 
     await upsertReading(reading, user.value.username)
+    const category = classifyReading(sys, dia)
+    const phrase = getRandomPhrase(category)
+    if (phrase) sessionStorage.setItem('iperTeso_lastPhrase', phrase)
     router.push('/')
   } catch (e) {
     errorMessage.value = e.message || 'Errore nel salvataggio'

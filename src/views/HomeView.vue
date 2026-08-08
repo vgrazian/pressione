@@ -26,6 +26,9 @@ const displayName = computed(() => {
 
 const showWelcome = ref(localStorage.getItem('pressione_welcome_dismissed') !== 'true')
 
+const lastPhrase = ref(sessionStorage.getItem('iperTeso_lastPhrase') || '')
+if (lastPhrase.value) sessionStorage.removeItem('iperTeso_lastPhrase')
+
 const needsSetup = computed(() => {
   return !user.value?.email || user.value.email === user.value.username
 })
@@ -172,6 +175,11 @@ function editReading(reading) {
       <button class="btn btn-sm btn-ghost" @click="loadData">Riprova</button>
     </div>
 
+    <!-- Irony phrase from last reading -->
+    <div v-if="lastPhrase" class="phrase-card mb-md">
+      <p>💬 {{ lastPhrase }}</p>
+    </div>
+
     <!-- Wellness Status Card -->
     <div v-if="latestReading && wellnessMessage" class="wellness-card card mb-md" :class="`wellness-card--${wellnessMessage.tone}`">
       <div class="wellness-card__header">
@@ -271,6 +279,22 @@ function editReading(reading) {
 .greeting { padding-top: var(--space-sm); }
 .greeting h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 2px; }
 .greeting__sub { font-size: 0.8125rem; color: var(--color-text-tertiary); }
+
+/* ── Phrase card ── */
+.phrase-card {
+  padding: var(--space-md);
+  background: var(--color-accent-muted);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-style: italic;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  animation: phraseIn 0.3s ease-out;
+}
+@keyframes phraseIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Welcome card ── */
 .welcome-card {
