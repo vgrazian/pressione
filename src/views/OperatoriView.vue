@@ -435,11 +435,14 @@ async function handleResetPassword() {
 .email-edit-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .email-edit-input {
-  width: 200px;
+  max-width: 220px;
+  min-width: 140px;
+  flex: 1;
   font-size: 0.8125rem;
   padding: 0.25rem 0.5rem;
   min-height: 28px;

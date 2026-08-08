@@ -53,8 +53,8 @@ const periods = [
 
 const chartTabs = [
   { key: 'bp', label: 'Andamento', icon: 'chart' },
-  { key: 'deriv', label: 'Variazioni', icon: 'trending-up' },
-  { key: 'dist', label: 'Distribuzione', icon: 'pie-chart' }
+  { key: 'deriv', label: 'Variazioni', icon: 'clock' },
+  { key: 'dist', label: 'Distribuzione', icon: 'chart' }
 ]
 
 function fmtDateShort(ts) {
@@ -542,9 +542,11 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
 </template>
 
 <style scoped>
-.chart-tabs { display: flex; gap: 4px; background: var(--color-surface-overlay); border-radius: var(--radius-sm); padding: 3px; }
-.chart-tab { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border: none; background: transparent; border-radius: 6px; font-size: 0.75rem; font-family: var(--font-sans); color: var(--color-text-secondary); cursor: pointer; transition: color 0.15s, background-color 0.15s; white-space: nowrap; }
+.chart-tabs { display: flex; gap: 2px; background: var(--color-surface-overlay); border-radius: var(--radius-md); padding: 4px; }
+.chart-tab { position: relative; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; background: transparent; border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 500; font-family: var(--font-sans); color: var(--color-text-secondary); cursor: pointer; transition: color 0.15s, background-color 0.15s, box-shadow 0.15s; white-space: nowrap; }
+.chart-tab:hover { color: var(--color-text-primary); }
 .chart-tab--active { background: var(--color-surface-raised); color: var(--color-accent); font-weight: 600; box-shadow: var(--shadow-sm); }
+.chart-tab--active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: var(--color-accent); border-radius: 3px 3px 0 0; }
 .chart-wrap { position: relative; height: 260px; width: 100%; }
 @media (max-width: 480px) { .chart-wrap { height: 200px; } }
 
