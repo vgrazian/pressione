@@ -256,7 +256,7 @@ function renderPieChart() {
       labels: Object.keys(cats),
       datasets: [{
         data: Object.values(cats),
-        backgroundColor: ['#006C4C', '#FFC107', '#FF9800', '#E63946'],
+        backgroundColor: ['#3B5D45', '#FFC107', '#FF9800', '#E63946'],
         borderWidth: 0
       }]
     },

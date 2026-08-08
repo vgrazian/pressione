@@ -12,8 +12,8 @@ export const ReadingCategory = Object.freeze({
 const CATEGORY_CONFIG = {
     [ReadingCategory.NORMAL]: {
         label: 'Normale',
-        color: '#006C4C',
-        bgColor: '#D0F5E9',
+        color: '#3B5D45',
+        bgColor: '#DCE8DF',
         severity: 0
     },
     [ReadingCategory.ELEVATED]: {

@@ -56,7 +56,7 @@ describe('getCategoryLabel', () => {
 
 describe('getCategoryColor', () => {
     it('returns hex colors', () => {
-        expect(getCategoryColor(ReadingCategory.NORMAL)).toBe('#006C4C')
+        expect(getCategoryColor(ReadingCategory.NORMAL)).toBe('#3B5D45')
         expect(getCategoryColor(ReadingCategory.HYPERTENSIVE_CRISIS)).toBe('#690005')
     })
 })

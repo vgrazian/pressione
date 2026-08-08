@@ -11,7 +11,7 @@ import annotationPlugin from 'chartjs-plugin-annotation'
 Chart.register(...registerables, annotationPlugin)
 
 function catColor(category) {
-  const map = { 'NORMAL': '#006C4C', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
+  const map = { 'NORMAL': '#3B5D45', 'ELEVATED': '#F9A825', 'HYPERTENSION_STAGE_1': '#EF6C00', 'HYPERTENSION_STAGE_2': '#D32F2F', 'HYPERTENSIVE_CRISIS': '#7B1FA2', 'HYPOTENSION': '#1976D2' }
   return map[category] || '#999'
 }
 // Short date format: dd/mm instead of dd/mm/yyyy to save table space
@@ -145,7 +145,7 @@ function renderBPChart() {
       plugins: {
         legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 } } },
         annotation: { annotations: {
-          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: 'rgba(0,108,76,0.05)', borderColor: 'rgba(0,108,76,0.15)', borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: 'rgba(255,255,255,0.85)', color: '#006C4C' } },
+          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: 'rgba(59,93,69,0.05)', borderColor: 'rgba(59,93,69,0.15)', borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: 'rgba(255,255,255,0.85)', color: '#3B5D45' } },
           sys140: { type: 'line', yMin: 140, yMax: 140, borderColor: 'rgba(186,26,26,0.4)', borderWidth: 1, borderDash: [5, 5] }
         } },
         tooltip: { callbacks: {

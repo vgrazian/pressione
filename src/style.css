@@ -9,9 +9,9 @@
 
 :root {
   /* Accent — Medical Green (single accent, saturation < 80%) */
-  --color-accent: #006C4C;
-  --color-accent-hover: #00573D;
-  --color-accent-muted: #D0F5E9;
+  --color-accent: #3B5D45;
+  --color-accent-hover: #2F4A37;
+  --color-accent-muted: #DCE8DF;
   --color-on-accent: #FFFFFF;
 
   /* Surfaces — warm near-white, not pure #fff */
@@ -73,9 +73,9 @@
 
 /* --- Dark Mode --- */
 [data-theme="dark"] {
-  --color-accent: #4DD9A0;
-  --color-accent-hover: #66E0B2;
-  --color-accent-muted: #003828;
+  --color-accent: #6BBF8A;
+  --color-accent-hover: #7DCF9A;
+  --color-accent-muted: #1A2E22;
   --color-on-accent: #002114;
 
   --color-surface: #111412;
@@ -104,9 +104,9 @@
 [data-theme="dark"] .badge-category { text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-accent: #4DD9A0;
-    --color-accent-hover: #66E0B2;
-    --color-accent-muted: #003828;
+    --color-accent: #6BBF8A;
+    --color-accent-hover: #7DCF9A;
+    --color-accent-muted: #1A2E22;
     --color-on-accent: #002114;
 
     --color-surface: #111412;

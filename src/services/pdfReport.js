@@ -16,7 +16,7 @@ import { getCategoryLabel, classifyReading } from '@/services/categories.js'
 
 // ── Design Tokens ──────────────────────────────────────────────
 const C = {
-    brand: [0, 108, 76],   // #006C4C — primary medical green
+    brand: [59, 93, 69],   // #006C4C — primary medical green
     brandBg: [232, 245, 233],// #E8F5E9 — tint
     text: [51, 51, 51],   // #333
     body: [85, 85, 85],   // #555
@@ -25,7 +25,7 @@ const C = {
     error: [186, 26, 26],  // #BA1A1A — dangerous values
     warning: [239, 108, 0],  // #EF6C00 — caution zone
     critical: [211, 47, 47],  // crisis red
-    ok: [0, 108, 76],   // normal range
+    ok: [59, 93, 69],   // normal range
     surface: [248, 249, 247],
 }
 const S = { m: 14, gap: 8, in: 4, rh: 5.5, hh: 5.5 }
@@ -96,7 +96,7 @@ function makeLineChart(readings) {
 function makeDoughnutChart(stats) {
     const dist = stats.categoryDistribution || {}
     const keys = ['NORMAL', 'ELEVATED', 'HYPERTENSION_STAGE_1', 'HYPERTENSION_STAGE_2', 'HYPERTENSIVE_CRISIS', 'HYPOTENSION']
-    const colors = ['#006C4C', '#F9A825', '#EF6C00', '#D32F2F', '#7B1FA2', '#1976D2']
+    const colors = ['#3B5D45', '#F9A825', '#EF6C00', '#D32F2F', '#7B1FA2', '#1976D2']
     const data = keys.map(k => dist[k] || 0)
     const total = data.reduce((a, b) => a + b, 0)
     return {

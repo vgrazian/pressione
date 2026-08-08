@@ -70,9 +70,9 @@ function diastolicColor(accent) {
  * Call this at chart render time to always get current theme values.
  */
 export function getChartColors() {
-    const accent = cssVar('--color-accent') || '#006C4C'
+    const accent = cssVar('--color-accent') || '#3B5D45'
     const error = cssVar('--color-error') || '#BA1A1A'
-    const accentMuted = cssVar('--color-accent-muted') || '#D0F5E9'
+    const accentMuted = cssVar('--color-accent-muted') || '#DCE8DF'
     const errorMuted = cssVar('--color-error-muted') || '#FFECEB'
     const surfaceRaised = cssVar('--color-surface-raised') || '#FFFFFF'
     const textPrimary = cssVar('--color-text-primary') || '#191C1A'
