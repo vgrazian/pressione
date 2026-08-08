@@ -55,6 +55,8 @@ const savedStreetNumber = ref('')
 const savedCity = ref('')
 const savedPostalCode = ref('')
 const importCsvInput = ref(null)
+const importMode = ref('add')
+const pendingImportFile = ref(null)
 
 const profileDirty = computed(() => {
   return profileBirthDate.value !== savedBirthDate.value ||
@@ -244,25 +246,32 @@ async function handleRestore(e) {
 
 function triggerImportCsv() { importCsvInput.value?.click() }
 
-async function handleImportCsv(e) {
-  message.value = ''
+function handleImportCsvFile(e) {
   const file = e.target.files?.[0]
   if (!file) return
-  if (!confirm) {
-    if (!window.confirm('I dati verranno aggiunti a quelli esistenti. Continuare?')) { e.target.value = ''; return }
-  } else {
-    const ok = await confirm({ title: 'Importa CSV', message: 'I dati verranno aggiunti a quelli esistenti. Continuare?', confirmText: 'Importa' })
-    if (!ok) { e.target.value = ''; return }
-  }
+  pendingImportFile.value = file
+  importMode.value = 'add'
+  message.value = ''
+  e.target.value = ''
+}
+
+async function executeImport() {
+  if (!pendingImportFile.value) return
+  const file = pendingImportFile.value
   try {
-    const result = await importCSV(user.value.username, file)
+    const result = await importCSV(user.value.username, file, importMode.value)
     await refreshFromServer(user.value.username)
     message.value = `Importate ${result.imported} misurazioni`
-    if (result.errors.length > 0) {
-      message.value += ` (${result.errors.length} errori)`
-    }
+    if (result.skipped > 0) message.value += `, ${result.skipped} duplicate saltate`
+    if (result.overwritten > 0) message.value += `, ${result.overwritten} sovrascritte`
+    if (result.errors.length > 0) message.value += ` (${result.errors.length} errori)`
   } catch (err) { message.value = err.message }
-  e.target.value = ''
+  pendingImportFile.value = null
+}
+
+function cancelImport() {
+  pendingImportFile.value = null
+  importMode.value = 'add'
 }
 
 // --- Profile ---
@@ -619,9 +628,37 @@ async function handleInstall() {
           <button class="btn btn-sm btn-secondary" @click="triggerRestore"><AppIcon name="upload" :size="16" /> Ripristina Backup</button>
           <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
           <button class="btn btn-sm btn-secondary" @click="triggerImportCsv"><AppIcon name="upload" :size="16" /> Importa CSV (bp-tracker)</button>
-          <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsv" />
+          <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsvFile" />
           <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData"><AppIcon name="robot" :size="16" /> {{ t('generate_test_data') }}</button>
         </div>
+
+        <!-- Import options (shown after file selection) -->
+        <div v-if="pendingImportFile" class="import-options mt-sm">
+          <p class="mb-sm" style="font-size:0.8125rem;font-weight:500">
+            📄 {{ pendingImportFile.name }} — Come gestire i dati?
+          </p>
+          <div class="flex flex-col gap-sm mb-sm">
+            <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
+              <input type="radio" v-model="importMode" value="add" />
+              <span><strong>Aggiungi tutti</strong> — importa tutte le letture</span>
+            </label>
+            <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
+              <input type="radio" v-model="importMode" value="skip" />
+              <span><strong>Salta duplicati</strong> — non importare letture già presenti</span>
+            </label>
+            <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
+              <input type="radio" v-model="importMode" value="overwrite" />
+              <span><strong>Sovrascrivi duplicati</strong> — aggiorna le letture esistenti</span>
+            </label>
+          </div>
+          <div class="flex gap-sm">
+            <button class="btn btn-sm btn-primary" @click="executeImport">
+              <AppIcon name="upload" :size="14" /> Importa
+            </button>
+            <button class="btn btn-sm btn-ghost" @click="cancelImport">Annulla</button>
+          </div>
+        </div>
+
         <div v-if="message" class="form-success mt-sm">{{ message }}</div>
       </div>
 
@@ -726,4 +763,12 @@ async function handleInstall() {
 }
 
 .form-success { color: var(--color-accent); font-size: 0.875rem; font-weight: 500; }
+
+.import-options {
+  background: var(--color-surface-overlay);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+.import-options input[type="radio"] { accent-color: var(--color-accent); }
 </style>

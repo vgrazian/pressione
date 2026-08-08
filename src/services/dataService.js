@@ -511,7 +511,7 @@ export async function exportCSV(readings) {
 /**
  * Import CSV data (compatible with Pressione and bp-tracker formats)
  */
-export async function importCSV(username, file) {
+export async function importCSV(username, file, mode = 'add') {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = async (e) => {
@@ -521,7 +521,15 @@ export async function importCSV(username, file) {
                 if (lines.length < 2) throw new Error('CSV vuoto')
                 const header = lines[0].toLowerCase()
                 const isPressione = header.includes('sistolica')
-                let imported = 0
+
+                // Pre-load existing readings for dedup (skip/overwrite modes)
+                let existingTimestamps = new Set()
+                if (mode === 'skip' || mode === 'overwrite') {
+                    const existing = await getReadings(username)
+                    existingTimestamps = new Set(existing.map(r => new Date(r.timestamp).getTime()))
+                }
+
+                let imported = 0, skipped = 0, overwritten = 0
                 const errors = []
                 for (let i = 1; i < lines.length; i++) {
                     const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''))
@@ -548,12 +556,22 @@ export async function importCSV(username, file) {
                         if (isNaN(sys) || isNaN(dia) || isNaN(hr)) throw new Error('Valori non validi')
                         if (sys < 1 || sys > 300 || dia < 1 || dia > 200 || hr < 1 || hr > 300)
                             throw new Error(`Fuori range: ${sys}/${dia} ${hr}`)
-                        const timestamp = new Date(`${date}T${time}`).toISOString()
-                        await upsertReading({ systolic: sys, diastolic: dia, heartRate: hr, timestamp, notes }, username)
+                        const timestamp = new Date(`${date}T${time}`).getTime()
+
+                        // Merge logic
+                        if (mode === 'skip' && existingTimestamps.has(timestamp)) {
+                            skipped++
+                            continue
+                        }
+                        if (mode === 'overwrite' && existingTimestamps.has(timestamp)) {
+                            overwritten++
+                        }
+
+                        await upsertReading({ systolic: sys, diastolic: dia, heartRate: hr, timestamp: new Date(timestamp).toISOString(), notes }, username)
                         imported++
                     } catch (err) { errors.push(`Riga ${i}: ${err.message}`) }
                 }
-                resolve({ imported, errors })
+                resolve({ imported, skipped, overwritten, errors })
             } catch (err) { reject(err) }
         }
         reader.onerror = () => reject(new Error('Errore lettura file'))
