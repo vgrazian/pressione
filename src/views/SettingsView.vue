@@ -209,9 +209,8 @@ async function handleExportCSV() {
 async function handleGenerateTestData() {
   message.value = ''
   try {
-    await generateTestData(user.value.username, 30)
-    await refreshFromServer(user.value.username)
-    message.value = t('test_data_generated')
+    const count = await generateTestData(user.value.username, 30)
+    message.value = `Generati ${count} dati di test con distribuzione realistica.`
   } catch (e) { message.value = e.message }
 }
 

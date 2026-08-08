@@ -585,16 +585,7 @@ export async function importCSV(username, file, mode = 'add') {
 export async function generateTestData(username, count = 30) {
     if (!isSupabaseConfigured) throw new Error('Supabase non configurato')
 
-    // Try RPC first
-    try {
-        const { error } = await supabase.rpc('generate_test_data', {
-            p_username: username,
-            p_count: count
-        })
-        if (!error) return count
-    } catch { /* fall back to client-side */ }
-
-    // Client-side fallback: generate readings with realistic BP + time distribution
+    // Always use client-side generation for full control over BP + time distribution
     const now = new Date().toISOString()
     const readings = []
 
