@@ -509,7 +509,7 @@ export async function exportCSV(readings) {
 }
 
 /**
- * Import CSV data (compatible with Pressione and bp-tracker formats)
+ * Import CSV data (compatible with IperTeso and bp-tracker formats)
  */
 export async function importCSV(username, file, mode = 'add') {
     return new Promise((resolve, reject) => {

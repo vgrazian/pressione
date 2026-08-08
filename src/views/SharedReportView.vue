@@ -184,7 +184,7 @@ const readingsByTimeOfDay = computed(() => {
     <template v-else-if="report && filteredReadings.length">
       <!-- Header -->
       <div style="background:var(--color-accent);color:var(--color-on-accent);padding:1.5rem;border-radius:12px 12px 0 0">
-        <h1 style="margin:0 0 4px;font-size:1.5rem">📊 Report IperTeso Arteriosa</h1>
+        <h1 style="margin:0 0 4px;font-size:1.5rem">📊 Report IperTeso</h1>
         <p style="margin:0;opacity:0.85;font-size:0.875rem">{{ filteredReadings.length }} misurazioni — {{ new Date(filteredReadings[filteredReadings.length-1].timestamp).toLocaleDateString('it-IT') }} – {{ new Date(filteredReadings[0].timestamp).toLocaleDateString('it-IT') }}</p>
       </div>
 

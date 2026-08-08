@@ -236,7 +236,7 @@ async function shareViaEmail() {
   try {
     const file = await getPDFFile()
     const s = stats.value
-    const text = `Report IperTeso Arteriosa${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    const text = `Report IperTeso${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: 'Report IperTeso', text })
     } else {
@@ -257,7 +257,7 @@ async function shareViaWhatsApp() {
   try {
     const file = await getPDFFile()
     const s = stats.value
-    const text = `📊 Report IperTeso Arteriosa${titleSuffix.value.replace(/-/g, '')}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    const text = `📊 Report IperTeso${titleSuffix.value.replace(/-/g, '')}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: 'Report IperTeso', text })
     } else {
@@ -277,7 +277,7 @@ async function shareNative() {
   try {
     const file = await getPDFFile()
     const s = stats.value
-    const text = `Report IperTeso Arteriosa${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    const text = `Report IperTeso${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: 'Report IperTeso', text })
     } else if (navigator.share) {
@@ -434,7 +434,7 @@ function copyActiveLink(token) {
     <template v-else>
       <!-- Preview: Summary Cards -->
       <div class="card mb-md">
-        <h2>Report IperTeso Arteriosa{{ titleSuffix }}</h2>
+        <h2>Report IperTeso{{ titleSuffix }}</h2>
         <p class="text-secondary mb-sm" style="font-size:0.8125rem">
           {{ filteredReadings.length }} misurazioni — 
           {{ new Date(filteredReadings[filteredReadings.length-1]?.timestamp).toLocaleDateString('it-IT') }} / 

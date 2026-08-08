@@ -1,5 +1,5 @@
 <!--
-  Pressione — Icon component
+  IperTeso — Icon component
   Minimal inline SVG icons. No dependencies.
   Stroke-width: 1.5, size: 24px default
 -->

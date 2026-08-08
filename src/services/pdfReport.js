@@ -339,7 +339,7 @@ async function addCharts(doc, y, readings, stats) {
     doc.setFontSize(T.sm)
     doc.setTextColor(...C.body)
     const sysRange = `(${stats.minSystolic} – ${stats.maxSystolic})`
-    doc.text(`Andamento pressione arteriosa  —  Media ${stats.avgSystolic}/${stats.avgDiastolic} mmHg  ${sysRange}`, S.m, y)
+    doc.text(`Andamento IperTeso  —  Media ${stats.avgSystolic}/${stats.avgDiastolic} mmHg  ${sysRange}`, S.m, y)
     y += 2.5
 
     const lineImg = await renderChart(makeLineChart(readings), 800, 340)
