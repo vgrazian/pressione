@@ -122,7 +122,7 @@ async function handleSave() {
 
     await upsertReading(reading, user.value.username)
     const category = classifyReading(sys, dia)
-    const phrase = getRandomPhrase(category)
+    const phrase = getRandomPhrase(category, user.value.gender)
     if (phrase) sessionStorage.setItem('iperTeso_lastPhrase', phrase)
     router.push('/')
   } catch (e) {
