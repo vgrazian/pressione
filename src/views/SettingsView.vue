@@ -260,11 +260,14 @@ async function executeImport() {
   try {
     const result = await importCSV(user.value.username, file, importMode.value)
     await refreshFromServer(user.value.username)
-    message.value = `Importate ${result.imported} misurazioni`
-    if (result.skipped > 0) message.value += `, ${result.skipped} duplicate saltate`
-    if (result.overwritten > 0) message.value += `, ${result.overwritten} sovrascritte`
-    if (result.errors.length > 0) message.value += ` (${result.errors.length} errori)`
-  } catch (err) { message.value = err.message }
+    let msg = `Importate ${result.imported} misurazioni`
+    if (result.skipped > 0) msg += `, ${result.skipped} saltate`
+    if (result.overwritten > 0) msg += `, ${result.overwritten} sovrascritte`
+    if (result.errors.length > 0) msg += ` (${result.errors.length} errori)`
+    message.value = msg
+  } catch (err) {
+    message.value = '❌ ' + (err.message || 'Errore durante l\'importazione')
+  }
   pendingImportFile.value = null
 }
 
@@ -657,7 +660,13 @@ async function handleInstall() {
         </div>
       </div>
 
-      <div v-if="message" class="form-success mt-sm">{{ message }}</div>
+      <div v-if="message" class="result-banner mt-sm" :class="{ 'result-banner--error': message.startsWith('Errore') || message.startsWith('❌') }">
+        <span class="result-banner__icon">{{ message.startsWith('Errore') || message.startsWith('❌') ? '❌' : '✅' }}</span>
+        <span class="result-banner__text">{{ message }}</span>
+        <button class="result-banner__dismiss" @click="message = ''" title="Chiudi">
+          <AppIcon name="x" :size="14" />
+        </button>
+      </div>
     </CollapsibleSection>
 
     <CollapsibleSection title="🛠️ Strumenti avanzati" class="mb-md">
@@ -807,5 +816,51 @@ async function handleInstall() {
 }
 .import-options__label strong {
   color: var(--color-text-primary);
+}
+
+.result-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  animation: resultBannerIn 0.3s ease-out;
+}
+.result-banner--error {
+  border-color: var(--color-error);
+  background: var(--color-error-container);
+}
+.result-banner__icon {
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.result-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+.result-banner__dismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  margin-top: -2px;
+  margin-right: -4px;
+}
+.result-banner__dismiss:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-overlay);
+}
+
+@keyframes resultBannerIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
