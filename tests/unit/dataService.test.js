@@ -408,3 +408,156 @@ describe('importCSV', () => {
         expect(storedReadings[0].systolic).toBe(120)
     })
 })
+
+// ── backupData / restoreData tests ──────────────────────────────────
+
+const { backupData, restoreData } = await import('@/services/dataService.js')
+
+describe('backupData', () => {
+    let anchorClickSpy
+
+    beforeEach(() => {
+        anchorClickSpy = vi.fn()
+        const origCreateElement = document.createElement.bind(document)
+        vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+            const el = origCreateElement(tag)
+            if (tag === 'a') el.click = anchorClickSpy
+            return el
+        })
+        vi.clearAllMocks()
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('crea un backup JSON con struttura corretta', async () => {
+        // Mock db.readings.where → toArray
+        const { db } = await import('@/db')
+        db.readings.where = vi.fn().mockReturnValue({
+            equals: vi.fn().mockReturnValue({
+                toArray: vi.fn().mockResolvedValue([
+                    { systolic: 120, diastolic: 80, heartRate: 72, timestamp: '2026-08-01T10:00:00Z', notes: 'test', category: 'NORMAL' }
+                ])
+            })
+        })
+        db.reminders = {
+            where: vi.fn().mockReturnValue({
+                equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) })
+            })
+        }
+        db.settings = {
+            where: vi.fn().mockReturnValue({
+                equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) })
+            })
+        }
+
+        const count = await backupData('testuser')
+
+        expect(count).toBe(1)
+        expect(URL.createObjectURL).toHaveBeenCalled()
+        const blob = URL.createObjectURL.mock.calls.at(-1)[0]
+        expect(blob.type).toBe('application/json')
+
+        const text = await blob.text()
+        const parsed = JSON.parse(text)
+        expect(parsed.version).toBe(1)
+        expect(parsed.username).toBe('testuser')
+        expect(parsed.readings).toHaveLength(1)
+        expect(parsed.readings[0].systolic).toBe(120)
+        expect(parsed.readings[0].notes).toBe('test')
+        expect(parsed.exportedAt).toBeDefined()
+    })
+
+    it('avvia il download con nome file corretto', async () => {
+        const { db } = await import('@/db')
+        db.readings.where = vi.fn().mockReturnValue({
+            equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) })
+        })
+        db.reminders = { where: vi.fn().mockReturnValue({ equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) }) }) }
+        db.settings = { where: vi.fn().mockReturnValue({ equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) }) }) }
+
+        await backupData('testuser')
+
+        expect(anchorClickSpy).toHaveBeenCalled()
+        expect(URL.revokeObjectURL).toHaveBeenCalled()
+    })
+
+    it('restituisce 0 se nessuna lettura', async () => {
+        const { db } = await import('@/db')
+        db.readings.where = vi.fn().mockReturnValue({
+            equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) })
+        })
+        db.reminders = { where: vi.fn().mockReturnValue({ equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) }) }) }
+        db.settings = { where: vi.fn().mockReturnValue({ equals: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) }) }) }
+
+        const count = await backupData('testuser')
+        expect(count).toBe(0)
+    })
+})
+
+describe('restoreData', () => {
+    beforeEach(() => {
+        storedReadings.length = 0
+        mockDbPut.mockReset().mockImplementation(async (reading) => {
+            storedReadings.push({
+                systolic: reading.systolic,
+                diastolic: reading.diastolic,
+                heartRate: reading.heartRate || reading.heart_rate,
+                notes: reading.notes || '',
+                timestamp: reading.timestamp
+            })
+        })
+    })
+
+    function backupFile(readings) {
+        const json = JSON.stringify({
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            username: 'testuser',
+            readings: readings.map(r => ({
+                systolic: r.systolic, diastolic: r.diastolic, heartRate: r.heartRate,
+                timestamp: r.timestamp, notes: r.notes || '', category: r.category || 'NORMAL'
+            })),
+            reminders: [],
+            settings: []
+        }, null, 2)
+        return new File([json], 'backup.json', { type: 'application/json' })
+    }
+
+    it('ripristina letture da un backup JSON valido', async () => {
+        const file = backupFile([
+            { systolic: 120, diastolic: 80, heartRate: 72, timestamp: '2026-08-01T10:00:00Z', notes: 'mattina' },
+            { systolic: 130, diastolic: 85, heartRate: 75, timestamp: '2026-08-02T18:00:00Z', notes: '' }
+        ])
+
+        const count = await restoreData('testuser', file)
+
+        expect(count).toBe(2)
+        expect(storedReadings).toHaveLength(2)
+        expect(storedReadings[0].systolic).toBe(120)
+        expect(storedReadings[0].notes).toBe('mattina')
+        expect(storedReadings[1].systolic).toBe(130)
+    })
+
+    it('rifiuta file JSON malformato', async () => {
+        const file = new File(['not json'], 'bad.json', { type: 'application/json' })
+
+        await expect(restoreData('testuser', file)).rejects.toThrow()
+    })
+
+    it('rifiuta backup senza campo readings', async () => {
+        const json = JSON.stringify({ version: 1, username: 'test' })
+        const file = new File([json], 'backup.json', { type: 'application/json' })
+
+        await expect(restoreData('testuser', file)).rejects.toThrow('Formato backup non valido')
+    })
+
+    it('ripristina 0 letture per backup vuoto', async () => {
+        const file = backupFile([])
+        const count = await restoreData('testuser', file)
+
+        expect(count).toBe(0)
+        expect(storedReadings).toHaveLength(0)
+    })
+})

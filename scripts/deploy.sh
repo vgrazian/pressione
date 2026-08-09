@@ -54,9 +54,9 @@ _gh_api() {
 }
 
 echo ""
-echo -e "${CYAN}╔══════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║   Pressione — Fast Deploy           ║${NC}"
-echo -e "${CYAN}╚══════════════════════════════════════╝${NC}"
+echo -e "${CYAN}╔══════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║        Pressione — Fast Deploy              ║${NC}"
+echo -e "${CYAN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 
 # ── Step 0: GitHub Status pre-flight ─────────────────────────────────
@@ -242,9 +242,9 @@ else
 fi
 echo ""
 
-echo -e "${GREEN}╔══════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   ✅ Deploy completato!             ║${NC}"
-printf "${GREEN}║   v%s (%s)%*s║${NC}\n" "$VERSION" "$BUILD" $(( 20 - ${#VERSION} - ${#BUILD} )) ""
-echo -e "${GREEN}║   ${PAGES_URL} ║${NC}"
-echo -e "${GREEN}╚══════════════════════════════════════╝${NC}"
+echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
+printf "${GREEN}║   %-41s║${NC}\n" "✅ Deploy completato!"
+printf "${GREEN}║   %-41s║${NC}\n" "v${VERSION} (${BUILD})"
+printf "${GREEN}║   %-41s║${NC}\n" "${PAGES_URL}"
+echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
