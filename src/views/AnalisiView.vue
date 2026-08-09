@@ -204,7 +204,7 @@ function renderDerivChart() {
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Variazione: ${ctx.raw} mmHg/ora` } } },
       scales: {
         x: { ticks: { maxTicksLimit: 12, font: { size: 10 } }, grid: { display: false } },
-        y: { min: -Math.max(d.maxRate + 5, 20), max: Math.max(d.maxRate + 5, 20), ticks: { font: { size: 10 } }, title: { display: true, text: 'mmHg/ora', font: { size: 10 } } }
+        y: { min: -Math.max(d.maxRate + 2, 5), max: Math.max(d.maxRate + 2, 5), ticks: { font: { size: 10 } }, title: { display: true, text: 'mmHg/ora', font: { size: 10 } } }
       }
     }
   })
@@ -259,6 +259,64 @@ async function getPDFFile() {
     gender: user.value?.gender || null, anonymize: anonymize.value,
     includeCharts: includeCharts.value, includeHistory: includeHistory.value
   })
+}
+
+async function shareViaEmail() {
+  generatingAction.value = 'email'
+  try {
+    const file = await getPDFFile()
+    const s = stats.value
+    const text = `Report IperTeso${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Report IperTeso', text })
+    } else {
+      const body = `REPORT PRESSIONE ARTERIOSA${titleSuffix.value}\n\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg\nBPM medio: ${s.avgHeartRate}\nMisurazioni: ${s.readingsCount}\n\nGenerato da IperTeso App`
+      window.open(`mailto:?subject=Report IperTeso${titleSuffix.value}&body=${encodeURIComponent(body)}`, '_blank')
+    }
+  } catch (e) {
+    linkMessage.value = 'Condivisione non supportata su questo browser'
+    setTimeout(() => linkMessage.value = '', 3000)
+  } finally { generatingAction.value = null }
+}
+
+async function shareViaWhatsApp() {
+  generatingAction.value = 'whatsapp'
+  try {
+    const file = await getPDFFile()
+    const s = stats.value
+    const text = `📊 Report IperTeso${titleSuffix.value.replace(/-/g, '')}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Report IperTeso', text })
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    }
+  } catch (e) {
+    linkMessage.value = 'Condivisione non supportata su questo browser'
+    setTimeout(() => linkMessage.value = '', 3000)
+  } finally { generatingAction.value = null }
+}
+
+async function shareNative() {
+  generatingAction.value = 'native'
+  try {
+    const file = await getPDFFile()
+    const s = stats.value
+    const text = `Report IperTeso${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Report IperTeso', text })
+    } else if (navigator.share) {
+      await navigator.share({ title: 'Report IperTeso', text })
+    } else {
+      await navigator.clipboard.writeText(text)
+      linkMessage.value = 'Report copiato negli appunti!'
+      setTimeout(() => linkMessage.value = '', 3000)
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      linkMessage.value = 'Condivisione non supportata'
+      setTimeout(() => linkMessage.value = '', 3000)
+    }
+  } finally { generatingAction.value = null }
 }
 
 async function loadActiveLinks() {
@@ -495,6 +553,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
 
       <div class="card mb-md">
         <h3 class="mb-sm">Scarica / Condividi</h3>
+        <p class="text-secondary mb-sm" style="font-size:0.75rem">I dati esportati rispettano il periodo selezionato ({{ dateRange === 'custom' ? 'personalizzato' : 'ultimi ' + dateRange + ' giorni' }})</p>
         <div class="mb-sm">
           <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
             <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF
@@ -503,9 +562,21 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
             <input type="checkbox" v-model="anonymize" /> Anonimizza (nasconde nome, genere, età e anagrafica)
           </label>
         </div>
-        <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
-          <AppIcon name="download" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
-        </button>
+        <div class="flex gap-sm flex-wrap">
+          <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
+            <AppIcon name="download" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
+          </button>
+          <button class="btn btn-secondary" @click="shareViaEmail" :disabled="generatingAction !== null">
+            <AppIcon name="mail" :size="16" /> {{ generatingAction === 'email' ? 'Invio...' : 'Email' }}
+          </button>
+          <button class="btn btn-secondary" @click="shareViaWhatsApp" :disabled="generatingAction !== null">
+            <AppIcon name="message-circle" :size="16" /> {{ generatingAction === 'whatsapp' ? 'Invio...' : 'WhatsApp' }}
+          </button>
+          <button class="btn btn-secondary" @click="shareNative" :disabled="generatingAction !== null">
+            <AppIcon name="share" :size="16" /> {{ generatingAction === 'native' ? 'Invio...' : 'Condividi' }}
+          </button>
+        </div>
+        <div v-if="linkMessage" class="form-success mt-sm">{{ linkMessage }}</div>
       </div>
 
       <div class="card mb-md">

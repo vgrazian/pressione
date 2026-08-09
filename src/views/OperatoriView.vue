@@ -521,6 +521,7 @@ async function handleResetPassword() {
   width: 24px;
   height: 24px;
   border-radius: var(--radius-sm);
+  margin: 0 auto;
 }
 
 .checkbox-label input[type="checkbox"] {

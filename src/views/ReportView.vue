@@ -592,6 +592,7 @@ function copyActiveLink(token) {
       <!-- Share Actions -->
       <div class="card mb-md">
         <h3 class="mb-sm">Condividi</h3>
+        <p class="text-secondary mb-sm" style="font-size:0.75rem">I dati esportati rispettano il periodo selezionato ({{ dateRange === 'custom' ? 'personalizzato' : dateRange === 'all' ? 'tutti i dati' : 'ultimi ' + dateRange + ' giorni' }})</p>
         <div class="mb-sm">
           <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
             <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF
@@ -603,9 +604,21 @@ function copyActiveLink(token) {
             <input type="checkbox" v-model="anonymize" /> Anonimizza report
           </label>
         </div>
-        <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
-          <AppIcon name="download" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
-        </button>
+        <div class="flex gap-sm flex-wrap">
+          <button class="btn btn-primary" @click="generatePDF" :disabled="generatingAction !== null">
+            <AppIcon name="download" :size="16" /> {{ generatingAction === 'pdf' ? 'Generazione...' : 'Scarica PDF' }}
+          </button>
+          <button class="btn btn-secondary" @click="shareViaEmail" :disabled="generatingAction !== null">
+            <AppIcon name="mail" :size="16" /> {{ generatingAction === 'email' ? 'Invio...' : 'Email' }}
+          </button>
+          <button class="btn btn-secondary" @click="shareViaWhatsApp" :disabled="generatingAction !== null">
+            <AppIcon name="message-circle" :size="16" /> {{ generatingAction === 'whatsapp' ? 'Invio...' : 'WhatsApp' }}
+          </button>
+          <button class="btn btn-secondary" @click="shareNative" :disabled="generatingAction !== null">
+            <AppIcon name="share" :size="16" /> {{ generatingAction === 'native' ? 'Invio...' : 'Condividi' }}
+          </button>
+        </div>
+        <div v-if="linkMessage" class="form-success mt-sm">{{ linkMessage }}</div>
       </div>
 
       <!-- Temporary Link -->
