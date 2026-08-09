@@ -58,6 +58,16 @@ const importCsvInput = ref(null)
 const importMode = ref('add')
 const pendingImportFile = ref(null)
 
+// Export period filter
+const exportPeriod = ref('90')
+const exportPeriods = [
+  { value: '30', label: '30 giorni' },
+  { value: '90', label: '3 mesi' },
+  { value: '180', label: '6 mesi' },
+  { value: '365', label: '12 mesi' },
+  { value: 'all', label: 'Tutto' }
+]
+
 const profileDirty = computed(() => {
   return profileBirthDate.value !== savedBirthDate.value ||
     profileGender.value !== savedGender.value ||
@@ -200,8 +210,17 @@ async function handleDeleteAll() {
 async function handleExportCSV() {
   message.value = ''
   await refreshFromServer(user.value.username)
-  const readings = await getReadings(user.value.username)
+  let readings = await getReadings(user.value.username)
   if (readings.length === 0) { message.value = 'Nessun dato da esportare'; return }
+
+  // Filter by selected period
+  if (exportPeriod.value !== 'all') {
+    const days = parseInt(exportPeriod.value)
+    const cutoff = new Date(Date.now() - days * 86400000)
+    readings = readings.filter(r => new Date(r.timestamp) >= cutoff)
+  }
+
+  if (readings.length === 0) { message.value = 'Nessun dato nel periodo selezionato'; return }
   exportCSV(readings)
   message.value = `Esportate ${readings.length} misurazioni`
 }
@@ -624,6 +643,12 @@ async function handleInstall() {
     <!-- Import / Export -->
     <CollapsibleSection title="📥 Importa / Esporta" class="mb-md">
       <div class="flex flex-col gap-sm mt-sm">
+        <div class="flex gap-sm items-center flex-wrap">
+          <span class="text-secondary" style="font-size:0.75rem">Esporta:</span>
+          <button v-for="p in exportPeriods" :key="p.value"
+            class="chip" :class="{ 'chip--active': exportPeriod === p.value }"
+            @click="exportPeriod = p.value">{{ p.label }}</button>
+        </div>
         <button class="btn btn-sm btn-secondary" @click="handleExportCSV"><AppIcon name="download" :size="16" /> {{ t('export_csv') }}</button>
         <button class="btn btn-sm btn-secondary" @click="handleBackup"><AppIcon name="download" :size="16" /> Backup (JSON)</button>
         <button class="btn btn-sm btn-secondary" @click="triggerRestore"><AppIcon name="upload" :size="16" /> Ripristina Backup</button>
