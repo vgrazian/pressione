@@ -16,7 +16,7 @@ const editingEmail = ref(null)
 const newEmail = ref('')
 const successMessage = ref('')
 const showNewUserForm = ref(false)
-const newUser = ref({ username: '', email: '', password: '', role: 'user' })
+const newUser = ref({ username: '', email: '', password: '', isAdmin: false, isActive: true })
 const creatingUser = ref(false)
 
 onMounted(async () => {
@@ -34,7 +34,7 @@ async function loadUsers() {
   }
 }
 
-async function toggleRole(targetUser) {
+async function toggleAdmin(targetUser) {
   if (targetUser.username === user.value.username) {
     errorMessage.value = 'Non puoi cambiare il tuo ruolo'
     return
@@ -48,45 +48,36 @@ async function toggleRole(targetUser) {
   }
 }
 
-async function handleDeactivate(targetUser) {
+async function toggleActive(targetUser) {
   if (targetUser.username === user.value.username) {
     errorMessage.value = 'Non puoi disattivare il tuo account'
     return
   }
+  const activating = targetUser.disabled
   if (!confirm) {
-    if (!window.confirm(`Disattivare l'utente "${targetUser.username}"?`)) return
+    const msg = activating
+      ? `Riattivare l'utente "${targetUser.username}"?`
+      : `Disattivare l'utente "${targetUser.username}"?`
+    if (!window.confirm(msg)) return
   } else {
     const confirmed = await confirm({
-      title: 'Disattiva utente',
-      message: `Disattivare l'utente "${targetUser.username}"?`,
-      confirmText: 'Disattiva',
-      variant: 'danger'
+      title: activating ? 'Riattiva utente' : 'Disattiva utente',
+      message: activating
+        ? `Riattivare l'utente "${targetUser.username}"? Potrà nuovamente accedere.`
+        : `Disattivare l'utente "${targetUser.username}"?`,
+      confirmText: activating ? 'Riattiva' : 'Disattiva',
+      variant: activating ? 'default' : 'danger'
     })
     if (!confirmed) return
   }
   try {
-    await deactivateUser(targetUser.username)
-    targetUser.disabled = true
-  } catch (e) {
-    errorMessage.value = e.message
-  }
-}
-
-async function handleActivate(targetUser) {
-  if (!confirm) {
-    if (!window.confirm(`Riattivare l'utente "${targetUser.username}"?`)) return
-  } else {
-    const confirmed = await confirm({
-      title: 'Riattiva utente',
-      message: `Riattivare l'utente "${targetUser.username}"? Potrà nuovamente accedere.`,
-      confirmText: 'Riattiva',
-      variant: 'default'
-    })
-    if (!confirmed) return
-  }
-  try {
-    await activateUser(targetUser.username)
-    targetUser.disabled = false
+    if (activating) {
+      await activateUser(targetUser.username)
+    } else {
+      await deactivateUser(targetUser.username)
+    }
+    // Reload from server to ensure correct state (prevents stale role on reactivation)
+    await loadUsers()
   } catch (e) {
     errorMessage.value = e.message
   }
@@ -132,10 +123,15 @@ async function handleCreateUser() {
   }
   creatingUser.value = true
   try {
-    await register(newUser.value.username, newUser.value.email, newUser.value.password, newUser.value.role)
+    const role = newUser.value.isAdmin ? 'admin' : 'user'
+    await register(newUser.value.username, newUser.value.email, newUser.value.password, role)
+    // If isActive is false, deactivate the newly created user
+    if (!newUser.value.isActive) {
+      await deactivateUser(newUser.value.username)
+    }
     successMessage.value = `Utente "${newUser.value.username}" creato`
     showNewUserForm.value = false
-    newUser.value = { username: '', email: '', password: '', role: 'user' }
+    newUser.value = { username: '', email: '', password: '', isAdmin: false, isActive: true }
     setTimeout(() => { successMessage.value = '' }, 3000)
     await loadUsers()
   } catch (e) {
@@ -213,28 +209,26 @@ async function handleResetPassword() {
       <div class="new-user-form">
         <div class="form-group">
           <label class="form-label">Username</label>
-          <label class="form-label">Username</label>
           <input v-model="newUser.username" class="form-input" placeholder="nome.cognome" autocomplete="off" />
         </div>
         <div class="form-group">
-          <label class="form-label">Email</label>
           <label class="form-label">Email</label>
           <input v-model="newUser.email" type="email" class="form-input" placeholder="nome@email.com" autocomplete="off" />
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <label class="form-label">Password</label>
           <input v-model="newUser.password" type="password" class="form-input" placeholder="Minimo 8 caratteri" autocomplete="new-password" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Ruolo</label>
-          <select v-model="newUser.role" class="form-input">
-            <option value="user">Utente</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
       </div>
-      <div class="flex gap-sm mt-sm">
+      <div class="flex gap-sm items-center mt-sm">
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="newUser.isAdmin" />
+          <AppIcon name="users" :size="14" /> Admin
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="newUser.isActive" />
+          Attivo
+        </label>
         <button class="btn btn-sm btn-primary" @click="handleCreateUser" :disabled="creatingUser">
           <AppIcon name="plus" :size="16" /> {{ creatingUser ? 'Creazione...' : 'Crea Utente' }}
         </button>
@@ -281,37 +275,23 @@ async function handleResetPassword() {
             </div>
           </div>
           <div class="user-actions">
-            <!-- Active user actions -->
-            <template v-if="!u.disabled">
-              <button
-                class="btn btn-sm btn-ghost"
-                @click="toggleRole(u)"
-              >
-                <AppIcon name="users" :size="14" /> {{ u.role === 'admin' ? 'Rendi Utente' : 'Rendi Admin' }}
-              </button>
-              <button
-                class="btn btn-sm btn-ghost"
-                @click="startResetPassword(u)"
-              >
-                <AppIcon name="refresh" :size="14" /> Reset PW
-              </button>
-              <button
-                class="btn btn-sm btn-secondary"
-                @click="handleDeactivate(u)"
-              >
-                Disattiva
-              </button>
-            </template>
-            <!-- Disabled user actions -->
-            <template v-else>
-              <button
-                class="btn btn-sm btn-primary"
-                @click="handleActivate(u)"
-              >
-                <AppIcon name="refresh" :size="14" /> Attiva
-              </button>
-            </template>
-            <!-- Delete (always available for other users) -->
+            <label class="checkbox-label" :class="{ 'checkbox-label--disabled': u.username === user?.username }" :title="u.username === user?.username ? 'Non puoi cambiare il tuo ruolo' : ''">
+              <input type="checkbox" :checked="u.role === 'admin'" :disabled="u.username === user?.username"
+                @change="toggleAdmin(u)" />
+              <AppIcon name="users" :size="14" /> Admin
+            </label>
+            <label class="checkbox-label" :class="{ 'checkbox-label--disabled': u.username === user?.username }" :title="u.username === user?.username ? 'Non puoi disattivare il tuo account' : ''">
+              <input type="checkbox" :checked="!u.disabled" :disabled="u.username === user?.username"
+                @change="toggleActive(u)" />
+              Attivo
+            </label>
+            <button
+              v-if="!u.disabled"
+              class="btn btn-sm btn-ghost"
+              @click="startResetPassword(u)"
+            >
+              <AppIcon name="refresh" :size="14" /> Reset PW
+            </button>
             <button
               v-if="u.username !== user?.username"
               class="btn btn-sm btn-ghost-error"
@@ -494,5 +474,45 @@ async function handleResetPassword() {
 .chip-inactive {
   background: var(--color-error-container);
   color: var(--color-on-error-container);
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.checkbox-label:hover {
+  background: var(--color-surface-overlay);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  margin: 0;
+}
+
+.checkbox-label--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.checkbox-label--disabled:hover {
+  background: transparent;
+}
+
+.checkbox-label--disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+.items-center {
+  align-items: center;
 }
 </style>

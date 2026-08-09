@@ -618,48 +618,49 @@ async function handleInstall() {
       <div v-if="timeBandsMessage" class="form-success mt-sm">{{ timeBandsMessage }}</div>
     </CollapsibleSection>
 
-    <CollapsibleSection title="🛠️ Strumenti avanzati" class="mb-md">
-      <div class="mb-md">
-        <h4 class="mb-sm">Dati</h4>
-        <div class="flex flex-col gap-sm">
-          <button class="btn btn-sm btn-secondary" @click="handleExportCSV"><AppIcon name="download" :size="16" /> {{ t('export_csv') }}</button>
-          <button class="btn btn-sm btn-secondary" @click="handleBackup"><AppIcon name="download" :size="16" /> Backup (JSON)</button>
-          <button class="btn btn-sm btn-secondary" @click="triggerRestore"><AppIcon name="upload" :size="16" /> Ripristina Backup</button>
-          <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
-          <button class="btn btn-sm btn-secondary" @click="triggerImportCsv"><AppIcon name="upload" :size="16" /> Importa CSV (bp-tracker)</button>
-          <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsvFile" />
-          <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData"><AppIcon name="robot" :size="16" /> {{ t('generate_test_data') }}</button>
-        </div>
-
-        <!-- Import options (shown after file selection) -->
-        <div v-if="pendingImportFile" class="import-options mt-sm">
-          <p class="mb-sm" style="font-size:0.8125rem;font-weight:500">
-            📄 {{ pendingImportFile.name }} — Come gestire i dati?
-          </p>
-          <div class="flex flex-col gap-sm mb-sm">
-            <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
-              <input type="radio" v-model="importMode" value="add" />
-              <span><strong>Aggiungi tutti</strong> — importa tutte le letture</span>
-            </label>
-            <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
-              <input type="radio" v-model="importMode" value="skip" />
-              <span><strong>Salta duplicati</strong> — non importare letture già presenti</span>
-            </label>
-            <label class="flex items-center gap-sm" style="font-size:0.8125rem;cursor:pointer">
-              <input type="radio" v-model="importMode" value="overwrite" />
-              <span><strong>Sovrascrivi duplicati</strong> — aggiorna le letture esistenti</span>
-            </label>
-          </div>
-          <div class="flex gap-sm">
-            <button class="btn btn-sm btn-primary" @click="executeImport">
-              <AppIcon name="upload" :size="14" /> Importa
-            </button>
-            <button class="btn btn-sm btn-ghost" @click="cancelImport">Annulla</button>
-          </div>
-        </div>
-
-        <div v-if="message" class="form-success mt-sm">{{ message }}</div>
+    <!-- Import / Export -->
+    <CollapsibleSection title="📥 Importa / Esporta" class="mb-md">
+      <div class="flex flex-col gap-sm mt-sm">
+        <button class="btn btn-sm btn-secondary" @click="handleExportCSV"><AppIcon name="download" :size="16" /> {{ t('export_csv') }}</button>
+        <button class="btn btn-sm btn-secondary" @click="handleBackup"><AppIcon name="download" :size="16" /> Backup (JSON)</button>
+        <button class="btn btn-sm btn-secondary" @click="triggerRestore"><AppIcon name="upload" :size="16" /> Ripristina Backup</button>
+        <input ref="restoreInput" type="file" accept=".json" style="display:none" @change="handleRestore" />
+        <button class="btn btn-sm btn-secondary" @click="triggerImportCsv"><AppIcon name="upload" :size="16" /> Importa CSV (bp-tracker)</button>
+        <input ref="importCsvInput" type="file" accept=".csv" style="display:none" @change="handleImportCsvFile" />
+        <button class="btn btn-sm btn-secondary" @click="handleGenerateTestData"><AppIcon name="robot" :size="16" /> {{ t('generate_test_data') }}</button>
       </div>
+
+      <!-- Import options (shown after file selection) -->
+      <div v-if="pendingImportFile" class="import-options mt-sm">
+        <p class="import-options__title">
+          📄 {{ pendingImportFile.name }} — Come gestire i duplicati?
+        </p>
+        <div class="flex flex-col gap-sm mb-sm">
+          <label class="import-options__label">
+            <input type="radio" v-model="importMode" value="add" />
+            <span><strong>Importa tutto (anche duplicati)</strong> — non controllare letture già presenti</span>
+          </label>
+          <label class="import-options__label">
+            <input type="radio" v-model="importMode" value="skip" />
+            <span><strong>Salta duplicati</strong> — non importare letture con stesso orario</span>
+          </label>
+          <label class="import-options__label">
+            <input type="radio" v-model="importMode" value="overwrite" />
+            <span><strong>Sovrascrivi duplicati</strong> — aggiorna letture con stesso orario</span>
+          </label>
+        </div>
+        <div class="flex gap-sm">
+          <button class="btn btn-sm btn-primary" @click="executeImport">
+            <AppIcon name="upload" :size="14" /> Importa
+          </button>
+          <button class="btn btn-sm btn-ghost" @click="cancelImport">Annulla</button>
+        </div>
+      </div>
+
+      <div v-if="message" class="form-success mt-sm">{{ message }}</div>
+    </CollapsibleSection>
+
+    <CollapsibleSection title="🛠️ Strumenti avanzati" class="mb-md">
 
       <!-- Cache & Updates -->
       <div class="mb-md">
@@ -783,10 +784,28 @@ async function handleInstall() {
 .form-success { color: var(--color-accent); font-size: 0.875rem; font-weight: 500; }
 
 .import-options {
-  background: var(--color-surface-overlay);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
+  color: var(--color-text-primary);
 }
 .import-options input[type="radio"] { accent-color: var(--color-accent); }
+.import-options__title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+}
+.import-options__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+.import-options__label strong {
+  color: var(--color-text-primary);
+}
 </style>
