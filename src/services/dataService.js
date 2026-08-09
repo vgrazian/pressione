@@ -531,6 +531,9 @@ export async function importCSV(username, file, mode = 'add') {
                 if (lines.length < 2) throw new Error('CSV vuoto')
                 const header = lines[0].toLowerCase()
                 const isPressione = header.includes('sistolica')
+                // bp-tracker exports have Note before Categoria (cols[5]=Note, cols[6]=Categoria)
+                // IperTeso exports have Categoria before Note (cols[5]=Categoria, cols[6]=Note)
+                const noteCol = header.includes('pulsazioni') ? 5 : 6
 
                 // Pre-load existing readings for dedup (skip/overwrite modes)
                 let existingTimestamps = new Set()
@@ -548,7 +551,7 @@ export async function importCSV(username, file, mode = 'add') {
                         let date, time, sys, dia, hr, notes = ''
                         if (isPressione) {
                             date = cols[0]; time = cols[1]; sys = parseInt(cols[2])
-                            dia = parseInt(cols[3]); hr = parseInt(cols[4]); notes = cols[6] || ''
+                            dia = parseInt(cols[3]); hr = parseInt(cols[4]); notes = cols[noteCol] || ''
                         } else {
                             if (cols[0].includes('/') || cols[0].includes('-')) {
                                 date = cols[0]; time = cols[1] || '12:00'

@@ -59,8 +59,9 @@ const importMode = ref('add')
 const pendingImportFile = ref(null)
 
 // Export period filter
-const exportPeriod = ref('90')
+const exportPeriod = ref('current')
 const exportPeriods = [
+  { value: 'current', label: 'Vista corrente' },
   { value: '30', label: '30 giorni' },
   { value: '90', label: '3 mesi' },
   { value: '180', label: '6 mesi' },
@@ -214,7 +215,7 @@ async function handleExportCSV() {
   if (readings.length === 0) { message.value = 'Nessun dato da esportare'; return }
 
   // Filter by selected period
-  if (exportPeriod.value !== 'all') {
+  if (exportPeriod.value !== 'all' && exportPeriod.value !== 'current') {
     const days = parseInt(exportPeriod.value)
     const cutoff = new Date(Date.now() - days * 86400000)
     readings = readings.filter(r => new Date(r.timestamp) >= cutoff)

@@ -234,6 +234,23 @@ describe('importCSV', () => {
         expect(storedReadings[0].systolic).toBe(118)
     })
 
+    it('bp-tracker con Pulsazioni: le note non includono la categoria', async () => {
+        // Real bp-tracker export: Note before Categoria, Pulsazioni not Freq. Cardiaca
+        const csv = buildCSV(
+            ['Data', 'Ora', 'Sistolica (mmHg)', 'Diastolica (mmHg)', 'Pulsazioni (bpm)', 'Note', 'Categoria'],
+            [
+                ['2026-08-01', '10:00', '120', '80', '72', 'nota importante', 'Normale'],
+                ['2026-08-02', '18:00', '180', '110', '95', '', 'Crisi Ipertensiva']
+            ]
+        )
+        const result = await importCSV('testuser', csvFile(csv), 'add')
+
+        expect(result.imported).toBe(2)
+        // Notes should be the actual notes, not the category string
+        expect(storedReadings[0].notes).toBe('nota importante')
+        expect(storedReadings[1].notes).toBe('')
+    })
+
     // ── CSV malformati ───────────────────────────────────────────
 
     it('rifiuta CSV vuoto (solo header)', async () => {
