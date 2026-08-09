@@ -444,15 +444,18 @@ async function handleResetPassword() {
   white-space: nowrap;
 }
 
-/* ── Email edit ──────────────────────────────────────────── */
+/* ── Email ──────────────────────────────────────────────── */
 
-.user-email.clickable {
-  cursor: pointer;
-  color: var(--color-text-secondary);
+.user-email {
   font-size: 0.8125rem;
+  color: var(--color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.user-email.clickable {
+  cursor: pointer;
 }
 
 .user-email.clickable:hover {
@@ -515,12 +518,9 @@ async function handleResetPassword() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 4px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-sm);
-}
-
-.checkbox-label:hover {
-  background: var(--color-surface-overlay);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -529,6 +529,11 @@ async function handleResetPassword() {
   accent-color: var(--color-accent);
   cursor: pointer;
   margin: 0;
+  flex-shrink: 0;
+}
+
+.checkbox-label:hover {
+  background: var(--color-surface-overlay);
 }
 
 .checkbox-label--disabled {
