@@ -28,7 +28,7 @@ import DateRangeSlider from '@/components/DateRangeSlider.vue'
 const { user } = useAuth()
 const readings = ref([])
 const isLoading = ref(true)
-const dateRange = ref('30')
+const dateRange = ref('all')
 const customFrom = ref('')
 const customTo = ref('')
 
