@@ -224,8 +224,8 @@ function renderDerivChart() {
       scales: {
         x: { ticks: { maxTicksLimit: 12, font: { size: 10 } }, grid: { display: false } },
         y: {
-          min: -Math.max(d.maxRate + 5, 20),
-          max: Math.max(d.maxRate + 5, 20),
+          min: -Math.max(Math.ceil(d.maxRate * 1.3), 8),
+          max: Math.max(Math.ceil(d.maxRate * 1.3), 8),
           ticks: { font: { size: 10 } },
           title: { display: true, text: 'mmHg/ora', font: { size: 10 } }
         }

@@ -23,6 +23,7 @@ import { generatePDF as generatePDFReport, generatePDFBlob } from '@/services/pd
 import { supabase } from '@/services/supabaseClient.js'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import AppIcon from '@/components/AppIcon.vue'
+import DateRangeSlider from '@/components/DateRangeSlider.vue'
 
 const { user } = useAuth()
 const readings = ref([])
@@ -30,6 +31,20 @@ const isLoading = ref(true)
 const dateRange = ref('30')
 const customFrom = ref('')
 const customTo = ref('')
+
+// Bridge for DateRangeSlider v-model ↔ customFrom/customTo
+const customRange = computed({
+  get() {
+    const to = customTo.value || new Date().toISOString().slice(0, 10)
+    const from = customFrom.value || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
+    return { from, to }
+  },
+  set(val) {
+    customFrom.value = val.from
+    customTo.value = val.to
+  }
+})
+
 const includeCharts = ref(true)
 const includeHistory = ref(true)
 const anonymize = ref(false)
@@ -48,6 +63,7 @@ let bpChart = null
 const periods = [
   { value: '7', label: '7 Giorni' },
   { value: '30', label: '30 Giorni' },
+  { value: 'all', label: 'Tutto' },
   { value: 'custom', label: 'Personalizzato' }
 ]
 
@@ -416,10 +432,8 @@ function copyActiveLink(token) {
         <button v-for="p in periods" :key="p.value" class="chip" :class="{ 'chip--active': dateRange === p.value }"
           @click="dateRange = p.value">{{ p.label }}</button>
       </div>
-      <div v-if="dateRange === 'custom'" class="flex gap-sm mb-sm">
-        <input type="date" v-model="customFrom" class="form-input" style="width:140px" />
-        <span class="text-secondary">—</span>
-        <input type="date" v-model="customTo" class="form-input" style="width:140px" />
+      <div v-if="dateRange === 'custom'" class="mb-sm">
+        <DateRangeSlider v-model="customRange" :readings="readings" />
       </div>
     </div>
 
