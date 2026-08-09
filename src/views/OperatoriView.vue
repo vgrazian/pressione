@@ -316,9 +316,11 @@ async function handleResetPassword() {
             <button v-if="!u.disabled" class="btn btn-xs btn-ghost" @click="startResetPassword(u)" title="Reset password">
               <AppIcon name="refresh" :size="14" />
             </button>
+            <span v-else class="users-table__actions-spacer"></span>
             <button v-if="u.username !== user?.username" class="btn btn-xs btn-ghost-error" @click="handleHardDelete(u)" title="Elimina">
               <AppIcon name="trash" :size="14" color="currentColor" />
             </button>
+            <span v-else class="users-table__actions-spacer"></span>
           </span>
         </div>
       </div>
@@ -365,7 +367,7 @@ async function handleResetPassword() {
     minmax(80px, 1fr)   /* Utente */
     minmax(120px, 1.5fr) /* Email */
     64px                  /* Ruolo */
-    64px                  /* Stato */
+    80px                  /* Stato */
     48px                  /* Admin */
     48px                  /* Attivo */
     64px;                 /* Azioni */
@@ -390,9 +392,12 @@ async function handleResetPassword() {
   border-bottom: none;
 }
 
+.users-table__row--disabled {
+  opacity: 0.45;
+}
+
 .users-table__row--disabled .users-table__user {
   text-decoration: line-through;
-  opacity: 0.5;
 }
 
 .users-table__user {
@@ -423,6 +428,20 @@ async function handleResetPassword() {
   display: flex;
   gap: 2px;
   justify-content: flex-end;
+}
+
+.users-table__actions-spacer {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+}
+
+/* ── Chips (scoped overrides) ───────────────────────────── */
+
+.chip {
+  font-size: 0.6875rem;
+  padding: 0.15rem 0.5rem;
+  white-space: nowrap;
 }
 
 /* ── Email edit ──────────────────────────────────────────── */
