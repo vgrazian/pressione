@@ -129,12 +129,24 @@ export function computeDerivatives(readings) {
     let maxNegativeRate = 0
     const alarmSegments = []
 
+    // Absolute systolic delta between consecutive readings (for chart display)
+    const deltaSys = []
+    const deltaDia = []
+    let maxDelta = 0
+
     for (let i = 1; i < sorted.length; i++) {
         const dtHours = (new Date(sorted[i].timestamp) - new Date(sorted[i - 1].timestamp)) / (1000 * 3600)
         if (dtHours <= 0) continue
 
         const ds = (smoothSys[i] - smoothSys[i - 1]) / dtHours
         const dd = (smoothDia[i] - smoothDia[i - 1]) / dtHours
+
+        // Absolute change between consecutive readings (ignoring time)
+        const absDs = Math.round(smoothSys[i] - smoothSys[i - 1])
+        const absDd = Math.round(smoothDia[i] - smoothDia[i - 1])
+        deltaSys.push(absDs)
+        deltaDia.push(absDd)
+        maxDelta = Math.max(maxDelta, Math.abs(absDs), Math.abs(absDd))
 
         systolic.push(Math.round(ds * 10) / 10)
         diastolic.push(Math.round(dd * 10) / 10)
@@ -155,7 +167,7 @@ export function computeDerivatives(readings) {
         }
     }
 
-    return { systolic, diastolic, timestamps, maxRate, maxPositiveRate, maxNegativeRate, alarmSegments }
+    return { systolic, diastolic, timestamps, maxRate, maxPositiveRate, maxNegativeRate, alarmSegments, deltaSys, deltaDia, maxDelta }
 }
 
 /**

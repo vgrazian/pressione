@@ -196,15 +196,17 @@ function renderDerivChart() {
 
   const labels = d.timestamps.map(t => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
 
+  // Show absolute systolic change (Δ mmHg) as bar height — more readable
+  // for sparse readings than the per-hour rate
   derivChart = new Chart(derivChartEl.value, {
     type: 'bar',
     data: {
       labels,
       datasets: [
         {
-          label: 'dS/dt',
-          data: d.systolic,
-          backgroundColor: d.systolic.map(v => Math.abs(v) > 10 ? '#D90429' : v > 0 ? '#E6394680' : '#457B9D80'),
+          label: 'Δ Sistolica',
+          data: d.deltaSys,
+          backgroundColor: d.deltaSys.map(v => Math.abs(v) > 10 ? '#D90429' : v > 0 ? '#E6394680' : '#457B9D80'),
           borderWidth: 0,
           borderRadius: 2
         }
@@ -217,17 +219,26 @@ function renderDerivChart() {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (ctx) => `Variazione: ${ctx.raw} mmHg/ora`
+            label: (ctx) => {
+              const i = ctx.dataIndex
+              const absChange = ctx.raw
+              const rate = d.systolic[i]
+              let text = `Δ ${absChange > 0 ? '+' : ''}${absChange} mmHg`
+              if (rate !== undefined && !isNaN(rate)) {
+                text += `  (${rate > 0 ? '+' : ''}${Math.round(rate * 10) / 10} mmHg/h)`
+              }
+              return text
+            }
           }
         }
       },
       scales: {
         x: { ticks: { maxTicksLimit: 12, font: { size: 10 } }, grid: { display: false } },
         y: {
-          min: -Math.max(Math.ceil(d.maxRate * 1.3), 8),
-          max: Math.max(Math.ceil(d.maxRate * 1.3), 8),
-          ticks: { font: { size: 10 } },
-          title: { display: true, text: 'mmHg/ora', font: { size: 10 } }
+          min: -Math.max(Math.ceil(d.maxDelta * 1.2), 10),
+          max: Math.max(Math.ceil(d.maxDelta * 1.2), 10),
+          ticks: { font: { size: 10 }, stepSize: 5 },
+          title: { display: true, text: 'Δ mmHg', font: { size: 10 } }
         }
       }
     }
@@ -349,8 +360,8 @@ function goToAdd() { router.push('/add') }
 
       <!-- Derivative Chart -->
       <div class="card mb-md" v-if="derivatives.timestamps.length > 0">
-        <h3 class="mb-sm">Velocità di Variazione (dP/dt)</h3>
-        <p class="text-secondary mb-sm" style="font-size:0.75rem">mmHg/ora — barre rosse indicano variazioni &gt;10 mmHg/ora</p>
+        <h3 class="mb-sm">Variazioni tra letture consecutive</h3>
+        <p class="text-secondary mb-sm" style="font-size:0.75rem">Δ mmHg sistolica — barre rosse indicano scostamenti &gt;10 mmHg</p>
         <div class="chart-wrap chart-wrap--sm"><canvas ref="derivChartEl"></canvas></div>
         <!-- Alarm list -->
         <div v-if="derivatives.alarmSegments.length" class="mt-sm">
