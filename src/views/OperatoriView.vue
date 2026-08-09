@@ -249,57 +249,77 @@ async function handleResetPassword() {
     </div>
 
     <div v-else class="card">
-      <div class="users-list">
-        <div v-for="u in users" :key="u.username" class="user-row" :class="{ 'user-row--disabled': u.disabled }">
-          <div class="user-info">
-            <span class="user-name">{{ u.username }}</span>
-            <div class="user-meta">
+      <div class="users-table">
+        <div class="users-table__head">
+          <span>Utente</span>
+          <span>Email</span>
+          <span>Ruolo</span>
+          <span>Stato</span>
+          <span>Admin</span>
+          <span>Attivo</span>
+          <span></span>
+        </div>
+        <div
+          v-for="u in users"
+          :key="u.username"
+          class="users-table__row"
+          :class="{ 'users-table__row--disabled': u.disabled }"
+        >
+          <span class="users-table__user">{{ u.username }}</span>
+
+          <span class="users-table__email">
             <template v-if="!u.disabled && editingEmail === u.username">
-              <div class="email-edit-row">
+              <span class="email-edit-inline">
                 <input v-model="newEmail" type="email" class="form-input email-edit-input"
                   placeholder="nuova@email.com" @keyup.enter="handleUpdateEmail(u)" />
                 <button class="btn btn-xs btn-primary" @click="handleUpdateEmail(u)">Salva</button>
-                <button class="btn btn-xs btn-ghost" @click="cancelEditEmail"><AppIcon name="x" :size="14" /></button>
-              </div>
+                <button class="btn btn-xs btn-ghost" @click="cancelEditEmail"><AppIcon name="x" :size="12" /></button>
+              </span>
             </template>
             <template v-else>
-              <span class="user-email" :class="{ 'clickable': !u.disabled }" role="button" tabindex="0" @click="!u.disabled && startEditEmail(u)" @keydown.enter="!u.disabled && startEditEmail(u)">{{ u.email || '—' }}</span>
+              <span class="user-email" :class="{ clickable: !u.disabled }" role="button" tabindex="0"
+                @click="!u.disabled && startEditEmail(u)" @keydown.enter="!u.disabled && startEditEmail(u)">{{ u.email || '—' }}</span>
               <button v-if="!u.disabled" class="btn-edit-email" title="Modifica email" @click="startEditEmail(u)">
                 <AppIcon name="edit" :size="12" />
               </button>
             </template>
+          </span>
+
+          <span>
             <span class="chip" :class="u.role === 'admin' ? 'chip-admin' : 'chip-user'">
               {{ u.role === 'admin' ? 'Admin' : 'Utente' }}
             </span>
+          </span>
+
+          <span>
             <span v-if="u.disabled" class="chip chip-inactive">Disattivato</span>
-            </div>
-          </div>
-          <div class="user-actions">
-            <label class="checkbox-label" :class="{ 'checkbox-label--disabled': u.username === user?.username }" :title="u.username === user?.username ? 'Non puoi cambiare il tuo ruolo' : ''">
+            <span v-else class="users-table__active-dot" title="Attivo"></span>
+          </span>
+
+          <span>
+            <label class="checkbox-label" :class="{ 'checkbox-label--disabled': u.username === user?.username }"
+              :title="u.username === user?.username ? 'Non puoi cambiare il tuo ruolo' : ''">
               <input type="checkbox" :checked="u.role === 'admin'" :disabled="u.username === user?.username"
                 @change="toggleAdmin(u)" />
-              <AppIcon name="users" :size="14" /> Admin
             </label>
-            <label class="checkbox-label" :class="{ 'checkbox-label--disabled': u.username === user?.username }" :title="u.username === user?.username ? 'Non puoi disattivare il tuo account' : ''">
+          </span>
+
+          <span>
+            <label class="checkbox-label" :class="{ 'checkbox-label--disabled': u.username === user?.username }"
+              :title="u.username === user?.username ? 'Non puoi disattivare il tuo account' : ''">
               <input type="checkbox" :checked="!u.disabled" :disabled="u.username === user?.username"
                 @change="toggleActive(u)" />
-              Attivo
             </label>
-            <button
-              v-if="!u.disabled"
-              class="btn btn-sm btn-ghost"
-              @click="startResetPassword(u)"
-            >
-              <AppIcon name="refresh" :size="14" /> Reset PW
+          </span>
+
+          <span class="users-table__actions">
+            <button v-if="!u.disabled" class="btn btn-xs btn-ghost" @click="startResetPassword(u)" title="Reset password">
+              <AppIcon name="refresh" :size="14" />
             </button>
-            <button
-              v-if="u.username !== user?.username"
-              class="btn btn-sm btn-ghost-error"
-              @click="handleHardDelete(u)"
-            >
-              <AppIcon name="trash" :size="14" color="currentColor" /> Elimina
+            <button v-if="u.username !== user?.username" class="btn btn-xs btn-ghost-error" @click="handleHardDelete(u)" title="Elimina">
+              <AppIcon name="trash" :size="14" color="currentColor" />
             </button>
-          </div>
+          </span>
         </div>
       </div>
     </div>
@@ -332,68 +352,92 @@ async function handleResetPassword() {
   }
 }
 
-.user-row {
+/* ── Users Table ─────────────────────────────────────────── */
+
+.users-table {
+  width: 100%;
+}
+
+.users-table__head,
+.users-table__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns:
+    minmax(80px, 1fr)   /* Utente */
+    minmax(120px, 1.5fr) /* Email */
+    64px                  /* Ruolo */
+    64px                  /* Stato */
+    48px                  /* Admin */
+    48px                  /* Attivo */
+    64px;                 /* Azioni */
   align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-border);
 }
 
-.user-row:last-child {
+.users-table__head {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom-width: 2px;
+}
+
+.users-table__row:last-child {
   border-bottom: none;
 }
 
-.user-info {
+.users-table__row--disabled .users-table__user {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.users-table__user {
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.users-table__email {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
   min-width: 0;
 }
 
-.user-name {
-  font-weight: 600;
-  font-size: 0.9375rem;
+.users-table__active-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  margin-left: 4px;
 }
 
-.user-meta {
+.users-table__actions {
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-
-.user-actions {
-  display: flex;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
+  gap: 2px;
   justify-content: flex-end;
 }
 
-@media (max-width: 480px) {
-  .user-row {
-    grid-template-columns: 1fr;
-  }
-  .user-actions {
-    justify-content: flex-start;
-  }
-}
-
-.user-row--disabled .user-info {
-  opacity: 0.55;
-}
-
-.user-row--disabled .user-name {
-  text-decoration: line-through;
-}
+/* ── Email edit ──────────────────────────────────────────── */
 
 .user-email.clickable {
   cursor: pointer;
-  color: var(--color-accent);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-email.clickable:hover {
+  color: var(--color-accent);
   text-decoration: underline;
 }
 
@@ -406,60 +450,29 @@ async function handleResetPassword() {
   padding: 0 2px;
   opacity: 0;
   transition: opacity 0.15s;
+  flex-shrink: 0;
 }
 
-.user-row:hover .btn-edit-email {
+.users-table__row:hover .btn-edit-email {
   opacity: 1;
 }
 
-.email-edit-row {
+.email-edit-inline {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .email-edit-input {
-  max-width: 220px;
-  min-width: 140px;
-  flex: 1;
-  font-size: 0.8125rem;
-  padding: 0.25rem 0.5rem;
-  min-height: 28px;
+  max-width: 160px;
+  min-width: 100px;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  min-height: 26px;
 }
 
-.card--error {
-  border-color: var(--color-error);
-}
-
-.card--error p {
-  color: var(--color-error);
-}
-
-.card--success {
-  border-color: var(--color-accent);
-}
-
-.card--success p {
-  color: var(--color-accent);
-}
-
-.text-error {
-  color: var(--color-error);
-}
-
-.text-success {
-  color: var(--color-accent);
-}
-
-.user-name {
-  font-weight: 600;
-}
-
-.user-email {
-  color: var(--color-text-secondary);
-  font-size: 0.8125rem;
-}
+/* ── Chips ───────────────────────────────────────────────── */
 
 .chip-admin {
   background: var(--color-accent-muted);
@@ -468,7 +481,7 @@ async function handleResetPassword() {
 
 .chip-user {
   background: var(--color-surface-overlay);
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
 }
 
 .chip-inactive {
@@ -476,14 +489,14 @@ async function handleResetPassword() {
   color: var(--color-on-error-container);
 }
 
+/* ── Checkboxes ──────────────────────────────────────────── */
+
 .checkbox-label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.8125rem;
+  justify-content: center;
   cursor: pointer;
-  user-select: none;
-  padding: 2px 4px;
+  padding: 4px;
   border-radius: var(--radius-sm);
 }
 
@@ -500,7 +513,7 @@ async function handleResetPassword() {
 }
 
 .checkbox-label--disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -512,7 +525,53 @@ async function handleResetPassword() {
   cursor: not-allowed;
 }
 
-.items-center {
-  align-items: center;
+/* ── Cards ───────────────────────────────────────────────── */
+
+.card--error {
+  border-color: var(--color-error);
+}
+.card--error p {
+  color: var(--color-error);
+}
+.card--success {
+  border-color: var(--color-accent);
+}
+.card--success p {
+  color: var(--color-accent);
+}
+.text-error { color: var(--color-error); }
+.text-success { color: var(--color-accent); }
+
+.items-center { align-items: center; }
+
+/* ── Mobile: switch to card layout ───────────────────────── */
+
+@media (max-width: 640px) {
+  .users-table__head {
+    display: none;
+  }
+
+  .users-table__row {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xs) var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .users-table__user {
+    grid-column: 1 / -1;
+    font-size: 0.9375rem;
+  }
+
+  .users-table__email {
+    grid-column: 1 / -1;
+  }
+
+  /* Label each cell with its column name via data attribute would be ideal,
+     but for simplicity we just let the content speak for itself on mobile */
+  .users-table__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    margin-top: 4px;
+  }
 }
 </style>
