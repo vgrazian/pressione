@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
 import { getReadings, refreshFromServer } from '@/services/dataService.js'
@@ -52,10 +52,13 @@ const periods = [
 ]
 
 const chartTabs = [
-  { key: 'bp', label: 'Andamento', icon: 'chart' },
-  { key: 'deriv', label: 'Variazioni', icon: 'clock' },
-  { key: 'dist', label: 'Distribuzione', icon: 'chart' }
+  { key: 'bp', label: 'Andamento', shortLabel: 'Andam.', icon: 'chart' },
+  { key: 'deriv', label: 'Variazioni', shortLabel: 'Variaz.', icon: 'clock' },
+  { key: 'dist', label: 'Distribuzione', shortLabel: 'Distrib.', icon: 'chart' }
 ]
+
+const isNarrow = ref(window.innerWidth < 420)
+function onResize() { isNarrow.value = window.innerWidth < 420 }
 
 function fmtDateShort(ts) {
   const d = new Date(ts)
@@ -63,6 +66,7 @@ function fmtDateShort(ts) {
 }
 
 onMounted(async () => {
+  window.addEventListener('resize', onResize)
   isLoading.value = true
   shareLink.value = null; showPin.value = ''; linkMessage.value = ''
   try {
@@ -238,6 +242,8 @@ watch(chartTab, () => { nextTick(() => renderActiveChart()) })
 watch(filteredReadings, () => { nextTick(() => renderActiveChart()) }, { flush: 'post' })
 watch(userBands, () => { nextTick(() => renderActiveChart()) }, { flush: 'post' })
 watch(theme, () => { nextTick(() => renderActiveChart()) })
+
+onBeforeUnmount(() => { window.removeEventListener('resize', onResize) })
 
 async function generatePDF() {
   generatingAction.value = 'pdf'
@@ -455,7 +461,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
             :class="{ 'chart-tab--active': chartTab === t.key }"
             @click="chartTab = t.key">
             <AppIcon :name="t.icon" :size="14" />
-            <span>{{ t.label }}</span>
+            <span>{{ isNarrow ? t.shortLabel : t.label }}</span>
           </button>
         </div>
         <div class="chart-wrap">
@@ -614,10 +620,13 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
 
 <style scoped>
 .chart-tabs { display: flex; gap: 2px; background: var(--color-surface-overlay); border-radius: var(--radius-md); padding: 4px; }
-.chart-tab { position: relative; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; background: transparent; border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 500; font-family: var(--font-sans); color: var(--color-text-secondary); cursor: pointer; transition: color 0.15s, background-color 0.15s, box-shadow 0.15s; white-space: nowrap; }
+.chart-tab { position: relative; display: flex; align-items: center; gap: 4px; padding: 8px 10px; border: none; background: transparent; border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 500; font-family: var(--font-sans); color: var(--color-text-secondary); cursor: pointer; transition: color 0.15s, background-color 0.15s, box-shadow 0.15s; white-space: nowrap; }
 .chart-tab:hover { color: var(--color-text-primary); }
 .chart-tab--active { background: var(--color-surface-raised); color: var(--color-accent); font-weight: 600; box-shadow: var(--shadow-sm); }
-.chart-tab--active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: var(--color-accent); border-radius: 3px 3px 0 0; }
+.chart-tab--active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 16px; height: 3px; background: var(--color-accent); border-radius: 3px 3px 0 0; }
+@media (max-width: 420px) {
+  .chart-tab { padding: 8px 6px; gap: 3px; font-size: 0.75rem; }
+}
 .chart-wrap { position: relative; height: 260px; width: 100%; }
 @media (max-width: 480px) { .chart-wrap { height: 200px; } }
 

@@ -226,7 +226,7 @@ function goBack() {
 
 .form-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr);
   gap: var(--space-md);
   align-items: start;
 }
@@ -240,14 +240,14 @@ function goBack() {
 
 .form-row .form-group {
   margin-bottom: 0;
-  min-width: 0;
-  overflow: hidden;
 }
 
 .form-row .form-input {
-  min-width: 0;
   width: 100%;
   box-sizing: border-box;
+  min-height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .category-preview {
