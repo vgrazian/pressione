@@ -69,7 +69,24 @@ const PHRASES = {
         "Il misuratore ti sta suggerendo, con molta diplomazia, di prenderti una pausa.",
         "La pressione è salita un pochino. Evidentemente ha ricevuto una buona notizia prima di noi.",
         "Direi che il tuo sistema cardiovascolare oggi è leggermente troppo motivato.",
-        "Niente panico: al massimo il tuo sangue sta facendo un po' di networking."
+        "Niente panico: al massimo il tuo sangue sta facendo un po' di networking.",
+        // --- Nuove (seconda tornata): Ipertensione di grado 1 ---
+        "La pressione è un po' alta: qualcuno qui ha bevuto il caffè anche col sangue.",
+        "Il tuo cuore oggi ha deciso di non prendere l'ascensore.",
+        "Sei leggermente sopra il limite: praticamente la pressione ha parcheggiato sulle strisce.",
+        "Il sangue oggi ha fretta. Non sappiamo dove debba andare, ma sicuramente è in ritardo.",
+        "La pressione è salita di livello, ma almeno non ha ancora sbloccato il boss finale.",
+        "Il tuo cuore sta facendo gli straordinari, ma senza aver compilato il modulo ferie.",
+        "Il misuratore ti sta dicendo: «Guarda che possiamo anche prendercela con calma».",
+        "La pressione è un po' alta. Evidentemente anche le tue arterie hanno una giornata no.",
+        "Non è preoccupante, è solo il tuo sistema cardiovascolare che oggi vuole attirare l'attenzione.",
+        "Il cuore ha messo la modalità «facciamo una cosa veloce» e poi non si è più fermato.",
+        "Sei appena entrato nella categoria «signore, abbassi i toni».",
+        "La pressione è sopra la media: anche il tuo sangue vuole distinguersi.",
+        "Il tuo apparato cardiovascolare oggi ha scelto il capitalismo: massima produttività.",
+        "Il misuratore ha visto il risultato e ha detto: «Interessante. Ne parliamo con calma.»",
+        "La pressione è salita, ma almeno non ha ancora chiesto di essere chiamata «eccellenza».",
+        "Oggi il tuo sangue non è fluido: è un pendolare romano alle 8 di mattina."
     ],
     HYPERTENSION_STAGE_2: [
         // --- Originali ---
@@ -88,7 +105,24 @@ const PHRASES = {
         "Il misuratore ha visto il numero e ha chiesto: «Sicuro di voler continuare?»",
         "Direi che oggi il tuo sangue ha deciso di fare le scale di corsa.",
         "Tranquillo, non è un risultato: è un grido d'aiuto con i numeri.",
-        "A questo punto non misuriamo più la pressione, chiediamo direttamente il meteo."
+        "A questo punto non misuriamo più la pressione, chiediamo direttamente il meteo.",
+        // --- Nuove (seconda tornata): Ipertensione di grado 2 ---
+        "La pressione è talmente alta che il misuratore ha chiesto un aumento di stipendio.",
+        "Il tuo cuore oggi non pompa: fa il DJ. E ha messo tutto a palla.",
+        "Questi numeri non sono una pressione, sono una minaccia scritta in formato digitale.",
+        "La pressione è salita così tanto che adesso paga l'affitto al piano di sopra.",
+        "Il tuo sangue evidentemente ha prenotato un volo e ha paura di perderlo.",
+        "Il cuore oggi: «Ragazzi, acceleriamo che c'è traffico!»",
+        "Non hai la pressione alta, hai semplicemente un sistema cardiovascolare molto competitivo.",
+        "Il misuratore ha fatto il conto e ha detto: «Io su questo non mi esprimo».",
+        "La pressione è così alta che tra poco serve il nulla osta dell'ENAC.",
+        "Il tuo cuore sta lavorando come se avesse scoperto che chiude il supermercato tra cinque minuti.",
+        "Hai una pressione che non entra più nei parametri: vuole direttamente diventare amministratore delegato.",
+        "Il sangue oggi non circola: corre dietro ai suoi sogni.",
+        "A questi livelli il misuratore non misura più: giudica.",
+        "Il tuo cuore ha confuso «ritmo sostenuto» con «finale olimpica».",
+        "Questa pressione ha più grinta di te il lunedì mattina.",
+        "Il misuratore: «Riproviamo?» Tu: «Perché, vuoi farmi arrabbiare ancora di più?»"
     ],
     HYPERTENSIVE_CRISIS: [
         "Se fossi una pentola a pressione, faresti fischiare anche i vicini. Ti prego, rilassati subito!",
