@@ -31,6 +31,7 @@ data class AddEditUiState(
     @StringRes val diastolicError: Int? = null,
     @StringRes val heartRateError: Int? = null,
     @StringRes val duplicateError: Int? = null,
+    @StringRes val saveError: Int? = null,
     val saved: Boolean = false,
     val isEditing: Boolean = false,
     val editingId: String? = null
@@ -148,7 +149,7 @@ class AddEditReadingViewModel(
         if (hasError) return
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true, duplicateError = null)
+            _uiState.value = _uiState.value.copy(isSaving = true, duplicateError = null, saveError = null)
 
             val timestamp = _uiState.value.date
                 .atTime(_uiState.value.time)
@@ -181,12 +182,18 @@ class AddEditReadingViewModel(
                 category = Category.classify(systolic, diastolic)
             )
 
-            readingRepository.upsertReading(reading)
-
-            _uiState.value = _uiState.value.copy(
-                isSaving = false,
-                saved = true
-            )
+            try {
+                readingRepository.upsertReading(reading)
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    saved = true
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    saveError = R.string.add_edit_error_save
+                )
+            }
         }
     }
 }

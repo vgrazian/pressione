@@ -87,6 +87,7 @@
     <string name="add_edit_error_heart_rate">Inserisci un valore tra 1 e 299 BPM</string>
     <string name="add_edit_error_dia_less">La diastolica deve essere minore della sistolica</string>
     <string name="add_edit_error_duplicate">Hai già inserito una misurazione a quest\'ora. Aspetta almeno 10 minuti.</string>
+    <string name="add_edit_error_save">Salvataggio non riuscito. Controlla la connessione e riprova.</string>
 
     <!-- Settings -->
     <string name="settings_title">Impostazioni</string>

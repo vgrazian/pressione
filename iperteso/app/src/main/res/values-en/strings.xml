@@ -87,6 +87,7 @@
     <string name="add_edit_error_heart_rate">Enter a value between 1 and 299 BPM</string>
     <string name="add_edit_error_dia_less">Diastolic must be lower than systolic</string>
     <string name="add_edit_error_duplicate">You already recorded a reading at this time. Wait at least 10 minutes.</string>
+    <string name="add_edit_error_save">Save failed. Check your connection and try again.</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

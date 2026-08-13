@@ -317,6 +317,16 @@ fun AddEditReadingScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(if (uiState.isEditing) stringResource(R.string.common_update) else stringResource(R.string.common_save))
             }
+
+            // ── Save Error ───────────────────────────────
+            if (uiState.saveError != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    stringResource(uiState.saveError!!),
+                    color = ErrorRed,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }

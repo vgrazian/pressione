@@ -32,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -78,7 +79,9 @@ fun HomeScreen(
                     Column {
                         Text(
                             text = "$greeting, ${session.username}",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         if (uiState.syncStatus == SyncStatus.ERROR) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -179,7 +182,9 @@ fun HomeScreen(
                             stringResource(R.string.home_see_all),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable { onNavigateToList() }
+                            modifier = Modifier
+                                .minimumInteractiveComponentSize()
+                                .clickable { onNavigateToList() }
                         )
                     }
                 }
