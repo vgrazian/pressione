@@ -127,7 +127,6 @@ fun HomeScreen(
         bottomBar = {
             AppBottomNav(
                 current = AppTab.HOME,
-                isAdmin = session.role == "admin",
                 onNavigate = onNavigateTab
             )
         }

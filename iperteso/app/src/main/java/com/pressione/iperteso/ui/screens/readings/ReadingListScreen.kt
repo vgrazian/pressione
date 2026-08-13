@@ -143,7 +143,6 @@ fun ReadingListScreen(
         bottomBar = {
             AppBottomNav(
                 current = AppTab.LIST,
-                isAdmin = session.role == "admin",
                 onNavigate = onNavigateTab
             )
         }

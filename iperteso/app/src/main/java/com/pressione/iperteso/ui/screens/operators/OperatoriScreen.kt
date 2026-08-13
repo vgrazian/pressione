@@ -59,7 +59,6 @@ import org.koin.androidx.compose.koinViewModel
 fun OperatoriScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
-    onNavigateTab: (AppTab) -> Unit,
     viewModel: OperatorsViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -84,9 +83,6 @@ fun OperatoriScreen(
                     }
                 }
             )
-        },
-        bottomBar = {
-            AppBottomNav(current = AppTab.OPERATORS, isAdmin = true, onNavigate = onNavigateTab)
         }
     ) { paddingValues ->
         Column(

@@ -20,6 +20,7 @@
     <string name="nav_home">Home</string>
     <string name="nav_list">Lista</string>
     <string name="nav_analysis">Analisi</string>
+    <string name="nav_medications">Farmaci</string>
     <string name="nav_operators">Gestione</string>
     <string name="nav_settings">Altro</string>
 
@@ -109,6 +110,8 @@
     <string name="reminder_big_text">Ricordati di misurare la pressione e registrare i valori nell\'app IperTeso.</string>
     <string name="reminder_channel_desc">Notifiche giornaliere per ricordare di misurare la pressione</string>
     <string name="settings_medications">Farmaci</string>
+    <string name="medications_history">Storico</string>
+    <string name="medications_empty">Nessun farmaco registrato. Aggiungine uno per tenerne traccia.</string>
     <string name="settings_add_medication">Aggiungi farmaco</string>
     <string name="settings_medication_delete">Elimina farmaco</string>
     <string name="settings_medication_in_progress">in corso</string>

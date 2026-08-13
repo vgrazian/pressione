@@ -23,6 +23,7 @@ import com.pressione.iperteso.ui.screens.operators.OperatoriScreen
 import com.pressione.iperteso.ui.screens.readings.AddEditReadingScreen
 import com.pressione.iperteso.ui.screens.readings.ReadingListScreen
 import com.pressione.iperteso.ui.screens.report.SharedReportScreen
+import com.pressione.iperteso.ui.screens.settings.MedicationsScreen
 import com.pressione.iperteso.ui.screens.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -38,6 +39,7 @@ object Routes {
     const val EDIT_READING = "edit_reading/{id}"
     const val READING_LIST = "reading_list"
     const val ANALYSIS = "analysis"
+    const val MEDICATIONS = "medications"
     const val OPERATORS = "operators"
     const val SETTINGS = "settings"
     const val SHARED_REPORT = "shared/{token}"
@@ -53,7 +55,7 @@ fun NavGraph(sharedToken: String? = null) {
         AppTab.HOME -> Routes.HOME
         AppTab.LIST -> Routes.READING_LIST
         AppTab.ANALYSIS -> Routes.ANALYSIS
-        AppTab.OPERATORS -> Routes.OPERATORS
+        AppTab.FARMACI -> Routes.MEDICATIONS
         AppTab.SETTINGS -> Routes.SETTINGS
     }
 
@@ -172,13 +174,23 @@ fun NavGraph(sharedToken: String? = null) {
             }
         }
 
+        composable(Routes.MEDICATIONS) {
+            val session = authState.session
+            if (session != null) {
+                MedicationsScreen(
+                    session = session,
+                    onNavigateBack = { goHome() },
+                    onNavigateTab = { navigateToTab(it) }
+                )
+            }
+        }
+
         composable(Routes.OPERATORS) {
             val session = authState.session
             if (session != null && session.role == "admin") {
                 OperatoriScreen(
                     session = session,
-                    onNavigateBack = { goHome() },
-                    onNavigateTab = { navigateToTab(it) }
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
         }
@@ -190,6 +202,7 @@ fun NavGraph(sharedToken: String? = null) {
                     session = session,
                     onNavigateBack = { goHome() },
                     onNavigateTab = { navigateToTab(it) },
+                    onNavigateToOperators = { navController.navigate(Routes.OPERATORS) },
                     onLogout = {
                         authViewModel.logout()
                         navController.navigate(Routes.LOGIN) {

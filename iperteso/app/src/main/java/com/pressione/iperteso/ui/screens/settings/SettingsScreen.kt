@@ -91,13 +91,12 @@ fun SettingsScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
     onNavigateTab: (AppTab) -> Unit,
-    onLogout: () -> Unit,
-    medicationViewModel: MedicationViewModel = koinViewModel()
+    onNavigateToOperators: () -> Unit,
+    onLogout: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var remindersEnabled by remember { mutableStateOf(false) }
-    val medState by medicationViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -132,8 +131,6 @@ fun SettingsScreen(
             remindersEnabled = false
         }
     }
-
-    LaunchedEffect(session) { medicationViewModel.initialize(session.username) }
 
     // ── Profilo esteso ──
     var showProfileDialog by remember { mutableStateOf(false) }
@@ -309,6 +306,22 @@ fun SettingsScreen(
         bandsMessage = "Fasce ripristinate (salva per confermare)"
     }
 
+    fun deleteAllData() {
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                val readingRepo = com.pressione.iperteso.data.repository.ReadingRepository(
+                    com.pressione.iperteso.data.remote.api.ReadingsApi(), db.readingDao()
+                )
+                val medRepo = com.pressione.iperteso.data.repository.MedicationRepository(
+                    com.pressione.iperteso.data.remote.api.MedicationApi(), db.medicationDao()
+                )
+                readingRepo.deleteAllForUser(session.username)
+                medRepo.deleteAllForUser(session.username)
+            }
+            dataMessage = "Dati eliminati"
+        }
+    }
+
     val importCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -350,7 +363,6 @@ fun SettingsScreen(
         bottomBar = {
             AppBottomNav(
                 current = AppTab.SETTINGS,
-                isAdmin = session.role == "admin",
                 onNavigate = onNavigateTab
             )
         }
@@ -424,25 +436,19 @@ fun SettingsScreen(
                 )
             }
 
-            // ── Farmaci ──
-            CollapsibleSection(
-                title = "💊 " + stringResource(R.string.settings_medications),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            ) {
-                if (!medState.isLoading) {
-                    for (med in medState.medications) {
-                        MedicationItem(
-                            medication = med,
-                            onStop = { medicationViewModel.stopMedication(med) },
-                            onDelete = { medicationViewModel.deleteMedication(med.id) }
-                        )
-                    }
+            // ── Gestione utenti (solo admin) ──
+            if (session.role == "admin") {
+                CollapsibleSection(
+                    title = "🛡️ " + stringResource(R.string.settings_admin),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.settings_manage_users)) },
+                        supportingContent = { Text(stringResource(R.string.settings_manage_users_sub)) },
+                        leadingContent = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.settings_manage_users)) },
+                        modifier = Modifier.clickable { onNavigateToOperators() }
+                    )
                 }
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_add_medication)) },
-                    leadingContent = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.settings_add_medication)) },
-                    modifier = Modifier.clickable { medicationViewModel.showAddDialog() }
-                )
             }
 
             // ── Promemoria ──
@@ -602,16 +608,6 @@ fun SettingsScreen(
             )
         }
 
-        if (medState.showAddDialog) {
-            MedicationDialog(
-                editing = medState.editingMedication,
-                onDismiss = { medicationViewModel.dismissDialog() },
-                onSave = { name, dosage, freq, notes, start, end ->
-                    medicationViewModel.saveMedication(name, dosage, freq, notes, start, end)
-                }
-            )
-        }
-
         if (showLogoutDialog) {
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
@@ -634,7 +630,7 @@ fun SettingsScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         showDeleteDialog = false
-                        medicationViewModel.deleteAllData()
+                        deleteAllData()
                     }) {
                         Text(stringResource(R.string.settings_delete_all_button), color = ErrorRed)
                     }
@@ -742,162 +738,6 @@ fun SettingsScreen(
                 confirmButton = {},
                 dismissButton = { TextButton(onClick = { showImportModeDialog = false; pendingImportContent = null }) { Text(stringResource(R.string.common_cancel)) } }
             )
-        }
-    }
-}
-
-@Composable
-private fun MedicationItem(
-    medication: Medication,
-    onStop: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val dateFormat = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy") }
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (medication.isActive)
-                MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Medication, contentDescription = null,
-                tint = if (medication.isActive) MaterialTheme.colorScheme.primary
-                       else MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    medication.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-                Row {
-                    if (medication.dosage.isNotBlank()) {
-                        Text(medication.dosage, style = MaterialTheme.typography.bodySmall)
-                        Text(" \u00B7 ", style = MaterialTheme.typography.bodySmall)
-                    }
-                    Text(
-                        "${dateFormat.format(medication.startDate.atZone(ZoneId.systemDefault()))} \u2014 " +
-                        if (medication.isActive) stringResource(R.string.settings_medication_in_progress)
-                        else dateFormat.format(medication.endDate!!.atZone(ZoneId.systemDefault())),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (medication.notes.isNotBlank()) {
-                    Text(
-                        medication.notes,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                }
-            }
-            if (medication.isActive) {
-                TextButton(onClick = onStop) { Text(stringResource(R.string.settings_medication_stop), style = MaterialTheme.typography.labelSmall) }
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.settings_medication_delete))
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MedicationDialog(
-    editing: Medication?,
-    onDismiss: () -> Unit,
-    onSave: (String, String, String, String, Instant, Instant?) -> Unit
-) {
-    var name by remember { mutableStateOf(editing?.name ?: "") }
-    var dosage by remember { mutableStateOf(editing?.dosage ?: "") }
-    var frequency by remember { mutableStateOf(editing?.frequency ?: "") }
-    var notes by remember { mutableStateOf(editing?.notes ?: "") }
-    var startDate by remember { mutableStateOf(editing?.startDate ?: Instant.now()) }
-    var endDate by remember { mutableStateOf(editing?.endDate) }
-    var stillTaking by remember { mutableStateOf(editing?.isActive ?: true) }
-    var showStartPicker by remember { mutableStateOf(false) }
-    var showEndPicker by remember { mutableStateOf(false) }
-    val dateFormat = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (editing != null) stringResource(R.string.settings_med_edit) else stringResource(R.string.settings_med_new)) },
-        text = {
-            Column {
-                OutlinedTextField(value = name, onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.settings_med_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    OutlinedTextField(value = dosage, onValueChange = { dosage = it },
-                        label = { Text(stringResource(R.string.settings_med_dosage)) }, singleLine = true, modifier = Modifier.weight(1f))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    OutlinedTextField(value = frequency, onValueChange = { frequency = it },
-                        label = { Text(stringResource(R.string.settings_med_frequency)) }, singleLine = true, modifier = Modifier.weight(1f))
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = notes, onValueChange = { notes = it },
-                    label = { Text(stringResource(R.string.settings_med_notes)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                TextButton(onClick = { showStartPicker = true }) {
-                    Text(stringResource(R.string.settings_med_start, dateFormat.format(startDate.atZone(ZoneId.systemDefault()))))
-                }
-                if (!stillTaking) {
-                    TextButton(onClick = { showEndPicker = true }) {
-                        Text(stringResource(R.string.settings_med_end, endDate?.let { dateFormat.format(it.atZone(ZoneId.systemDefault())) } ?: stringResource(R.string.settings_med_end_not_set)))
-                    }
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Switch(checked = stillTaking, onCheckedChange = { stillTaking = it; if (it) endDate = null })
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.settings_med_still_taking), style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onSave(name, dosage, frequency, notes, startDate, endDate) },
-                enabled = name.isNotBlank()) { Text(stringResource(R.string.common_save)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } }
-    )
-
-    if (showStartPicker) {
-        val startPickerState = rememberDatePickerState(initialSelectedDateMillis = startDate.toEpochMilli())
-        DatePickerDialog(
-            onDismissRequest = { showStartPicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    startPickerState.selectedDateMillis?.let { millis ->
-                        startDate = Instant.ofEpochMilli(millis)
-                    }
-                    showStartPicker = false
-                }) { Text(stringResource(R.string.common_ok)) }
-            }
-        ) {
-            DatePicker(state = startPickerState)
-        }
-    }
-    if (showEndPicker) {
-        val endPickerState = rememberDatePickerState(
-            initialSelectedDateMillis = endDate?.toEpochMilli() ?: System.currentTimeMillis()
-        )
-        DatePickerDialog(
-            onDismissRequest = { showEndPicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    endPickerState.selectedDateMillis?.let { millis ->
-                        endDate = Instant.ofEpochMilli(millis)
-                    }
-                    showEndPicker = false
-                }) { Text(stringResource(R.string.common_ok)) }
-            }
-        ) {
-            DatePicker(state = endPickerState)
         }
     }
 }

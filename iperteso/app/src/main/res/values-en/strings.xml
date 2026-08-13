@@ -20,6 +20,7 @@
     <string name="nav_home">Home</string>
     <string name="nav_list">List</string>
     <string name="nav_analysis">Analysis</string>
+    <string name="nav_medications">Meds</string>
     <string name="nav_operators">Manage</string>
     <string name="nav_settings">More</string>
 
@@ -109,6 +110,8 @@
     <string name="reminder_big_text">Remember to measure your blood pressure and log the values in the IperTeso app.</string>
     <string name="reminder_channel_desc">Daily notifications to remind you to measure your blood pressure</string>
     <string name="settings_medications">Medications</string>
+    <string name="medications_history">History</string>
+    <string name="medications_empty">No medications recorded. Add one to keep track.</string>
     <string name="settings_add_medication">Add medication</string>
     <string name="settings_medication_delete">Delete medication</string>
     <string name="settings_medication_in_progress">ongoing</string>

@@ -141,7 +141,6 @@ fun AnalysisScreen(
         bottomBar = {
             AppBottomNav(
                 current = AppTab.ANALYSIS,
-                isAdmin = session.role == "admin",
                 onNavigate = onNavigateTab
             )
         }

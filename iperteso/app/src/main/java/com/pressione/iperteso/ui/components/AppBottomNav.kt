@@ -3,14 +3,14 @@ package com.pressione.iperteso.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -19,27 +19,23 @@ import androidx.compose.ui.unit.dp
 import com.pressione.iperteso.R
 
 /**
- * Main tabs, matching the web app's bottom nav (Home, Lista, Analisi, Gestione[admin], Altro).
+ * Main tabs (Home, Lista, Analisi, Farmaci, Altro).
+ * Admin "Gestione utenti" lives inside Impostazioni, not the nav bar.
  */
-enum class AppTab { HOME, LIST, ANALYSIS, OPERATORS, SETTINGS }
+enum class AppTab { HOME, LIST, ANALYSIS, FARMACI, SETTINGS }
 
 data class NavItem(val tab: AppTab, val icon: ImageVector, val label: String)
 
 @Composable
 fun AppBottomNav(
     current: AppTab,
-    isAdmin: Boolean,
     onNavigate: (AppTab) -> Unit
 ) {
     val items = listOf(
         NavItem(AppTab.HOME, Icons.Filled.Home, stringResource(R.string.nav_home)),
         NavItem(AppTab.LIST, Icons.AutoMirrored.Filled.List, stringResource(R.string.nav_list)),
         NavItem(AppTab.ANALYSIS, Icons.Filled.ShowChart, stringResource(R.string.nav_analysis)),
-    ) + if (isAdmin) {
-        listOf(NavItem(AppTab.OPERATORS, Icons.Filled.People, stringResource(R.string.nav_operators)))
-    } else {
-        emptyList()
-    } + listOf(
+        NavItem(AppTab.FARMACI, Icons.Filled.Medication, stringResource(R.string.nav_medications)),
         NavItem(AppTab.SETTINGS, Icons.Filled.Settings, stringResource(R.string.nav_settings))
     )
 
