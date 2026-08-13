@@ -63,6 +63,7 @@ async function loadReport(pinHash = null) {
       if (!pinHash) { needsPin.value = true; isLoading.value = false; return }
       if (pinHash !== stored.pinHash) throw new Error('wrong pin')
     }
+    needsPin.value = false
     report.value = stored.reportData
   } catch (e) { error.value = 'Link non valido, scaduto o revocato.' }
   finally {

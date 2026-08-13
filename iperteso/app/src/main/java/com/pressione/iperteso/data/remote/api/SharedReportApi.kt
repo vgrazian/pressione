@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonElement
 /**
  * Shared-report links, stored in the `settings` table exactly like the web app:
  *   key   = "_share_<token>"
- *   value = JSON: { report_data, pin_hash, expires_at, revoked }
+ *   value = JSON: { reportData, pinHash, expiresAt, revoked }
  * This keeps Android and web fully interoperable (a link created on one
  * platform can be opened on the other).
  */
@@ -31,7 +31,8 @@ class SharedReportApi {
             SettingRow(
                 username = request.username,
                 key = "_share_" + request.token,
-                value = json.encodeToString(stored)
+                value = json.encodeToString(stored),
+                updatedAt = java.time.Instant.now().toString()
             )
         )
     }
@@ -65,7 +66,10 @@ class SharedReportApi {
             .firstOrNull() ?: return
         val stored = runCatching { json.decodeFromString<StoredShareLink>(row.value) }.getOrNull() ?: return
         client.from("settings").upsert(
-            row.copy(value = json.encodeToString(stored.copy(revoked = true)))
+            row.copy(
+                value = json.encodeToString(stored.copy(revoked = true)),
+                updatedAt = java.time.Instant.now().toString()
+            )
         )
     }
 
@@ -100,11 +104,8 @@ data class SettingRow(
 
 @Serializable
 data class StoredShareLink(
-    @SerialName("report_data")
     val reportData: JsonElement,
-    @SerialName("pin_hash")
     val pinHash: String? = null,
-    @SerialName("expires_at")
     val expiresAt: String,
     val revoked: Boolean = false
 )

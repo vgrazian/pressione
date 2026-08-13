@@ -33,7 +33,7 @@ object ReadingReportJson {
                     put("heartRate", r.heartRate)
                     put("timestamp", r.timestamp.toEpochMilli())
                     put("notes", r.notes)
-                    put("category", r.category.name)
+                    put("category", webCategory(r.systolic, r.diastolic))
                 })
             }
         })
@@ -57,9 +57,10 @@ object ReadingReportJson {
                         ?: o["heart_rate"]?.jsonPrimitive?.int ?: 0,
                     timestamp = ts,
                     notes = o["notes"]?.jsonPrimitive?.contentOrNull ?: "",
-                    category = o["category"]?.jsonPrimitive?.contentOrNull
-                        ?.let { runCatching { Category.valueOf(it) }.getOrNull() }
-                        ?: Category.classify(o["systolic"]?.jsonPrimitive?.int ?: 0, o["diastolic"]?.jsonPrimitive?.int ?: 0)
+                    category = Category.classify(
+                        o["systolic"]?.jsonPrimitive?.int ?: 0,
+                        o["diastolic"]?.jsonPrimitive?.int ?: 0
+                    )
                 )
             } catch (_: Exception) { null }
         }
@@ -71,5 +72,21 @@ object ReadingReportJson {
         if (raw == null) return null
         raw.toLongOrNull()?.let { return Instant.ofEpochMilli(it) }
         return runCatching { Instant.parse(raw) }.getOrNull()
+    }
+
+    /**
+     * Maps a reading to the web app's category key (ESC/ESH classification used
+     * by the GitHub Pages report viewer). The Android app uses a different enum
+     * (OPTIMAL/HIGH_NORMAL/GRADE_*), so we recompute the web category from the
+     * raw systolic/diastolic values to keep the two apps interoperable.
+     */
+    private fun webCategory(systolic: Int, diastolic: Int): String = when {
+        systolic >= 180 || diastolic >= 120 -> "HYPERTENSIVE_CRISIS"
+        systolic >= 140 || diastolic >= 90 -> "HYPERTENSION_STAGE_2"
+        systolic >= 130 || diastolic >= 80 -> "HYPERTENSION_STAGE_1"
+        systolic >= 120 && diastolic < 80 -> "ELEVATED"
+        systolic < 90 || diastolic < 60 -> "HYPOTENSION"
+        systolic < 120 && diastolic < 80 -> "NORMAL"
+        else -> "UNCLASSIFIED"
     }
 }
