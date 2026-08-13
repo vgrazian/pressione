@@ -2,8 +2,10 @@ package com.pressione.iperteso.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pressione.iperteso.data.local.dao.SettingsDao
 import com.pressione.iperteso.data.repository.MedicationRepository
 import com.pressione.iperteso.domain.model.Medication
+import com.pressione.iperteso.services.MedicationEventStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +21,8 @@ data class MedicationUiState(
 )
 
 class MedicationViewModel(
-    private val medicationRepository: MedicationRepository
+    private val medicationRepository: MedicationRepository,
+    private val settingsDao: SettingsDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MedicationUiState())
@@ -60,6 +63,7 @@ class MedicationViewModel(
         startDate: Instant, endDate: Instant?
     ) {
         viewModelScope.launch {
+            val isEdit = _uiState.value.editingMedication != null
             val medication = Medication(
                 id = _uiState.value.editingMedication?.id ?: java.util.UUID.randomUUID().toString(),
                 username = currentUsername,
@@ -67,6 +71,12 @@ class MedicationViewModel(
                 startDate = startDate, endDate = endDate
             )
             medicationRepository.upsertMedication(medication)
+            MedicationEventStore.append(
+                currentUsername,
+                if (isEdit) "💊 Farmaco modificato: $name"
+                else "💊 Farmaco aggiunto: $name",
+                settingsDao
+            )
             _uiState.value = _uiState.value.copy(showAddDialog = false, editingMedication = null)
         }
     }
@@ -76,12 +86,25 @@ class MedicationViewModel(
             medicationRepository.upsertMedication(
                 medication.copy(endDate = Instant.now())
             )
+            MedicationEventStore.append(
+                currentUsername,
+                "💊 Farmaco interrotto: ${medication.name}",
+                settingsDao
+            )
         }
     }
 
     fun deleteMedication(id: String) {
+        val name = _uiState.value.medications.find { it.id == id }?.name ?: ""
         viewModelScope.launch {
             medicationRepository.deleteMedication(id)
+            if (name.isNotBlank()) {
+                MedicationEventStore.append(
+                    currentUsername,
+                    "💊 Farmaco rimosso: $name",
+                    settingsDao
+                )
+            }
         }
     }
 

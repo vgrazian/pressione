@@ -53,6 +53,7 @@ import com.pressione.iperteso.services.TimeBandsStore
 import com.pressione.iperteso.ui.components.AppBottomNav
 import com.pressione.iperteso.ui.components.AppTab
 import com.pressione.iperteso.ui.components.SkeletonLoader
+import com.pressione.iperteso.ui.screens.settings.MedicationViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -66,9 +67,11 @@ fun AnalysisScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
     onNavigateTab: (AppTab) -> Unit,
-    viewModel: AnalysisViewModel = koinViewModel()
+    viewModel: AnalysisViewModel = koinViewModel(),
+    medicationViewModel: MedicationViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val medState by medicationViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showShareLinkDialog by remember { mutableStateOf(false) }
@@ -77,6 +80,8 @@ fun AnalysisScreen(
     var timeBands by remember { mutableStateOf(TimeBand.defaults()) }
 
     LaunchedEffect(session) { viewModel.initialize(session.username) }
+
+    LaunchedEffect(session.username) { medicationViewModel.initialize(session.username) }
 
     LaunchedEffect(session.username) {
         val db = com.pressione.iperteso.IperTesoApplication.instance.database
@@ -124,7 +129,7 @@ fun AnalysisScreen(
                             scope.launch {
                                 withContext(Dispatchers.IO) {
                                     val file = PdfReportGenerator.generate(
-                                        context, session.username, uiState.readings, emptyList()
+                                        context, session.username, uiState.readings, medState.medications
                                     )
                                     withContext(Dispatchers.Main) {
                                         PdfReportGenerator.sharePdf(context, file)

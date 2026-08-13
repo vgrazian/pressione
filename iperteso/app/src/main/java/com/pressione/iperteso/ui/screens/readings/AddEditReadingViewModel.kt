@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.annotation.StringRes
 import com.pressione.iperteso.R
+import com.pressione.iperteso.data.local.dao.SettingsDao
 import com.pressione.iperteso.data.repository.ReadingRepository
 import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Reading
+import com.pressione.iperteso.services.MedicationEventStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +40,8 @@ data class AddEditUiState(
 )
 
 class AddEditReadingViewModel(
-    private val readingRepository: ReadingRepository
+    private val readingRepository: ReadingRepository,
+    private val settingsDao: SettingsDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddEditUiState())
@@ -49,6 +52,12 @@ class AddEditReadingViewModel(
     fun initializeForNew(username: String) {
         currentUsername = username
         _uiState.value = AddEditUiState()
+        viewModelScope.launch {
+            val events = MedicationEventStore.peekPending(username, settingsDao)
+            if (events.isNotEmpty()) {
+                _uiState.value = _uiState.value.copy(notes = events.joinToString("\n"))
+            }
+        }
     }
 
     fun initializeForEdit(username: String, reading: Reading) {
@@ -184,6 +193,7 @@ class AddEditReadingViewModel(
 
             try {
                 readingRepository.upsertReading(reading)
+                MedicationEventStore.clearPending(currentUsername, settingsDao)
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
                     saved = true
