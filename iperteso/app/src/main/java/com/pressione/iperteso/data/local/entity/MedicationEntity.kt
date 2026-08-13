@@ -19,6 +19,9 @@ data class MedicationEntity(
     @ColumnInfo(name = "name")
     val name: String,
 
+    @ColumnInfo(name = "active_ingredient")
+    val activeIngredient: String = "",
+
     @ColumnInfo(name = "dosage")
     val dosage: String = "",
 

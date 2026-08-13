@@ -59,7 +59,7 @@ class MedicationViewModel(
     }
 
     fun saveMedication(
-        name: String, dosage: String, frequency: String, notes: String,
+        name: String, activeIngredient: String, dosage: String, frequency: String, notes: String,
         startDate: Instant, endDate: Instant?
     ) {
         viewModelScope.launch {
@@ -67,7 +67,8 @@ class MedicationViewModel(
             val medication = Medication(
                 id = _uiState.value.editingMedication?.id ?: java.util.UUID.randomUUID().toString(),
                 username = currentUsername,
-                name = name, dosage = dosage, frequency = frequency, notes = notes,
+                name = name, activeIngredient = activeIngredient,
+                dosage = dosage, frequency = frequency, notes = notes,
                 startDate = startDate, endDate = endDate
             )
             medicationRepository.upsertMedication(medication)

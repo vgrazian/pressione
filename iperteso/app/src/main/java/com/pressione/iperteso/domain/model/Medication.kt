@@ -11,8 +11,9 @@ import java.util.UUID
 data class Medication(
     val id: String = UUID.randomUUID().toString(),
     val username: String,
-    val name: String,           // e.g. "Losartan"
-    val dosage: String = "",    // e.g. "50 mg"
+    val name: String,               // e.g. "Losartan" (product name)
+    val activeIngredient: String = "", // e.g. "losartan potassico"
+    val dosage: String = "",        // e.g. "50 mg"
     val frequency: String = "", // e.g. "1 volta al giorno"
     val notes: String = "",     // e.g. "dopo colazione"
     val startDate: Instant,     // when the patient started this medication

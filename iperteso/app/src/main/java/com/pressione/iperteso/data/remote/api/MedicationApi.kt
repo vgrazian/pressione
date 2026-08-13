@@ -38,6 +38,8 @@ data class MedicationResponse(
     val id: String,
     val username: String,
     val name: String,
+    @SerialName("active_ingredient")
+    val activeIngredient: String? = "",
     val dosage: String? = "",
     val frequency: String? = "",
     val notes: String? = "",
@@ -56,6 +58,8 @@ data class MedicationRequest(
     val id: String,
     val username: String,
     val name: String,
+    @SerialName("active_ingredient")
+    val activeIngredient: String? = "",
     val dosage: String? = "",
     val frequency: String? = "",
     val notes: String? = "",

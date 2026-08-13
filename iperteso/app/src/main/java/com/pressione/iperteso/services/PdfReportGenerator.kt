@@ -128,7 +128,13 @@ object PdfReportGenerator {
                 val dates = "${dateFormat.format(med.startDate.atZone(ZoneId.systemDefault()))} — " +
                     if (med.isActive) "in corso"
                     else dateFormat.format(med.endDate!!.atZone(ZoneId.systemDefault()))
-                val line = "${med.name} ${med.dosage} ${med.frequency} — $status ($dates)"
+                val line = buildString {
+                    append(med.name)
+                    if (med.activeIngredient.isNotBlank()) append(" (${med.activeIngredient})")
+                    if (med.dosage.isNotBlank()) append(" ${med.dosage}")
+                    if (med.frequency.isNotBlank()) append(" ${med.frequency}")
+                    append(" — $status ($dates)")
+                }
                 doc.add(Paragraph(line).setFontSize(10f))
             }
             doc.add(LineSeparator(SolidLine(0.3f)).setMarginTop(4f).setMarginBottom(4f))

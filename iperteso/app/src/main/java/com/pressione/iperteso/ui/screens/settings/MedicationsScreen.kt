@@ -159,8 +159,8 @@ fun MedicationsScreen(
         MedicationDialog(
             editing = uiState.editingMedication,
             onDismiss = { viewModel.dismissDialog() },
-            onSave = { name, dosage, freq, notes, start, end ->
-                viewModel.saveMedication(name, dosage, freq, notes, start, end)
+            onSave = { name, activeIngredient, dosage, freq, notes, start, end ->
+                viewModel.saveMedication(name, activeIngredient, dosage, freq, notes, start, end)
             }
         )
     }
@@ -226,6 +226,15 @@ private fun MedicationItem(
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
+                if (medication.activeIngredient.isNotBlank()) {
+                    Text(
+                        medication.activeIngredient,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
                 val meta = listOf(
                     medication.dosage.takeIf { it.isNotBlank() },
                     medication.frequency.takeIf { it.isNotBlank() }
@@ -273,9 +282,10 @@ private fun MedicationItem(
 private fun MedicationDialog(
     editing: Medication?,
     onDismiss: () -> Unit,
-    onSave: (String, String, String, String, Instant, Instant?) -> Unit
+    onSave: (String, String, String, String, String, Instant, Instant?) -> Unit
 ) {
     var name by remember { mutableStateOf(editing?.name ?: "") }
+    var activeIngredient by remember { mutableStateOf(editing?.activeIngredient ?: "") }
     var dosage by remember { mutableStateOf(editing?.dosage ?: "") }
     var frequency by remember { mutableStateOf(editing?.frequency ?: "") }
     var notes by remember { mutableStateOf(editing?.notes ?: "") }
@@ -293,6 +303,9 @@ private fun MedicationDialog(
             Column {
                 OutlinedTextField(value = name, onValueChange = { name = it },
                     label = { Text(stringResource(R.string.settings_med_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = activeIngredient, onValueChange = { activeIngredient = it },
+                    label = { Text(stringResource(R.string.settings_med_active_ingredient)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
                 Row {
                     OutlinedTextField(value = dosage, onValueChange = { dosage = it },
@@ -321,7 +334,7 @@ private fun MedicationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(name, dosage, frequency, notes, startDate, endDate) },
+            TextButton(onClick = { onSave(name, activeIngredient, dosage, frequency, notes, startDate, endDate) },
                 enabled = name.isNotBlank()) { Text(stringResource(R.string.common_save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } }

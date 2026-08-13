@@ -120,6 +120,7 @@
     <string name="settings_med_edit">Edit medication</string>
     <string name="settings_med_new">New medication</string>
     <string name="settings_med_name">Medication name</string>
+    <string name="settings_med_active_ingredient">Active ingredient</string>
     <string name="settings_med_dosage">Dosage</string>
     <string name="settings_med_frequency">Frequency</string>
     <string name="settings_med_notes">Notes</string>

@@ -52,6 +52,7 @@ object BackupService {
                     add(buildJsonObject {
                         put("id", m.id)
                         put("name", m.name)
+                        put("activeIngredient", m.activeIngredient)
                         put("dosage", m.dosage)
                         put("frequency", m.frequency)
                         put("notes", m.notes)
@@ -111,6 +112,7 @@ object BackupService {
                         id = o["id"]?.jsonPrimitive?.contentOrNull ?: java.util.UUID.randomUUID().toString(),
                         username = username,
                         name = o["name"]?.jsonPrimitive?.contentOrNull ?: return@runCatching,
+                        activeIngredient = o["activeIngredient"]?.jsonPrimitive?.contentOrNull ?: "",
                         dosage = o["dosage"]?.jsonPrimitive?.contentOrNull ?: "",
                         frequency = o["frequency"]?.jsonPrimitive?.contentOrNull ?: "",
                         notes = o["notes"]?.jsonPrimitive?.contentOrNull ?: "",

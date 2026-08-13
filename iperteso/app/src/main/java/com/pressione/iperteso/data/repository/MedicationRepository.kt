@@ -75,6 +75,7 @@ class MedicationRepository(
 
 fun Medication.toEntity(syncStatus: String) = MedicationEntity(
     id = id, username = username, name = name,
+    activeIngredient = activeIngredient,
     dosage = dosage, frequency = frequency, notes = notes,
     startDate = startDate.toEpochMilli(),
     endDate = endDate?.toEpochMilli(),
@@ -85,6 +86,7 @@ fun Medication.toEntity(syncStatus: String) = MedicationEntity(
 
 fun Medication.toApiRequest() = MedicationRequest(
     id = id, username = username, name = name,
+    activeIngredient = activeIngredient,
     dosage = dosage, frequency = frequency, notes = notes,
     startDate = startDate.toString(),
     endDate = endDate?.toString(),
@@ -93,6 +95,7 @@ fun Medication.toApiRequest() = MedicationRequest(
 
 fun MedicationEntity.toDomain() = Medication(
     id = id, username = username, name = name,
+    activeIngredient = activeIngredient,
     dosage = dosage, frequency = frequency, notes = notes,
     startDate = Instant.ofEpochMilli(startDate),
     endDate = endDate?.let { Instant.ofEpochMilli(it) },
@@ -102,6 +105,7 @@ fun MedicationEntity.toDomain() = Medication(
 
 fun com.pressione.iperteso.data.remote.api.MedicationResponse.toEntity() = MedicationEntity(
     id = id, username = username, name = name,
+    activeIngredient = activeIngredient ?: "",
     dosage = dosage ?: "", frequency = frequency ?: "", notes = notes ?: "",
     startDate = Instant.parse(startDate).toEpochMilli(),
     endDate = endDate?.let { Instant.parse(it)?.toEpochMilli() },
