@@ -107,11 +107,22 @@ fun MedicationsScreen(
             else -> {
                 val active = uiState.medications.filter { it.isActive }
                 val historical = uiState.medications.filter { !it.isActive }
+                val showHeaders = active.isNotEmpty() && historical.isNotEmpty()
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    if (showHeaders) {
+                        item {
+                            Text(
+                                stringResource(R.string.medications_active),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     items(active, key = { it.id }) { med ->
                         MedicationItem(
                             medication = med,
@@ -206,24 +217,31 @@ private fun MedicationItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     medication.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
-                Row {
-                    if (medication.dosage.isNotBlank()) {
-                        Text(medication.dosage, style = MaterialTheme.typography.bodySmall)
-                        Text(" · ", style = MaterialTheme.typography.bodySmall)
-                    }
+                val meta = listOf(
+                    medication.dosage.takeIf { it.isNotBlank() },
+                    medication.frequency.takeIf { it.isNotBlank() }
+                ).filterNotNull()
+                if (meta.isNotEmpty()) {
                     Text(
-                        "${dateFormat.format(medication.startDate.atZone(ZoneId.systemDefault()))} — " +
-                        if (medication.isActive) stringResource(R.string.settings_medication_in_progress)
-                        else dateFormat.format(medication.endDate!!.atZone(ZoneId.systemDefault())),
+                        meta.joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
+                Text(
+                    "${dateFormat.format(medication.startDate.atZone(ZoneId.systemDefault()))} — " +
+                    if (medication.isActive) stringResource(R.string.settings_medication_in_progress)
+                    else dateFormat.format(medication.endDate!!.atZone(ZoneId.systemDefault())),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (medication.notes.isNotBlank()) {
                     Text(
                         medication.notes,

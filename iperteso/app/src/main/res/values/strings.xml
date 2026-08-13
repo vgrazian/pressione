@@ -111,6 +111,7 @@
     <string name="reminder_channel_desc">Notifiche giornaliere per ricordare di misurare la pressione</string>
     <string name="settings_medications">Farmaci</string>
     <string name="medications_history">Storico</string>
+    <string name="medications_active">In corso</string>
     <string name="medications_empty">Nessun farmaco registrato. Aggiungine uno per tenerne traccia.</string>
     <string name="settings_add_medication">Aggiungi farmaco</string>
     <string name="settings_medication_delete">Elimina farmaco</string>

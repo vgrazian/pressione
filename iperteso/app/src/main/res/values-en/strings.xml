@@ -111,6 +111,7 @@
     <string name="reminder_channel_desc">Daily notifications to remind you to measure your blood pressure</string>
     <string name="settings_medications">Medications</string>
     <string name="medications_history">History</string>
+    <string name="medications_active">Current</string>
     <string name="medications_empty">No medications recorded. Add one to keep track.</string>
     <string name="settings_add_medication">Add medication</string>
     <string name="settings_medication_delete">Delete medication</string>
