@@ -6,7 +6,7 @@ import kotlin.random.Random
 /**
  * Ironic phrases shown after saving a reading, ported from the web app's phrases.js.
  * Mapped by ESC/ESH category. Gendered variants resolve to masculine by default.
- * ~30% chance of no phrase; never repeats the last phrase for the same category.
+ * ~15% chance of no phrase; never repeats the last phrase for the same category.
  */
 object Phrases {
 
@@ -138,12 +138,12 @@ object Phrases {
     }
 
     /**
-     * Pick a random phrase for the given category, or null (~30% of the time).
+     * Pick a random phrase for the given category, or null (~15% of the time).
      */
     fun getRandomPhrase(category: Category, gender: String?): String? {
         val pool = POOLS[category.toPool()] ?: return null
         if (pool.isEmpty()) return null
-        if (Random.nextFloat() < 0.30f) return null
+        if (Random.nextFloat() < 0.15f) return null
 
         var eligible = pool.indices.toList()
         val last = lastIndex[category]
