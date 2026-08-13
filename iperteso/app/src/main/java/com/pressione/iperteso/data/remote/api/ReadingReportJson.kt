@@ -21,8 +21,9 @@ import java.time.Instant
  */
 object ReadingReportJson {
 
-    fun readingsToJson(readings: List<Reading>): JsonElement = buildJsonObject {
-        put("username", readings.firstOrNull()?.username ?: "")
+    fun readingsToJson(readings: List<Reading>, anonymize: Boolean = false): JsonElement = buildJsonObject {
+        put("username", if (anonymize) "" else readings.firstOrNull()?.username ?: "")
+        put("anonymize", anonymize)
         put("readings", buildJsonArray {
             readings.forEach { r ->
                 add(buildJsonObject {

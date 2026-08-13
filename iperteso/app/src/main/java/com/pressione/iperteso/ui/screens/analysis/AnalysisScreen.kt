@@ -98,9 +98,17 @@ fun AnalysisScreen(
     var showShareLinkDialog by remember { mutableStateOf(false) }
     var shareLink by remember { mutableStateOf<String?>(null) }
     var sharePin by remember { mutableStateOf<String?>(null) }
+    var protectPin by remember { mutableStateOf(false) }
+    var anonymizeLink by remember { mutableStateOf(false) }
     var shareMessage by remember { mutableStateOf("") }
     var activeLinks by remember { mutableStateOf<List<SharedReportResponse>>(emptyList()) }
     var timeBands by remember { mutableStateOf(TimeBand.defaults()) }
+
+    fun copyToClipboard(text: String) {
+        val clip = android.content.ClipData.newPlainText("link", text)
+        (context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+            .setPrimaryClip(clip)
+    }
 
     suspend fun refreshActiveLinks() {
         activeLinks = runCatching { SharedReportApi().getSharedReports(session.username) }
@@ -154,11 +162,17 @@ fun AnalysisScreen(
     suspend fun generateShareLink() {
         try {
             val token = java.util.UUID.randomUUID().toString().replace("-", "")
-            val pin = (1000..9999).random().toString()
-            val pinHash = com.pressione.iperteso.util.PasswordHasher.hash(pin)
+            val pinHash: String? = if (protectPin) {
+                val pin = (1000..9999).random().toString()
+                sharePin = pin
+                com.pressione.iperteso.util.PasswordHasher.hash(pin)
+            } else {
+                sharePin = null
+                null
+            }
             val api = SharedReportApi()
             val expiresAt = java.time.Instant.now().plusSeconds(48 * 3600).toString()
-            val reportData = ReadingReportJson.readingsToJson(uiState.readings)
+            val reportData = ReadingReportJson.readingsToJson(uiState.readings, anonymize = anonymizeLink)
             api.createSharedReport(
                 SharedReportRequest(
                     username = session.username,
@@ -169,7 +183,10 @@ fun AnalysisScreen(
                 )
             )
             shareLink = "https://vgrazian.github.io/pressione/#/share/$token"
-            sharePin = pin
+            // Auto-copy to clipboard (link + PIN if present)
+            val copyText = if (sharePin != null) "$shareLink\nPIN: $sharePin" else shareLink!!
+            copyToClipboard(copyText)
+            shareMessage = context.getString(R.string.analysis_link_copied)
             showShareLinkDialog = true
             refreshActiveLinks()
         } catch (e: Exception) {
@@ -293,6 +310,32 @@ fun AnalysisScreen(
                                 Text(stringResource(R.string.analysis_share_whatsapp))
                             }
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(checked = protectPin, onCheckedChange = { protectPin = it })
+                                Text(
+                                    stringResource(R.string.analysis_share_pin_opt),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(checked = anonymizeLink, onCheckedChange = { anonymizeLink = it })
+                                Text(
+                                    stringResource(R.string.analysis_share_anonymize),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                         if (activeLinks.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(12.dp))
                             HorizontalDivider()
@@ -309,11 +352,7 @@ fun AnalysisScreen(
                                 ActiveLinkRow(
                                     link = link,
                                     onCopy = {
-                                        val clip = android.content.ClipData.newPlainText(
-                                            "link", "https://vgrazian.github.io/pressione/#/share/${link.token}"
-                                        )
-                                        (context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
-                                            .setPrimaryClip(clip)
+                                        copyToClipboard("https://vgrazian.github.io/pressione/#/share/${link.token}")
                                         shareMessage = copiedMsg
                                     },
                                     onRevoke = {
