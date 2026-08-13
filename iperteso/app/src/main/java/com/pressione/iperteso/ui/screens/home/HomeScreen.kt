@@ -42,6 +42,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pressione.iperteso.R
+import com.pressione.iperteso.ui.components.AppBottomNav
+import com.pressione.iperteso.ui.components.AppTab
 import com.pressione.iperteso.ui.components.CategoryBadge
 import com.pressione.iperteso.ui.components.ReadingCard
 import com.pressione.iperteso.ui.components.SkeletonLoader
@@ -57,6 +59,7 @@ fun HomeScreen(
     onNavigateToList: () -> Unit,
     onNavigateToAnalysis: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateTab: (AppTab) -> Unit,
     onLogout: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
@@ -117,6 +120,13 @@ fun HomeScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_new_reading))
             }
+        },
+        bottomBar = {
+            AppBottomNav(
+                current = AppTab.HOME,
+                isAdmin = session.role == "admin",
+                onNavigate = onNavigateTab
+            )
         }
     ) { paddingValues ->
         if (uiState.isLoading) {

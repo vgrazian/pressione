@@ -50,6 +50,8 @@ import com.pressione.iperteso.domain.statistics.StatisticsCalculator
 import com.pressione.iperteso.services.LocaleManager
 import com.pressione.iperteso.services.PdfReportGenerator
 import com.pressione.iperteso.services.TimeBandsStore
+import com.pressione.iperteso.ui.components.AppBottomNav
+import com.pressione.iperteso.ui.components.AppTab
 import com.pressione.iperteso.ui.components.SkeletonLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -63,6 +65,7 @@ import java.time.format.DateTimeFormatter
 fun AnalysisScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
+    onNavigateTab: (AppTab) -> Unit,
     viewModel: AnalysisViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -133,6 +136,13 @@ fun AnalysisScreen(
                         }
                     }
                 }
+            )
+        },
+        bottomBar = {
+            AppBottomNav(
+                current = AppTab.ANALYSIS,
+                isAdmin = session.role == "admin",
+                onNavigate = onNavigateTab
             )
         }
     ) { paddingValues ->

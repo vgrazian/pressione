@@ -9,10 +9,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.pressione.iperteso.ui.components.AppTab
 import com.pressione.iperteso.ui.screens.analysis.AnalysisScreen
 import com.pressione.iperteso.ui.screens.auth.AuthViewModel
 import com.pressione.iperteso.ui.screens.auth.LoginScreen
 import com.pressione.iperteso.ui.screens.home.HomeScreen
+import com.pressione.iperteso.ui.screens.operators.OperatoriScreen
 import com.pressione.iperteso.ui.screens.readings.AddEditReadingScreen
 import com.pressione.iperteso.ui.screens.readings.ReadingListScreen
 import com.pressione.iperteso.ui.screens.report.SharedReportScreen
@@ -31,6 +33,7 @@ object Routes {
     const val EDIT_READING = "edit_reading/{id}"
     const val READING_LIST = "reading_list"
     const val ANALYSIS = "analysis"
+    const val OPERATORS = "operators"
     const val SETTINGS = "settings"
     const val SHARED_REPORT = "shared/{token}"
 }
@@ -40,6 +43,24 @@ fun NavGraph(sharedToken: String? = null) {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = koinViewModel()
     val authState by authViewModel.uiState.collectAsState()
+
+    fun routeForTab(tab: AppTab): String = when (tab) {
+        AppTab.HOME -> Routes.HOME
+        AppTab.LIST -> Routes.READING_LIST
+        AppTab.ANALYSIS -> Routes.ANALYSIS
+        AppTab.OPERATORS -> Routes.OPERATORS
+        AppTab.SETTINGS -> Routes.SETTINGS
+    }
+
+    fun navigateToTab(tab: AppTab) {
+        navController.navigate(routeForTab(tab)) {
+            popUpTo(Routes.HOME) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    fun goHome() = navigateToTab(AppTab.HOME)
 
     // Deep link: open shared report directly if token provided
     LaunchedEffect(sharedToken) {
@@ -76,9 +97,10 @@ fun NavGraph(sharedToken: String? = null) {
                 HomeScreen(
                     session = session,
                     onNavigateToAdd = { navController.navigate(Routes.ADD_READING) },
-                    onNavigateToList = { navController.navigate(Routes.READING_LIST) },
-                    onNavigateToAnalysis = { navController.navigate(Routes.ANALYSIS) },
-                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                    onNavigateToList = { navigateToTab(AppTab.LIST) },
+                    onNavigateToAnalysis = { navigateToTab(AppTab.ANALYSIS) },
+                    onNavigateToSettings = { navigateToTab(AppTab.SETTINGS) },
+                    onNavigateTab = { navigateToTab(it) },
                     onLogout = {
                         authViewModel.logout()
                         navController.navigate(Routes.LOGIN) {
@@ -117,8 +139,9 @@ fun NavGraph(sharedToken: String? = null) {
             if (session != null) {
                 ReadingListScreen(
                     session = session,
-                    onNavigateBack = { navController.popBackStack() },
-                    onEditReading = { id -> navController.navigate("edit_reading/$id") }
+                    onNavigateBack = { goHome() },
+                    onEditReading = { id -> navController.navigate("edit_reading/$id") },
+                    onNavigateTab = { navigateToTab(it) }
                 )
             }
         }
@@ -128,7 +151,19 @@ fun NavGraph(sharedToken: String? = null) {
             if (session != null) {
                 AnalysisScreen(
                     session = session,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { goHome() },
+                    onNavigateTab = { navigateToTab(it) }
+                )
+            }
+        }
+
+        composable(Routes.OPERATORS) {
+            val session = authState.session
+            if (session != null && session.role == "admin") {
+                OperatoriScreen(
+                    session = session,
+                    onNavigateBack = { goHome() },
+                    onNavigateTab = { navigateToTab(it) }
                 )
             }
         }
@@ -138,7 +173,8 @@ fun NavGraph(sharedToken: String? = null) {
             if (session != null) {
                 SettingsScreen(
                     session = session,
-                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateBack = { goHome() },
+                    onNavigateTab = { navigateToTab(it) },
                     onLogout = {
                         authViewModel.logout()
                         navController.navigate(Routes.LOGIN) {

@@ -2,12 +2,14 @@ package com.pressione.iperteso.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pressione.iperteso.data.SessionManager
 import com.pressione.iperteso.data.repository.AuthError
 import com.pressione.iperteso.data.repository.AuthRepository
 import com.pressione.iperteso.domain.model.AuthSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class AuthUiState(
@@ -18,11 +20,28 @@ data class AuthUiState(
 )
 
 class AuthViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+
+    init {
+        restoreSession()
+    }
+
+    private fun restoreSession() {
+        viewModelScope.launch {
+            val session = sessionManager.session.first()
+            if (session != null) {
+                _uiState.value = AuthUiState(
+                    isLoggedIn = true,
+                    session = session
+                )
+            }
+        }
+    }
 
     fun login(username: String, password: String) {
         viewModelScope.launch {
@@ -32,6 +51,7 @@ class AuthViewModel(
 
             result.fold(
                 onSuccess = { session ->
+                    sessionManager.saveSession(session)
                     _uiState.value = AuthUiState(
                         isLoggedIn = true,
                         session = session
@@ -53,6 +73,7 @@ class AuthViewModel(
     }
 
     fun logout() {
+        viewModelScope.launch { sessionManager.clearSession() }
         _uiState.value = AuthUiState()
     }
 

@@ -13,6 +13,14 @@
     <string name="common_back">Indietro</string>
     <string name="common_loading">Caricamento…</string>
     <string name="common_update">Aggiorna</string>
+    <string name="common_confirm">Conferma</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_list">Lista</string>
+    <string name="nav_analysis">Analisi</string>
+    <string name="nav_operators">Gestione</string>
+    <string name="nav_settings">Altro</string>
 
     <!-- Login -->
     <string name="login_tagline">Quando la massima è alta,\nma la pazienza è minima.</string>
@@ -150,11 +158,40 @@
     <string name="settings_restore_sub">Importa dati da un file JSON</string>
     <string name="settings_time_bands">Fasce orarie</string>
     <string name="settings_time_bands_save">Salva fasce orarie</string>
+    <string name="settings_time_bands_reset">Ripristina default</string>
+    <string name="settings_time_bands_hint">Trascina i separatori per regolare le fasce. Le fasce non possono sovrapporsi.</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Chiaro</string>
+    <string name="settings_theme_dark">Scuro</string>
     <string name="settings_band_start">Inizio (ora)</string>
     <string name="settings_band_end">Fine (ora)</string>
     <string name="settings_about">Info</string>
     <string name="settings_logout">Esci</string>
     <string name="settings_logout_confirm">Sei sicuro di voler uscire?</string>
+
+    <!-- Operators (user management) -->
+    <string name="operators_title">Gestione Utenti</string>
+    <string name="operators_new_user">Nuovo Utente</string>
+    <string name="operators_username">Username</string>
+    <string name="operators_email">Email</string>
+    <string name="operators_password">Password</string>
+    <string name="operators_role_admin">Admin</string>
+    <string name="operators_role_user">Utente</string>
+    <string name="operators_active">Attivo</string>
+    <string name="operators_inactive">Disattivato</string>
+    <string name="operators_create">Crea Utente</string>
+    <string name="operators_error_fill_all">Compila tutti i campi</string>
+    <string name="operators_error_pw_short">La password deve essere di almeno 8 caratteri</string>
+    <string name="operators_error_email">Inserisci un indirizzo email valido</string>
+    <string name="operators_delete_title">Elimina utente</string>
+    <string name="operators_delete_confirm">Eliminare PERMANENTEMENTE l\'utente \"%1$s\"? Tutti i suoi dati andranno persi.</string>
+    <string name="operators_deactivate_title">Disattiva utente</string>
+    <string name="operators_deactivate_confirm">Disattivare l\'utente \"%1$s\"?</string>
+    <string name="operators_activate_title">Riattiva utente</string>
+    <string name="operators_activate_confirm">Riattivare l\'utente \"%1$s\"? Potrà nuovamente accedere.</string>
+    <string name="operators_reset_pw">Reimposta password</string>
+    <string name="operators_reset_pw_for">Reimposta password per %1$s</string>
+    <string name="operators_new_pw">Nuova password</string>
 
     <!-- Analysis -->
     <string name="analysis_title">Analisi</string>

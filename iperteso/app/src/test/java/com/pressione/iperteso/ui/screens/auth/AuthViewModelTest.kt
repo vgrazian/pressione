@@ -1,12 +1,15 @@
 package com.pressione.iperteso.ui.screens.auth
 
+import com.pressione.iperteso.data.SessionManager
 import com.pressione.iperteso.data.repository.AuthError
 import com.pressione.iperteso.data.repository.AuthRepository
 import com.pressione.iperteso.domain.model.AuthSession
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -24,6 +27,7 @@ import org.junit.Test
 class AuthViewModelTest {
 
     private lateinit var authRepository: AuthRepository
+    private lateinit var sessionManager: SessionManager
     private lateinit var viewModel: AuthViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -31,7 +35,11 @@ class AuthViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         authRepository = mockk()
-        viewModel = AuthViewModel(authRepository)
+        sessionManager = mockk()
+        every { sessionManager.session } returns flowOf(null)
+        coEvery { sessionManager.saveSession(any()) } returns Unit
+        coEvery { sessionManager.clearSession() } returns Unit
+        viewModel = AuthViewModel(authRepository, sessionManager)
     }
 
     @After

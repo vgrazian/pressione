@@ -16,12 +16,14 @@ Il progetto è distribuito in **due versioni** che condividono lo stesso backend
 | **IperTeso (Android)** | Kotlin 2.0 + Jetpack Compose, Material3 | `iperteso/app/` | Smartphone Android 8.0+ (minSdk 26) |
 
 **Modello condiviso:**
+
 - Stesso database Supabase (`public.users`, `readings`, `medications`, `settings`, `shared_reports`)
 - Stessa auth table-based con hash SHA-256 delle password
 - Stesse regole cliniche: classificazione ESC/ESH, validazione range + DIA<SYS + duplicati 10 min
 - Stesse funzioni power: import CSV, backup/restore JSON, fasce orarie configurabili, confronto 7/30 giorni, profilo esteso, cambio password/email
 
 **Differenze di piattaforma:**
+
 - Web: PWA con service worker, offline via IndexedDB (Dexie), deploy su GitHub Pages
 - Android: offline via Room (SQLite), sync in background con WorkManager, notifiche native, deep link `iperteso://share/{token}`, PDF via iText7
 

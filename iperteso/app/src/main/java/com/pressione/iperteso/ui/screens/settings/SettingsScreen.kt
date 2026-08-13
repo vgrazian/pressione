@@ -1,6 +1,7 @@
 package com.pressione.iperteso.ui.screens.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,19 +16,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -71,7 +70,12 @@ import com.pressione.iperteso.services.CsvExporter
 import com.pressione.iperteso.services.CsvImporter
 import com.pressione.iperteso.services.LocaleManager
 import com.pressione.iperteso.services.ReminderScheduler
+import com.pressione.iperteso.services.ThemeManager
 import com.pressione.iperteso.services.TimeBandsStore
+import com.pressione.iperteso.ui.components.AppBottomNav
+import com.pressione.iperteso.ui.components.AppTab
+import com.pressione.iperteso.ui.components.CollapsibleSection
+import com.pressione.iperteso.ui.components.TimeBandSlider
 import com.pressione.iperteso.ui.theme.ErrorRed
 import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
@@ -86,10 +90,10 @@ import kotlinx.coroutines.withContext
 fun SettingsScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
+    onNavigateTab: (AppTab) -> Unit,
     onLogout: () -> Unit,
     medicationViewModel: MedicationViewModel = koinViewModel()
 ) {
-    var darkMode by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var remindersEnabled by remember { mutableStateOf(false) }
@@ -97,6 +101,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val themeMode by ThemeManager.mode.collectAsState()
     val currentLanguage = LocaleManager.getLanguage(context)
     val activity = context as? android.app.Activity
 
@@ -160,6 +165,7 @@ fun SettingsScreen(
 
     // ── Fasce orarie ──
     var bands by remember { mutableStateOf(TimeBand.defaults()) }
+    var savedBands by remember { mutableStateOf<List<TimeBand>?>(null) }
     var bandsMessage by remember { mutableStateOf("") }
 
     val db = remember { com.pressione.iperteso.IperTesoApplication.instance.database }
@@ -180,6 +186,7 @@ fun SettingsScreen(
             profilePostalCode = user.postalCode ?: ""
         }
         bands = TimeBandsStore.load(session.username, db.settingsDao())
+        savedBands = bands.toList()
     }
 
     fun saveProfile() {
@@ -292,8 +299,14 @@ fun SettingsScreen(
     fun saveBands() {
         scope.launch {
             TimeBandsStore.save(session.username, bands, db.settingsDao())
+            savedBands = bands.toList()
             bandsMessage = "Fasce orarie salvate!"
         }
+    }
+
+    fun resetBands() {
+        bands = TimeBand.defaults()
+        bandsMessage = "Fasce ripristinate (salva per confermare)"
     }
 
     val importCsvLauncher = rememberLauncherForActivityResult(
@@ -333,11 +346,19 @@ fun SettingsScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            AppBottomNav(
+                current = AppTab.SETTINGS,
+                isAdmin = session.role == "admin",
+                onNavigate = onNavigateTab
+            )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier.fillMaxSize().padding(paddingValues).verticalScroll(rememberScrollState())
         ) {
+            // ── Account (always visible) ──
             SectionHeader(stringResource(R.string.settings_account))
             ListItem(
                 headlineContent = { Text(session.username) },
@@ -356,37 +377,7 @@ fun SettingsScreen(
             )
             HorizontalDivider()
 
-            // ── Profilo esteso ──
-            SectionHeader(stringResource(R.string.settings_profile))
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_edit_profile)) },
-                supportingContent = { Text(stringResource(R.string.settings_edit_profile_sub)) },
-                leadingContent = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.settings_edit_profile)) },
-                modifier = Modifier.clickable { showProfileDialog = true }
-            )
-            HorizontalDivider()
-
-            // ── Admin Section (RBAC: only for admin role) ──
-            if (session.role == "admin") {
-                SectionHeader(stringResource(R.string.settings_admin))
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_manage_users)) },
-                    supportingContent = { Text(stringResource(R.string.settings_manage_users_sub)) },
-                    leadingContent = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.settings_manage_users)) }
-                )
-                HorizontalDivider()
-            }
-
-            SectionHeader(stringResource(R.string.settings_appearance))
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_dark_mode)) },
-                supportingContent = { Text(stringResource(if (darkMode) R.string.settings_on else R.string.settings_off)) },
-                leadingContent = { Icon(Icons.Default.DarkMode, contentDescription = stringResource(R.string.settings_dark_mode)) },
-                trailingContent = { Switch(checked = darkMode, onCheckedChange = { darkMode = it }) }
-            )
-            HorizontalDivider()
-
-            // ── Language (i18n) ──
+            // ── Language (always visible) ──
             SectionHeader(stringResource(R.string.settings_language))
             ListItem(
                 headlineContent = { Text("Italiano") },
@@ -414,125 +405,190 @@ fun SettingsScreen(
             )
             HorizontalDivider()
 
-            // ── Fasce orarie configurabili ──
-            SectionHeader(stringResource(R.string.settings_time_bands))
-            for (band in bands) {
-                TimeBandRow(
-                    band = band,
-                    onStartChange = { newStart ->
-                        bands = bands.map { if (it.key == band.key) it.copy(startHour = newStart) else it }
+            // ── Profilo ──
+            CollapsibleSection(
+                title = "👤 " + stringResource(R.string.settings_profile),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_edit_profile)) },
+                    supportingContent = { Text(stringResource(R.string.settings_edit_profile_sub)) },
+                    leadingContent = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.settings_edit_profile)) },
+                    modifier = Modifier.clickable { showProfileDialog = true }
+                )
+            }
+
+            // ── Farmaci ──
+            CollapsibleSection(
+                title = "💊 " + stringResource(R.string.settings_medications),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                if (!medState.isLoading) {
+                    for (med in medState.medications) {
+                        MedicationItem(
+                            medication = med,
+                            onStop = { medicationViewModel.stopMedication(med) },
+                            onDelete = { medicationViewModel.deleteMedication(med.id) }
+                        )
+                    }
+                }
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_add_medication)) },
+                    leadingContent = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.settings_add_medication)) },
+                    modifier = Modifier.clickable { medicationViewModel.showAddDialog() }
+                )
+            }
+
+            // ── Promemoria ──
+            CollapsibleSection(
+                title = "🔔 " + stringResource(R.string.settings_reminders),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_daily_reminder)) },
+                    supportingContent = {
+                        Text(stringResource(if (remindersEnabled) R.string.settings_reminder_at else R.string.settings_off))
                     },
-                    onEndChange = { newEnd ->
-                        bands = bands.map { if (it.key == band.key) it.copy(endHour = newEnd) else it }
+                    leadingContent = { Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.settings_reminders)) },
+                    trailingContent = {
+                        Switch(checked = remindersEnabled, onCheckedChange = { toggleReminders(it) })
                     }
                 )
             }
-            ListItem(
-                headlineContent = { Text(bandsMessage.ifBlank { stringResource(R.string.settings_time_bands_save) }) },
-                leadingContent = { Icon(Icons.Default.Schedule, contentDescription = stringResource(R.string.settings_time_bands_save)) },
-                modifier = Modifier.clickable { saveBands() }
-            )
-            HorizontalDivider()
 
-            SectionHeader(stringResource(R.string.settings_reminders))
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_daily_reminder)) },
-                supportingContent = {
-                    Text(stringResource(if (remindersEnabled) R.string.settings_reminder_at else R.string.settings_off))
-                },
-                leadingContent = { Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.settings_reminders)) },
-                trailingContent = {
-                    Switch(checked = remindersEnabled, onCheckedChange = { toggleReminders(it) })
+            // ── Fasce Orarie ──
+            CollapsibleSection(
+                title = "⏰ " + stringResource(R.string.settings_time_bands),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    stringResource(R.string.settings_time_bands_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TimeBandSlider(bands = bands, onBandsChange = { bands = it })
+                Spacer(modifier = Modifier.height(8.dp))
+                val bandsDirty = savedBands != null && savedBands != bands
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Button(onClick = { saveBands() }, enabled = bandsDirty) {
+                        Text(stringResource(R.string.settings_time_bands_save))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(onClick = { resetBands() }) {
+                        Text(stringResource(R.string.settings_time_bands_reset))
+                    }
                 }
-            )
-            HorizontalDivider()
-
-            SectionHeader(stringResource(R.string.settings_medications))
-            if (!medState.isLoading) {
-                for (med in medState.medications) {
-                    MedicationItem(
-                        medication = med,
-                        onStop = { medicationViewModel.stopMedication(med) },
-                        onDelete = { medicationViewModel.deleteMedication(med.id) }
-                    )
+                if (bandsMessage.isNotBlank()) {
+                    Text(bandsMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_add_medication)) },
-                leadingContent = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.settings_add_medication)) },
-                modifier = Modifier.clickable { medicationViewModel.showAddDialog() }
-            )
-            HorizontalDivider()
 
-            SectionHeader(stringResource(R.string.settings_data))
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_export_csv)) },
-                supportingContent = { Text(stringResource(R.string.settings_export_csv_sub)) },
-                leadingContent = { Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.settings_export_csv)) },
-                modifier = Modifier.clickable {
-                    scope.launch {
-                        withContext(Dispatchers.IO) {
-                            val db = com.pressione.iperteso.IperTesoApplication.instance.database
-                            var readingList = emptyList<com.pressione.iperteso.domain.model.Reading>()
-                            db.readingDao().getReadingsByUser(session.username).collect { entities ->
-                                readingList = entities.map {
-                                    com.pressione.iperteso.domain.model.Reading(
-                                        id = it.id, username = it.username, systolic = it.systolic,
-                                        diastolic = it.diastolic, heartRate = it.heartRate,
-                                        timestamp = java.time.Instant.ofEpochMilli(it.timestamp),
-                                        notes = it.notes
-                                    )
+            // ── Aspetto ──
+            CollapsibleSection(
+                title = "🎨 " + stringResource(R.string.settings_appearance),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ThemeManager.Mode.entries.forEach { mode ->
+                        val label = when (mode) {
+                            ThemeManager.Mode.SYSTEM -> stringResource(R.string.settings_theme_system)
+                            ThemeManager.Mode.LIGHT -> stringResource(R.string.settings_theme_light)
+                            ThemeManager.Mode.DARK -> stringResource(R.string.settings_theme_dark)
+                        }
+                        androidx.compose.material3.FilterChip(
+                            selected = themeMode == mode,
+                            onClick = { ThemeManager.setMode(mode) },
+                            label = { Text(label) }
+                        )
+                    }
+                }
+            }
+
+            // ── Importa / Esporta ──
+            CollapsibleSection(
+                title = "📥 " + stringResource(R.string.settings_data),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_export_csv)) },
+                    supportingContent = { Text(stringResource(R.string.settings_export_csv_sub)) },
+                    leadingContent = { Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.settings_export_csv)) },
+                    modifier = Modifier.clickable {
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                val db = com.pressione.iperteso.IperTesoApplication.instance.database
+                                var readingList = emptyList<com.pressione.iperteso.domain.model.Reading>()
+                                db.readingDao().getReadingsByUser(session.username).collect { entities ->
+                                    readingList = entities.map {
+                                        com.pressione.iperteso.domain.model.Reading(
+                                            id = it.id, username = it.username, systolic = it.systolic,
+                                            diastolic = it.diastolic, heartRate = it.heartRate,
+                                            timestamp = java.time.Instant.ofEpochMilli(it.timestamp),
+                                            notes = it.notes
+                                        )
+                                    }
+                                    return@collect
                                 }
-                                return@collect
-                            }
-                            kotlinx.coroutines.delay(50)
-                            val file = CsvExporter.export(context, session.username, readingList)
-                            withContext(Dispatchers.Main) {
-                                CsvExporter.shareCsv(context, file)
+                                kotlinx.coroutines.delay(50)
+                                val file = CsvExporter.export(context, session.username, readingList)
+                                withContext(Dispatchers.Main) {
+                                    CsvExporter.shareCsv(context, file)
+                                }
                             }
                         }
                     }
-                }
-            )
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_import_csv)) },
-                supportingContent = { Text(stringResource(R.string.settings_import_csv_sub)) },
-                leadingContent = { Icon(Icons.Default.FileUpload, contentDescription = stringResource(R.string.settings_import_csv)) },
-                modifier = Modifier.clickable { importCsvLauncher.launch(arrayOf("text/*", "text/csv", "application/json")) }
-            )
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_backup)) },
-                supportingContent = { Text(stringResource(R.string.settings_backup_sub)) },
-                leadingContent = { Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.settings_backup)) },
-                modifier = Modifier.clickable { runBackup() }
-            )
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_restore)) },
-                supportingContent = { Text(stringResource(R.string.settings_restore_sub)) },
-                leadingContent = { Icon(Icons.Default.FileUpload, contentDescription = stringResource(R.string.settings_restore)) },
-                modifier = Modifier.clickable { restoreLauncher.launch(arrayOf("application/json", "text/*")) }
-            )
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_delete_all)) },
-                supportingContent = { Text(stringResource(R.string.settings_delete_all_sub)) },
-                leadingContent = { Icon(Icons.Default.DeleteForever, contentDescription = stringResource(R.string.settings_delete_all)) },
-                modifier = Modifier.clickable { showDeleteDialog = true }
-            )
-            if (dataMessage.isNotBlank()) {
+                )
                 ListItem(
-                    headlineContent = { Text(dataMessage) },
-                    leadingContent = { Icon(Icons.Default.Info, contentDescription = dataMessage) }
+                    headlineContent = { Text(stringResource(R.string.settings_import_csv)) },
+                    supportingContent = { Text(stringResource(R.string.settings_import_csv_sub)) },
+                    leadingContent = { Icon(Icons.Default.FileUpload, contentDescription = stringResource(R.string.settings_import_csv)) },
+                    modifier = Modifier.clickable { importCsvLauncher.launch(arrayOf("text/*", "text/csv", "application/json")) }
+                )
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_backup)) },
+                    supportingContent = { Text(stringResource(R.string.settings_backup_sub)) },
+                    leadingContent = { Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.settings_backup)) },
+                    modifier = Modifier.clickable { runBackup() }
+                )
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_restore)) },
+                    supportingContent = { Text(stringResource(R.string.settings_restore_sub)) },
+                    leadingContent = { Icon(Icons.Default.FileUpload, contentDescription = stringResource(R.string.settings_restore)) },
+                    modifier = Modifier.clickable { restoreLauncher.launch(arrayOf("application/json", "text/*")) }
+                )
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_delete_all), color = ErrorRed) },
+                    supportingContent = { Text(stringResource(R.string.settings_delete_all_sub)) },
+                    leadingContent = { Icon(Icons.Default.DeleteForever, contentDescription = stringResource(R.string.settings_delete_all), tint = ErrorRed) },
+                    modifier = Modifier.clickable { showDeleteDialog = true }
+                )
+                if (dataMessage.isNotBlank()) {
+                    Text(
+                        dataMessage,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // ── Informazioni ──
+            CollapsibleSection(
+                title = "ℹ️ " + stringResource(R.string.settings_about),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    stringResource(R.string.settings_about_text),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            HorizontalDivider()
 
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_about)) },
-                supportingContent = { Text(stringResource(R.string.settings_about_text)) },
-                leadingContent = { Icon(Icons.Default.Info, contentDescription = stringResource(R.string.settings_about)) }
-            )
-            HorizontalDivider()
-
+            // ── Logout ──
             ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_logout), color = ErrorRed) },
                 leadingContent = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(R.string.settings_logout), tint = ErrorRed) },
@@ -681,44 +737,6 @@ fun SettingsScreen(
                 dismissButton = { TextButton(onClick = { showImportModeDialog = false; pendingImportContent = null }) { Text(stringResource(R.string.common_cancel)) } }
             )
         }
-    }
-}
-
-@Composable
-private fun TimeBandRow(
-    band: TimeBand,
-    onStartChange: (Int) -> Unit,
-    onEndChange: (Int) -> Unit
-) {
-    var startText by remember(band.startHour) { mutableStateOf(band.startHour.toString()) }
-    var endText by remember(band.endHour) { mutableStateOf(band.endHour.toString()) }
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(band.label, modifier = Modifier.width(110.dp), style = MaterialTheme.typography.bodyLarge)
-        OutlinedTextField(
-            value = startText,
-            onValueChange = { v ->
-                val digits = v.filter { it.isDigit() }
-                startText = digits
-                digits.toIntOrNull()?.let { onStartChange(it) }
-            },
-            label = { Text(stringResource(R.string.settings_band_start)) },
-            modifier = Modifier.weight(1f).padding(end = 4.dp),
-            singleLine = true
-        )
-        OutlinedTextField(
-            value = endText,
-            onValueChange = { v ->
-                val digits = v.filter { it.isDigit() }
-                endText = digits
-                digits.toIntOrNull()?.let { onEndChange(it) }
-            },
-            label = { Text(stringResource(R.string.settings_band_end)) },
-            modifier = Modifier.weight(1f).padding(start = 4.dp),
-            singleLine = true
-        )
     }
 }
 

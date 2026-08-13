@@ -182,7 +182,67 @@ class AuthRepository(
     suspend fun adminResetPassword(adminUsername: String, targetUsername: String, newPassword: String): Result<Unit> {
         return try {
             val hash = PasswordHasher.hash(newPassword)
-            authApi.adminResetPassword(adminUsername, targetUsername, hash)
+            authApi.adminResetPassword(targetUsername, hash)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Admin: create a new user.
+     */
+    suspend fun createUser(username: String, email: String, password: String, role: String): Result<User> {
+        return try {
+            val hash = PasswordHasher.hash(password)
+            val created = authApi.createUser(
+                username = username.lowercase().trim(),
+                email = email.lowercase().trim(),
+                passwordHash = hash,
+                role = role
+            ) ?: return Result.failure(Exception("Creazione utente non riuscita"))
+            userDao.upsertUser(created.toUserEntity())
+            Result.success(created.toDomainUser())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Admin: change a user's role.
+     */
+    suspend fun setUserRole(username: String, role: String): Result<Unit> {
+        return try {
+            authApi.setUserRole(username, role)
+            val cached = userDao.getUser(username)
+            if (cached != null) userDao.upsertUser(cached.copy(role = role))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Admin: activate/deactivate a user.
+     */
+    suspend fun setUserActive(username: String, active: Boolean): Result<Unit> {
+        return try {
+            authApi.setUserActive(username, active)
+            val cached = userDao.getUser(username)
+            if (cached != null) userDao.upsertUser(cached.copy(active = active))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Admin: permanently delete a user.
+     */
+    suspend fun hardDeleteUser(username: String): Result<Unit> {
+        return try {
+            authApi.hardDeleteUser(username)
+            userDao.deleteUser(username)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

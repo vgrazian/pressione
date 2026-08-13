@@ -41,6 +41,38 @@ class AuthApi {
         return client.from("users").select().decodeList<UserResponse>()
     }
 
+    suspend fun createUser(username: String, email: String, passwordHash: String, role: String): UserResponse? {
+        return client.from("users")
+            .insert(CreateUserRequest(username = username, email = email, passwordHash = passwordHash, role = role))
+            .decodeList<UserResponse>()
+            .firstOrNull()
+    }
+
+    suspend fun setUserRole(username: String, role: String) {
+        client.from("users").update({
+            set("role", role)
+            set("updated_at", java.time.Instant.now().toString())
+        }) { filter { eq("username", username) } }
+    }
+
+    suspend fun setUserActive(username: String, active: Boolean) {
+        client.from("users").update({
+            set("active", active)
+            set("updated_at", java.time.Instant.now().toString())
+        }) { filter { eq("username", username) } }
+    }
+
+    suspend fun hardDeleteUser(username: String) {
+        client.from("users").delete { filter { eq("username", username) } }
+    }
+
+    suspend fun adminResetPassword(targetUsername: String, newPasswordHash: String) {
+        client.from("users").update({
+            set("password_hash", newPasswordHash)
+            set("updated_at", java.time.Instant.now().toString())
+        }) { filter { eq("username", targetUsername) } }
+    }
+
     suspend fun updateProfile(
         username: String,
         birthDate: String?,
@@ -84,7 +116,6 @@ class AuthApi {
     }
 
     suspend fun completePasswordRecovery(token: String, newPassword: String) { }
-    suspend fun adminResetPassword(adminUsername: String, targetUsername: String, newPasswordHash: String) { }
 }
 
 @Serializable
@@ -104,6 +135,14 @@ data class UserResponse(
     @SerialName("street_number") val streetNumber: String? = null,
     val city: String? = null,
     @SerialName("postal_code") val postalCode: String? = null
+)
+
+@Serializable
+data class CreateUserRequest(
+    val username: String,
+    val email: String,
+    @SerialName("password_hash") val passwordHash: String,
+    val role: String = "user"
 )
 
 @Serializable

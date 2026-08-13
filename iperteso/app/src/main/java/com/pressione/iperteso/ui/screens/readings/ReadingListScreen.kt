@@ -56,6 +56,8 @@ import com.pressione.iperteso.R
 import com.pressione.iperteso.domain.model.AuthSession
 import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Reading
+import com.pressione.iperteso.ui.components.AppBottomNav
+import com.pressione.iperteso.ui.components.AppTab
 import com.pressione.iperteso.ui.components.CategoryBadge
 import com.pressione.iperteso.ui.components.ReadingCard
 import com.pressione.iperteso.ui.components.SkeletonLoader
@@ -72,6 +74,7 @@ fun ReadingListScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
     onEditReading: (String) -> Unit,
+    onNavigateTab: (AppTab) -> Unit,
     viewModel: ReadingListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -135,6 +138,13 @@ fun ReadingListScreen(
                         }
                     }
                 }
+            )
+        },
+        bottomBar = {
+            AppBottomNav(
+                current = AppTab.LIST,
+                isAdmin = session.role == "admin",
+                onNavigate = onNavigateTab
             )
         }
     ) { paddingValues ->
