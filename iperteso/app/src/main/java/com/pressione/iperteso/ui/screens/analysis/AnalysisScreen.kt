@@ -1,5 +1,6 @@
 package com.pressione.iperteso.ui.screens.analysis
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -96,50 +99,6 @@ fun AnalysisScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
-                },
-                actions = {
-                    if (uiState.readings.isNotEmpty()) {
-                        // Share via temporary link
-                        IconButton(onClick = {
-                            scope.launch {
-                                val token = java.util.UUID.randomUUID().toString().replace("-", "")
-                                val pin = (1000..9999).random().toString()
-                                val api = com.pressione.iperteso.data.remote.api.SharedReportApi()
-                                val expiresAt = java.time.Instant.now().plusSeconds(48 * 3600).toString()
-                                val reportData = com.pressione.iperteso.data.remote.api.ReadingReportJson
-                                    .readingsToJson(uiState.readings)
-                                api.createSharedReport(
-                                    com.pressione.iperteso.data.remote.api.SharedReportRequest(
-                                        username = session.username,
-                                        token = token,
-                                        reportData = reportData,
-                                        pin = pin,
-                                        expiresAt = expiresAt
-                                    )
-                                )
-                                shareLink = "https://vgrazian.github.io/pressione/#/share/$token"
-                                sharePin = pin
-                                showShareLinkDialog = true
-                            }
-                        }) {
-                            Icon(Icons.Default.Link, contentDescription = stringResource(R.string.analysis_link))
-                        }
-                        // Share as PDF
-                        IconButton(onClick = {
-                            scope.launch {
-                                withContext(Dispatchers.IO) {
-                                    val file = PdfReportGenerator.generate(
-                                        context, session.username, uiState.readings, medState.medications
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        PdfReportGenerator.sharePdf(context, file)
-                                    }
-                                }
-                            }
-                        }) {
-                            Icon(Icons.Default.Share, contentDescription = stringResource(R.string.analysis_share_pdf))
-                        }
-                    }
                 }
             )
         },
@@ -181,6 +140,76 @@ fun AnalysisScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                // ── Report actions (export PDF / share link) ──
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            stringResource(R.string.analysis_report),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    scope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            val file = PdfReportGenerator.generate(
+                                                context, session.username, uiState.readings, medState.medications
+                                            )
+                                            withContext(Dispatchers.Main) {
+                                                PdfReportGenerator.sharePdf(context, file)
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.analysis_share_pdf))
+                            }
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        val token = java.util.UUID.randomUUID().toString().replace("-", "")
+                                        val pin = (1000..9999).random().toString()
+                                        val api = com.pressione.iperteso.data.remote.api.SharedReportApi()
+                                        val expiresAt = java.time.Instant.now().plusSeconds(48 * 3600).toString()
+                                        val reportData = com.pressione.iperteso.data.remote.api.ReadingReportJson
+                                            .readingsToJson(uiState.readings)
+                                        api.createSharedReport(
+                                            com.pressione.iperteso.data.remote.api.SharedReportRequest(
+                                                username = session.username,
+                                                token = token,
+                                                reportData = reportData,
+                                                pin = pin,
+                                                expiresAt = expiresAt
+                                            )
+                                        )
+                                        shareLink = "https://vgrazian.github.io/pressione/#/share/$token"
+                                        sharePin = pin
+                                        showShareLinkDialog = true
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.analysis_link))
+                            }
+                        }
+                    }
+                }
+
                 // ── Period Selector ──────────────────────────
                 Row(
                     modifier = Modifier

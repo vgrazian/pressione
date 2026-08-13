@@ -202,6 +202,7 @@
 
     <!-- Analysis -->
     <string name="analysis_title">Analisi</string>
+    <string name="analysis_report">Report</string>
     <string name="analysis_link">Crea link condiviso</string>
     <string name="analysis_share_pdf">Condividi report PDF</string>
     <string name="analysis_no_data">Nessun dato da analizzare</string>

@@ -202,6 +202,7 @@
 
     <!-- Analysis -->
     <string name="analysis_title">Analysis</string>
+    <string name="analysis_report">Report</string>
     <string name="analysis_link">Create shared link</string>
     <string name="analysis_share_pdf">Share PDF report</string>
     <string name="analysis_no_data">No data to analyze</string>
