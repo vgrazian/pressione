@@ -49,8 +49,21 @@ let bpChart = null, derivChart = null, pieChart = null
 const periods = [
   { value: '7', label: '7 Giorni' },
   { value: '30', label: '30 Giorni' },
+  { value: '90', label: '3 mesi' },
+  { value: '180', label: '6 mesi' },
   { value: 'custom', label: 'Personalizzato' }
 ]
+
+const periodDescription = computed(() => {
+  switch (dateRange.value) {
+    case '7': return 'ultimi 7 giorni'
+    case '30': return 'ultimi 30 giorni'
+    case '90': return 'ultimi 3 mesi'
+    case '180': return 'ultimi 6 mesi'
+    case 'custom': return 'personalizzato'
+    default: return 'periodo selezionato'
+  }
+})
 
 const chartTabs = [
   { key: 'bp', label: 'Andamento', shortLabel: 'Andam.', icon: 'chart' },
@@ -86,11 +99,9 @@ onMounted(async () => {
 
 const filteredReadings = computed(() => {
   let result = [...readings.value]
-  if (dateRange.value === '7') {
-    const cutoff = new Date(Date.now() - 7 * 86400000)
-    result = result.filter(r => new Date(r.timestamp) >= cutoff)
-  } else if (dateRange.value === '30') {
-    const cutoff = new Date(Date.now() - 30 * 86400000)
+  const dayCount = { '7': 7, '30': 30, '90': 90, '180': 180 }[dateRange.value]
+  if (dayCount) {
+    const cutoff = new Date(Date.now() - dayCount * 86400000)
     result = result.filter(r => new Date(r.timestamp) >= cutoff)
   } else if (dateRange.value === 'custom' && customFrom.value && customTo.value) {
     result = result.filter(r => {
@@ -563,7 +574,7 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
 
       <div class="card mb-md">
         <h3 class="mb-sm">Scarica / Condividi</h3>
-        <p class="text-secondary mb-sm" style="font-size:0.75rem">I dati esportati rispettano il periodo selezionato ({{ dateRange === 'custom' ? 'personalizzato' : 'ultimi ' + dateRange + ' giorni' }})</p>
+        <p class="text-secondary mb-sm" style="font-size:0.75rem">I dati esportati rispettano il periodo selezionato ({{ periodDescription }})</p>
         <div class="mb-sm">
           <label class="flex items-center gap-sm mb-sm" style="cursor:pointer;font-size:0.8125rem">
             <input type="checkbox" v-model="includeCharts" /> Includi grafici nel PDF

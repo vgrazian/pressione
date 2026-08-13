@@ -221,6 +221,7 @@
     <string name="analysis_period_7">7 giorni</string>
     <string name="analysis_period_30">30 giorni</string>
     <string name="analysis_period_90">3 mesi</string>
+    <string name="analysis_period_180">6 mesi</string>
     <string name="analysis_avg_sys">Media SYS</string>
     <string name="analysis_avg_dia">Media DIA</string>
     <string name="analysis_avg_bpm">Media BPM</string>

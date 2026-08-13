@@ -221,6 +221,7 @@
     <string name="analysis_period_7">7 days</string>
     <string name="analysis_period_30">30 days</string>
     <string name="analysis_period_90">3 months</string>
+    <string name="analysis_period_180">6 months</string>
     <string name="analysis_avg_sys">Avg SYS</string>
     <string name="analysis_avg_dia">Avg DIA</string>
     <string name="analysis_avg_bpm">Avg BPM</string>

@@ -385,7 +385,8 @@ fun AnalysisScreen(
                     listOf(
                         7 to stringResource(R.string.analysis_period_7),
                         30 to stringResource(R.string.analysis_period_30),
-                        90 to stringResource(R.string.analysis_period_90)
+                        90 to stringResource(R.string.analysis_period_90),
+                        180 to stringResource(R.string.analysis_period_180)
                     ).forEach { (days, label) ->
                         androidx.compose.material3.FilterChip(
                             selected = uiState.periodDays == days,
