@@ -380,7 +380,8 @@ fun AnalysisScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                 ) {
                     listOf(
                         7 to stringResource(R.string.analysis_period_7),
@@ -391,8 +392,7 @@ fun AnalysisScreen(
                         androidx.compose.material3.FilterChip(
                             selected = uiState.periodDays == days,
                             onClick = { viewModel.setPeriod(days) },
-                            label = { Text(label) },
-                            modifier = Modifier.padding(end = 8.dp)
+                            label = { Text(label) }
                         )
                     }
                 }
