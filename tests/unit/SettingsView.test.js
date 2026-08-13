@@ -29,7 +29,11 @@ vi.mock('@/services/dataService.js', () => ({
     refreshFromServer: vi.fn(),
     backupData: vi.fn(),
     restoreData: vi.fn(),
-    deleteAllReadings: vi.fn()
+    deleteAllReadings: vi.fn(),
+    getMedications: vi.fn().mockResolvedValue([]),
+    upsertMedication: vi.fn(),
+    deleteMedication: vi.fn(),
+    stopMedication: vi.fn()
 }))
 
 // Mock other services

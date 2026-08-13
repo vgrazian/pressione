@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IperTeso</string>
+
+    <!-- Common -->
+    <string name="common_username">Username</string>
+    <string name="common_password">Password</string>
+    <string name="common_email">Email</string>
+    <string name="common_save">Salva</string>
+    <string name="common_cancel">Annulla</string>
+    <string name="common_delete">Elimina</string>
+    <string name="common_ok">OK</string>
+    <string name="common_back">Indietro</string>
+    <string name="common_loading">Caricamento…</string>
+    <string name="common_update">Aggiorna</string>
+
+    <!-- Login -->
+    <string name="login_tagline">Quando la massima è alta,\nma la pazienza è minima.</string>
+    <string name="login_username_placeholder">Il tuo username</string>
+    <string name="login_password_placeholder">La tua password</string>
+    <string name="login_show_password">Mostra password</string>
+    <string name="login_hide_password">Nascondi password</string>
+    <string name="login_fill_fields">Inserisci username e password</string>
+    <string name="login_in_progress">Accesso in corso…</string>
+    <string name="login_button">Accedi</string>
+    <string name="login_forgot">Password dimenticata?</string>
+    <string name="login_recovery_hint">Inserisci l\'email del tuo account per ricevere un link di reset password.</string>
+    <string name="login_email_placeholder">La tua email</string>
+    <string name="login_send_request">Invia richiesta</string>
+    <string name="login_back_to_login">← Torna al login</string>
+
+    <!-- Home -->
+    <string name="home_sync_error">Errore sync</string>
+    <string name="home_refresh">Aggiorna</string>
+    <string name="home_new_reading">Nuova misurazione</string>
+    <string name="home_recent">Ultime misurazioni</string>
+    <string name="home_see_all">Vedi tutte</string>
+    <string name="home_latest">Ultima misurazione</string>
+    <string name="home_avg_sys">Media SYS</string>
+    <string name="home_avg_dia">Media DIA</string>
+    <string name="home_bpm">BPM</string>
+    <string name="home_total">Totale</string>
+    <string name="home_no_readings">Nessuna misurazione</string>
+    <string name="home_first_reading">Inizia registrando la tua prima misurazione</string>
+    <string name="greeting_night">Buonanotte</string>
+    <string name="greeting_morning">Buongiorno</string>
+    <string name="greeting_afternoon">Buon pomeriggio</string>
+    <string name="greeting_evening">Buonasera</string>
+
+    <!-- Reading list -->
+    <string name="readings_title">Misurazioni</string>
+    <string name="readings_search_placeholder">Cerca per valore o nota…</string>
+    <string name="readings_search">Cerca</string>
+    <string name="readings_clear">Pulisci</string>
+    <string name="readings_filter_all">Tutte</string>
+    <string name="readings_filter_normal">Normale</string>
+    <string name="readings_filter_hypertension">Ipertensione</string>
+    <string name="readings_filter_crisis">Crisi</string>
+    <string name="readings_none_found">Nessuna misurazione trovata</string>
+    <string name="readings_delete_title">Elimina misurazione</string>
+    <string name="readings_delete_message">Sei sicuro di voler eliminare questa misurazione?</string>
+
+    <!-- Add / Edit reading -->
+    <string name="add_edit_title_edit">Modifica misurazione</string>
+    <string name="add_edit_title_new">Nuova misurazione</string>
+    <string name="add_edit_systolic">Sistolica (mmHg)</string>
+    <string name="add_edit_diastolic">Diastolica (mmHg)</string>
+    <string name="add_edit_heart_rate">Frequenza cardiaca (BPM)</string>
+    <string name="add_edit_classification">Classificazione:</string>
+    <string name="add_edit_date">Data</string>
+    <string name="add_edit_change_date">Cambia data</string>
+    <string name="add_edit_time">Ora</string>
+    <string name="add_edit_change_time">Cambia ora</string>
+    <string name="add_edit_notes">Note (opzionale)</string>
+    <string name="add_edit_save_description">Salva misurazione</string>
+    <string name="add_edit_error_systolic">Inserisci un valore tra 1 e 299 mmHg</string>
+    <string name="add_edit_error_diastolic">Inserisci un valore tra 1 e 199 mmHg</string>
+    <string name="add_edit_error_heart_rate">Inserisci un valore tra 1 e 299 BPM</string>
+    <string name="add_edit_error_dia_less">La diastolica deve essere minore della sistolica</string>
+    <string name="add_edit_error_duplicate">Hai già inserito una misurazione a quest\'ora. Aspetta almeno 10 minuti.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_profile">Profilo</string>
+    <string name="settings_admin">Amministrazione</string>
+    <string name="settings_manage_users">Gestione utenti</string>
+    <string name="settings_manage_users_sub">Crea, disattiva, elimina account</string>
+    <string name="settings_appearance">Aspetto</string>
+    <string name="settings_dark_mode">Tema scuro</string>
+    <string name="settings_on">Attivo</string>
+    <string name="settings_off">Disattivato</string>
+    <string name="settings_language">Lingua</string>
+    <string name="settings_reminders">Promemoria</string>
+    <string name="settings_daily_reminder">Promemoria giornaliero</string>
+    <string name="settings_reminder_at">Ogni giorno alle 08:00</string>
+    <string name="reminder_title">Promemoria pressione</string>
+    <string name="reminder_text">È ora di misurare la pressione arteriosa.</string>
+    <string name="reminder_big_text">Ricordati di misurare la pressione e registrare i valori nell\'app IperTeso.</string>
+    <string name="reminder_channel_desc">Notifiche giornaliere per ricordare di misurare la pressione</string>
+    <string name="settings_medications">Farmaci</string>
+    <string name="settings_add_medication">Aggiungi farmaco</string>
+    <string name="settings_medication_delete">Elimina farmaco</string>
+    <string name="settings_medication_in_progress">in corso</string>
+    <string name="settings_medication_stop">Stop</string>
+    <string name="settings_med_edit">Modifica farmaco</string>
+    <string name="settings_med_new">Nuovo farmaco</string>
+    <string name="settings_med_name">Nome farmaco</string>
+    <string name="settings_med_dosage">Dosaggio</string>
+    <string name="settings_med_frequency">Frequenza</string>
+    <string name="settings_med_notes">Note</string>
+    <string name="settings_med_start">Inizio: %1$s</string>
+    <string name="settings_med_end">Fine: %1$s</string>
+    <string name="settings_med_end_not_set">non impostata</string>
+    <string name="settings_med_still_taking">Ancora in corso</string>
+    <string name="settings_about_text">IperTeso v1.0.0 \u2014 fatto con \u2764\uFE0F per i miei amici</string>
+    <string name="settings_delete_all_confirm">Questa azione \u00E8 irreversibile. Tutte le misurazioni e i farmaci saranno eliminati.</string>
+    <string name="settings_delete_all_button">Elimina tutto</string>
+    <string name="settings_data">Dati</string>
+    <string name="settings_export_csv">Esporta CSV</string>
+    <string name="settings_export_csv_sub">Scarica tutte le misurazioni in formato CSV</string>
+    <string name="settings_delete_all">Elimina tutti i dati</string>
+    <string name="settings_delete_all_sub">Rimuove misurazioni e farmaci</string>
+    <string name="settings_about">Info</string>
+    <string name="settings_logout">Esci</string>
+    <string name="settings_logout_confirm">Sei sicuro di voler uscire?</string>
+
+    <!-- Analysis -->
+    <string name="analysis_title">Analisi</string>
+    <string name="analysis_link">Crea link condiviso</string>
+    <string name="analysis_share_pdf">Condividi report PDF</string>
+    <string name="analysis_no_data">Nessun dato da analizzare</string>
+    <string name="analysis_no_data_sub">Registra alcune misurazioni per vedere le statistiche</string>
+    <string name="analysis_trend">Andamento pressione</string>
+    <string name="analysis_add_more">aggiungine altre per vedere il grafico</string>
+    <string name="analysis_measurements_hint">%1$d misurazione \u2014 aggiungine altre per vedere il grafico</string>
+    <string name="analysis_load">Carico Ipertensivo</string>
+    <string name="analysis_sys_label">SYS</string>
+    <string name="analysis_readings_suffix">rilev.</string>
+    <string name="analysis_morning_surge">Morning Surge</string>
+    <string name="analysis_tab_trend">Andamento</string>
+    <string name="analysis_tab_variations">Variazioni</string>
+    <string name="analysis_tab_distribution">Distribuzione</string>
+    <string name="analysis_period_7">7 giorni</string>
+    <string name="analysis_period_30">30 giorni</string>
+    <string name="analysis_period_90">3 mesi</string>
+    <string name="analysis_avg_sys">Media SYS</string>
+    <string name="analysis_avg_dia">Media DIA</string>
+    <string name="analysis_avg_bpm">Media BPM</string>
+    <string name="analysis_max_sys">Max SYS</string>
+    <string name="analysis_hrv">HRV</string>
+    <string name="analysis_variations">Variazioni orarie</string>
+    <string name="analysis_variations_sub">Le variazioni rapide della pressione (dP/dt &gt; 10 mmHg/h) sono un indicatore di rischio cardiovascolare.</string>
+    <string name="analysis_derivative">Derivata oraria SYS</string>
+    <string name="analysis_distribution">Distribuzione ESC/ESH</string>
+    <string name="analysis_by_time">Distribuzione per fascia oraria</string>
+    <string name="analysis_morning">Mattina</string>
+    <string name="analysis_afternoon">Pomeriggio</string>
+    <string name="analysis_evening">Sera</string>
+    <string name="analysis_night">Notte</string>
+    <string name="analysis_share_created">Link condiviso creato</string>
+    <string name="analysis_share_hint">Valido 48 ore. Condividi questo link col tuo medico:</string>
+    <string name="analysis_share_app_link">Link app:</string>
+
+    <!-- Shared report -->
+    <string name="report_title">Report condiviso</string>
+    <string name="report_pin_title">Report protetto da PIN</string>
+    <string name="report_pin_hint">Inserisci il PIN a 4 cifre fornito dal paziente.</string>
+    <string name="report_pin_label">PIN</string>
+    <string name="report_unlock">Sblocca report</string>
+    <string name="report_patient">Paziente:</string>
+    <string name="report_avg_sys">Media SYS</string>
+    <string name="report_avg_dia">Media DIA</string>
+    <string name="report_avg_bpm">Media BPM</string>
+    <string name="report_total">Totale</string>
+    <string name="report_load">Carico Ipert.</string>
+    <string name="report_recent">Ultime misurazioni</string>
+    <string name="report_error_not_found">Report non trovato o scaduto.</string>
+    <string name="report_error_expired">Questo link è scaduto.</string>
+    <string name="report_error_pin">PIN non corretto.</string>
+    <string name="report_error_generic">Impossibile caricare il report.</string>
+</resources>

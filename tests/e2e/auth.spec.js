@@ -5,7 +5,7 @@ test.describe('Auth Flow', () => {
     test('should redirect to login when not authenticated', async ({ page }) => {
         await page.goto('/#/')
         await page.waitForURL(/\/#\/login/, { timeout: 10000 })
-        await expect(page.locator('h1')).toHaveText('Pressione')
+        await expect(page.locator('h1')).toHaveText('IperTeso')
     })
 
     // Skipped: users table not exposed via Supabase REST API

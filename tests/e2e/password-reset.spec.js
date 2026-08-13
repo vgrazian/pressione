@@ -65,24 +65,19 @@ test.describe('Password Reset — Login Page', () => {
         await expect(usernameInput).toBeVisible({ timeout: 3000 })
     })
 
-    test('PR-04: Empty email shows validation error', async ({ page }) => {
+    test('PR-04: Empty email disables the send request button', async ({ page }) => {
         // Open recovery form
         await page.locator('button:has-text("Password dimenticata")').click()
         await page.waitForTimeout(300)
 
-        // Submit with empty email
-        await page.locator('button:has-text("Invia richiesta")').click()
-        await page.waitForTimeout(500)
-
-        // Should show error
-        const errorMsg = page.locator('.form-error')
-        const hasError = await errorMsg.isVisible({ timeout: 2000 }).catch(() => false)
-        expect(hasError).toBe(true)
+        // With empty email the button is disabled (no request can be sent)
+        const submitBtn = page.locator('button:has-text("Invia richiesta")')
+        await expect(submitBtn).toBeDisabled({ timeout: 3000 })
     })
 })
 
 test.describe('Password Reset — Reset Page', () => {
-    test('PR-05: /reset-password without token shows error', async ({ page }) => {
+    test('PR-05: /reset-password without token shows disabled form', async ({ page }) => {
         await page.goto('/#/reset-password')
         await page.waitForTimeout(500)
 
@@ -90,17 +85,9 @@ test.describe('Password Reset — Reset Page', () => {
         const heading = page.locator('h1')
         await expect(heading).toBeVisible({ timeout: 3000 })
 
-        // Submit without token
+        // Submit button is disabled while fields are empty
         const submitBtn = page.locator('button:has-text("Aggiorna password")')
-        if (await submitBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await submitBtn.click()
-            await page.waitForTimeout(500)
-
-            // Should show token error
-            const errorMsg = page.locator('.form-error')
-            const hasError = await errorMsg.isVisible({ timeout: 2000 }).catch(() => false)
-            expect(hasError).toBe(true)
-        }
+        await expect(submitBtn).toBeDisabled({ timeout: 3000 })
     })
 
     test('PR-06: /reset-password shows "Torna al login" link', async ({ page }) => {
@@ -111,20 +98,12 @@ test.describe('Password Reset — Reset Page', () => {
         await expect(backLink).toBeVisible({ timeout: 3000 })
     })
 
-    test('PR-07: /reset-password validates empty fields', async ({ page }) => {
+    test('PR-07: /reset-password disables submit with empty fields', async ({ page }) => {
         await page.goto('/#/reset-password?token=test-token-123')
         await page.waitForTimeout(500)
 
-        // Submit with empty fields
+        // Submit button is disabled while both password fields are empty
         const submitBtn = page.locator('button:has-text("Aggiorna password")')
-        if (await submitBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await submitBtn.click()
-            await page.waitForTimeout(500)
-
-            // Should show "Compila tutti i campi" error
-            const errorMsg = page.locator('.form-error')
-            const hasError = await errorMsg.isVisible({ timeout: 2000 }).catch(() => false)
-            expect(hasError).toBe(true)
-        }
+        await expect(submitBtn).toBeDisabled({ timeout: 3000 })
     })
 })

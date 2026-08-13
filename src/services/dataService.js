@@ -436,6 +436,93 @@ export async function getReminders(username) {
 }
 
 /**
+ * Get all medications for a user (most recent first)
+ */
+export async function getMedications(username) {
+    const meds = await db.medications.where('username').equals(username).toArray()
+    return meds.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+}
+
+/**
+ * Upsert a medication (offline-first: IndexedDB + Supabase)
+ */
+export async function upsertMedication(medication, username) {
+    const now = new Date().toISOString()
+    const normalized = {
+        id: medication.id || generateId(),
+        username,
+        name: medication.name,
+        dosage: medication.dosage || '',
+        frequency: medication.frequency || '',
+        notes: medication.notes || '',
+        startDate: medication.startDate || now,
+        endDate: medication.endDate || null,
+        createdAt: medication.createdAt || now,
+        updatedAt: now
+    }
+
+    await db.medications.put(normalized)
+
+    if (isSupabaseConfigured) {
+        try {
+            await supabase.from('medications').upsert({
+                id: normalized.id,
+                username,
+                name: normalized.name,
+                dosage: normalized.dosage,
+                frequency: normalized.frequency,
+                notes: normalized.notes,
+                start_date: normalized.startDate,
+                end_date: normalized.endDate,
+                created_at: normalized.createdAt,
+                updated_at: normalized.updatedAt
+            })
+        } catch (e) {
+            console.warn('Medication sync failed:', e)
+        }
+    }
+
+    return normalized
+}
+
+/**
+ * Stop a medication (set end date to now, keep history)
+ */
+export async function stopMedication(id, username) {
+    const now = new Date().toISOString()
+    const existing = await db.medications.get(id)
+    if (existing) {
+        existing.endDate = now
+        existing.updatedAt = now
+        await db.medications.put(existing)
+    }
+
+    if (isSupabaseConfigured) {
+        try {
+            await supabase.from('medications')
+                .update({ end_date: now, updated_at: now })
+                .eq('id', id).eq('username', username)
+        } catch (e) {
+            console.warn('Medication stop sync failed:', e)
+        }
+    }
+}
+
+/**
+ * Delete a medication
+ */
+export async function deleteMedication(id, username) {
+    await db.medications.delete(id)
+    if (isSupabaseConfigured) {
+        try {
+            await supabase.from('medications').delete().eq('id', id).eq('username', username)
+        } catch (e) {
+            console.warn('Medication delete sync failed:', e)
+        }
+    }
+}
+
+/**
  * Backup all user data as JSON download
  */
 export async function backupData(username) {

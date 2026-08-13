@@ -13,7 +13,7 @@ test.describe('Workflow: Complete User Journey', () => {
         await loginAsBot(page)
 
         // ── 1. Home ────────────────────────────────────────────────
-        await expect(page.locator('h1')).toContainText('Ciao', { timeout: 5000 })
+        await expect(page.locator('h1')).toContainText('Buon', { timeout: 5000 })
 
         // ── 2. Add a reading ───────────────────────────────────────
         await page.locator('button.fab').click()
@@ -90,14 +90,14 @@ test.describe('Workflow: Complete User Journey', () => {
         // Account section visible
         await expect(page.locator('h3:has-text("Account")').first()).toBeVisible({ timeout: 3000 })
 
-        // Time bands section
-        await expect(page.locator('h3:has-text("Fasce Orarie")').first()).toBeVisible({ timeout: 3000 })
+        // Time bands section header
+        await expect(page.locator('.collapsible__header:has-text("Fasce Orarie")').first()).toBeVisible({ timeout: 3000 })
 
-        // Keep-Alive section
-        await expect(page.locator('h3:has-text("Keep-Alive")').first()).toBeVisible({ timeout: 3000 })
+        // Advanced tools section header (contains cache / diagnostics / danger zone)
+        await expect(page.locator('.collapsible__header:has-text("Strumenti avanzati")').first()).toBeVisible({ timeout: 3000 })
 
         // Version info at bottom
-        await expect(page.locator('text=/Pressione v\\d/')).toBeVisible({ timeout: 3000 })
+        await expect(page.locator('text=/IperTeso v\\d/')).toBeVisible({ timeout: 3000 })
 
         // ── 10. Change language to English and back ─────────────────
         const enBtn = page.locator('button:has-text("English")')
@@ -126,7 +126,7 @@ test.describe('Workflow: Complete User Journey', () => {
 
         // Should redirect to login
         await expect(page).toHaveURL(/\/#\/login/, { timeout: 5000 })
-        await expect(page.locator('h1')).toContainText('Pressione', { timeout: 3000 })
+        await expect(page.locator('h1')).toContainText('IperTeso', { timeout: 3000 })
     })
 })
 
@@ -289,7 +289,7 @@ test.describe('Workflow: Error & Edge Cases', () => {
         await page.locator('nav a:has-text("Home")').click()
         await page.waitForTimeout(1000)
         // Should be on home page
-        await expect(page.locator('h1')).toContainText('Ciao', { timeout: 5000 })
+        await expect(page.locator('h1')).toContainText('Buon', { timeout: 5000 })
     })
 
     test('E-13: Delete all data with confirmation', async ({ page }) => {

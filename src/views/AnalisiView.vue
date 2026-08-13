@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
-import { getReadings, refreshFromServer } from '@/services/dataService.js'
+import { getReadings, refreshFromServer, getMedications } from '@/services/dataService.js'
 import { computeStatistics, computeMorningSurge, computeHypertensiveLoad, computeDerivatives, computeHRV } from '@/services/statistics.js'
 import { getCategoryLabel, classifyReading } from '@/services/categories.js'
 import { getUserBands, getDefaultBands, getBandForHour, groupReadingsByDayAndBand } from '@/services/timeBands.js'
@@ -21,6 +21,7 @@ const router = useRouter()
 const { user } = useAuth()
 const { theme } = useTheme()
 const readings = ref([])
+const medications = ref([])
 const isLoading = ref(true)
 const dateRange = ref('30')
 const customFrom = ref('')
@@ -73,6 +74,7 @@ onMounted(async () => {
     await refreshFromServer(user.value.username)
     readings.value = await getReadings(user.value.username)
     userBands.value = await getUserBands(user.value.username)
+    medications.value = await getMedications(user.value.username).catch(() => [])
     await nextTick()
     await loadActiveLinks()
   } finally {
@@ -252,7 +254,8 @@ async function generatePDF() {
       data: filteredReadings.value, readings7: readings7.value, readings30: readings30.value,
       username: user.value?.username, displayName: displayName.value,
       birthDate: user.value?.birthDate || null, gender: user.value?.gender || null,
-      anonymize: anonymize.value, includeCharts: includeCharts.value, includeHistory: includeHistory.value
+      anonymize: anonymize.value, includeCharts: includeCharts.value, includeHistory: includeHistory.value,
+      medications: medications.value
     })
   } catch (e) { linkMessage.value = 'Errore nella generazione PDF: ' + e.message }
   finally { generatingAction.value = null }
@@ -263,7 +266,8 @@ async function getPDFFile() {
     data: filteredReadings.value, readings7: readings7.value, readings30: readings30.value,
     username: user.value?.username, birthDate: user.value?.birthDate || null,
     gender: user.value?.gender || null, anonymize: anonymize.value,
-    includeCharts: includeCharts.value, includeHistory: includeHistory.value
+    includeCharts: includeCharts.value, includeHistory: includeHistory.value,
+    medications: medications.value
   })
 }
 

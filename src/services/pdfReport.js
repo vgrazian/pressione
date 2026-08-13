@@ -419,13 +419,62 @@ function addReferenceRanges(doc, y) {
     return y + S.gap
 }
 
+// ── Section: Medications ───────────────────────────────────────
+function addMedications(doc, y, medications) {
+    if (!medications || medications.length === 0) return y
+
+    doc.setFontSize(T.h2)
+    doc.setTextColor(...C.brand)
+    doc.text('5. Terapia Farmacologica', S.m, y)
+    y += S.in + 2
+
+    const pw = doc.internal.pageSize.getWidth()
+    const tw = pw - S.m * 2
+    const colX = [S.m, 44, 64, 84, 118, 150]
+
+    // Header
+    doc.setFillColor(...C.brand)
+    doc.rect(S.m, y, tw, S.hh, 'F')
+    doc.setFontSize(7)
+    doc.setTextColor(...C.white)
+    doc.text('Farmaco', colX[0], y + 3.8)
+    doc.text('Dosaggio', colX[1], y + 3.8)
+    doc.text('Frequenza', colX[2], y + 3.8)
+    doc.text('Inizio', colX[3], y + 3.8)
+    doc.text('Fine', colX[4], y + 3.8)
+    doc.text('Note', colX[5], y + 3.8)
+    y += S.hh
+
+    const fmt = iso => iso ? new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+
+    doc.setFontSize(7)
+    medications.forEach((m, i) => {
+        if (y > 275) { doc.addPage(); y = 20 }
+        if (i % 2 === 0) { doc.setFillColor(...C.brandBg); doc.rect(S.m, y - 1, tw, S.rh, 'F') }
+        doc.setTextColor(...C.body)
+        doc.text((m.name || '').slice(0, 22), colX[0], y + 3.2)
+        doc.setTextColor(...C.muted)
+        doc.text((m.dosage || '—').slice(0, 16), colX[1], y + 3.2)
+        doc.text((m.frequency || '—').slice(0, 16), colX[2], y + 3.2)
+        doc.text(fmt(m.startDate), colX[3], y + 3.2)
+        const ongoing = !m.endDate
+        doc.setTextColor(ongoing ? C.ok : C.body)
+        doc.text(ongoing ? 'in corso' : fmt(m.endDate), colX[4], y + 3.2)
+        doc.setTextColor(...C.muted)
+        doc.text((m.notes || '').slice(0, 22), colX[5], y + 3.2)
+        y += S.rh
+    })
+
+    return y + S.gap
+}
+
 // ── Section: History Table ─────────────────────────────────────
 function addHistoryTable(doc, y, data) {
     if (data.length === 0) return y
 
     doc.setFontSize(T.h2)
     doc.setTextColor(...C.brand)
-    doc.text('5. Storico Misurazioni', S.m, y)
+    doc.text('6. Storico Misurazioni', S.m, y)
     y += S.in + 2
 
     const pw = doc.internal.pageSize.getWidth()
@@ -502,7 +551,7 @@ function addFooter(doc, pageNum, totalPages) {
 }
 
 // ── Shared PDF builder ──────────────────────────────────────────
-async function buildPDF({ data, readings7, readings30, username, displayName, birthDate, gender, anonymize, includeCharts, includeHistory, user }) {
+async function buildPDF({ data, readings7, readings30, username, displayName, birthDate, gender, anonymize, includeCharts, includeHistory, user, medications }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
     const stats = computeStatistics(data)
     const opts = { data, username, displayName, birthDate, gender, anonymize, user }
@@ -519,6 +568,12 @@ async function buildPDF({ data, readings7, readings30, username, displayName, bi
     // Reference ranges (always included — medical context)
     if (y > 180) { doc.addPage(); y = 20 }
     y = addReferenceRanges(doc, y)
+
+    // Medications (if any)
+    if (medications && medications.length > 0) {
+        if (y > 205) { doc.addPage(); y = 20 }
+        y = addMedications(doc, y, medications)
+    }
 
     if (includeHistory && data.length > 0) {
         if (y > 195) { doc.addPage(); y = 20 }

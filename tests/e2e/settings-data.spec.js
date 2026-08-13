@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginAsBot } from './helpers/login.js'
+import { loginAsBot, expandAllSections } from './helpers/login.js'
 
 /**
  * Settings — Data Operations E2E Tests.
@@ -12,6 +12,7 @@ test.describe('Settings — Data Export', () => {
         await loginAsBot(page)
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
+        await expandAllSections(page)
     })
 
     test('SD-01: Export CSV triggers download', async ({ page }) => {
@@ -44,7 +45,7 @@ test.describe('Settings — Data Export', () => {
     })
 
     test('SD-03: Generate test data button is visible and clickable', async ({ page }) => {
-        const genBtn = page.locator('button:has-text("Genera dati test")')
+        const genBtn = page.locator('button:has-text("Genera Dati di Test")')
         await genBtn.scrollIntoViewIfNeeded()
         await expect(genBtn).toBeVisible({ timeout: 3000 })
 

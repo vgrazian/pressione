@@ -11,6 +11,11 @@ db.version(1).stores({
     cachedStats: '[username+dateRange]'
 })
 
+// v2: medication tracking (farmaci)
+db.version(2).stores({
+    medications: 'id, username, startDate'
+})
+
 // Helper to get a setting
 export async function getSetting(username, key, defaultValue = null) {
     const row = await db.settings.get([username, key])

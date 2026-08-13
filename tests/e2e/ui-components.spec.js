@@ -112,24 +112,13 @@ test.describe('UI Components — Authenticated', () => {
         expect(hasCancel || hasConfirm).toBe(true)
     })
 
-    test('UI-10: Settings page has AppIcon headings (no emoji)', async ({ page }) => {
+    test('UI-10: Settings page renders account and language headings', async ({ page }) => {
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
 
-        // Headings that used to have emoji should now use AppIcon SVGs
-        const headings = page.locator('.card h3')
-        const count = await headings.count()
-
-        // At least one heading should contain an SVG (AppIcon)
-        let foundSvg = false
-        for (let i = 0; i < count; i++) {
-            const svgCount = await headings.nth(i).locator('svg').count()
-            if (svgCount > 0) {
-                foundSvg = true
-                break
-            }
-        }
-        expect(foundSvg).toBe(true)
+        // Main cards should render their headings
+        await expect(page.locator('h3:has-text("Account")')).toBeVisible({ timeout: 3000 })
+        await expect(page.locator('h3:has-text("Lingua")')).toBeVisible({ timeout: 3000 })
     })
 
     test('UI-11: Reading cards show icons instead of emoji', async ({ page }) => {

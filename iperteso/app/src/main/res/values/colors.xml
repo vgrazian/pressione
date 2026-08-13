@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Medical green palette -->
+    <color name="medical_green">#006C4C</color>
+    <color name="medical_green_light">#4DD9A0</color>
+    <color name="medical_green_bg">#E8F5E9</color>
+    <color name="medical_green_dark_bg">#1B3A2D</color>
+
+    <!-- Status colors -->
+    <color name="error_red">#BA1A1A</color>
+    <color name="warning_orange">#EF6C00</color>
+    <color name="critical_red">#D32F2F</color>
+
+    <!-- Neutral -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

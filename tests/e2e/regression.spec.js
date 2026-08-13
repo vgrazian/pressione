@@ -14,7 +14,7 @@ test.describe('Regression: Navigation', () => {
     })
 
     test('R-01: Home page loads with greeting', async ({ page }) => {
-        await expect(page.locator('h1')).toContainText('Ciao', { timeout: 5000 })
+        await expect(page.locator('h1')).toContainText('Buon', { timeout: 5000 })
     })
 
     test('R-02: Navigate to Add Reading', async ({ page }) => {
@@ -241,8 +241,8 @@ test.describe('Regression: Settings', () => {
     test('R-25: Version info displayed at bottom', async ({ page }) => {
         await page.locator('nav a:has-text("Altro")').click()
         await page.waitForTimeout(1000)
-        // Version text should contain "Pressione v"
-        const versionText = page.locator('text=/Pressione v\\d/')
+        // Version text should contain "IperTeso v"
+        const versionText = page.locator('text=/IperTeso v\\d/')
         await expect(versionText).toBeVisible({ timeout: 3000 })
     })
 })

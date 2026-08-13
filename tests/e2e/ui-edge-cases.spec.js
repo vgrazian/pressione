@@ -67,9 +67,9 @@ test.describe('UI — Offline Banner', () => {
 
         // Should see greeting or empty state
         const hasContent = await Promise.race([
-            page.locator('h1:has-text("Ciao")').isVisible({ timeout: 3000 }).catch(() => false),
+            page.locator('h1:has-text("bot")').isVisible({ timeout: 3000 }).catch(() => false),
             page.locator('.empty-state').isVisible({ timeout: 3000 }).catch(() => false),
-            page.locator('.latest-card').isVisible({ timeout: 3000 }).catch(() => false)
+            page.locator('.wellness-card').isVisible({ timeout: 3000 }).catch(() => false)
         ])
 
         expect(hasContent).toBe(true)
@@ -135,12 +135,11 @@ test.describe('UI — Navigation Edge Cases', () => {
     })
 
     test('UI-19: Breadcrumbs show on add/edit page', async ({ page }) => {
-        await page.locator('button.fab').click()
+        await page.goto('/#/add')
         await expect(page).toHaveURL(/\/#\/add/, { timeout: 5000 })
 
         const breadcrumbs = page.locator('.breadcrumbs')
-        const hasBreadcrumbs = await breadcrumbs.isVisible({ timeout: 2000 }).catch(() => false)
-        expect(hasBreadcrumbs).toBe(true)
+        await expect(breadcrumbs).toBeVisible({ timeout: 5000 })
     })
 
     test('UI-20: Back button on add page returns to previous page', async ({ page }) => {

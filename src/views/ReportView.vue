@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useAuth } from '@/services/auth.js'
-import { getReadings, refreshFromServer } from '@/services/dataService.js'
+import { getReadings, refreshFromServer, getMedications } from '@/services/dataService.js'
 import { computeStatistics, computeMorningSurge, computeHypertensiveLoad, computeDerivatives, computeHRV } from '@/services/statistics.js'
 import { getCategoryLabel, classifyReading } from '@/services/categories.js'
 import { getUserBands, getDefaultBands, getBandForHour, groupReadingsByDayAndBand } from '@/services/timeBands.js'
@@ -27,6 +27,7 @@ import DateRangeSlider from '@/components/DateRangeSlider.vue'
 
 const { user } = useAuth()
 const readings = ref([])
+const medications = ref([])
 const isLoading = ref(true)
 const dateRange = ref('all')
 const customFrom = ref('')
@@ -76,6 +77,7 @@ onMounted(async () => {
     await refreshFromServer(user.value.username)
     readings.value = await getReadings(user.value.username)
     userBands.value = await getUserBands(user.value.username)
+    medications.value = await getMedications(user.value.username).catch(() => [])
     await loadActiveLinks()
   } finally {
     isLoading.value = false
@@ -219,7 +221,8 @@ async function generatePDF() {
       gender: user.value?.gender || null,
       anonymize: anonymize.value,
       includeCharts: includeCharts.value,
-      includeHistory: includeHistory.value
+      includeHistory: includeHistory.value,
+      medications: medications.value
     })
   } catch (e) {
     linkMessage.value = 'Errore nella generazione PDF: ' + e.message
@@ -239,7 +242,8 @@ async function getPDFFile() {
     gender: user.value?.gender || null,
     anonymize: anonymize.value,
     includeCharts: includeCharts.value,
-    includeHistory: includeHistory.value
+    includeHistory: includeHistory.value,
+    medications: medications.value
   })
 }
 

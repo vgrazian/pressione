@@ -21,7 +21,8 @@ vi.mock('@/services/dataService.js', () => ({
         { id: '2', systolic: 135, diastolic: 88, heartRate: 75, timestamp: new Date(Date.now() - 86400000).toISOString(), category: 'elevated' }
     ]),
     refreshFromServer: vi.fn().mockResolvedValue(),
-    exportCSV: vi.fn()
+    exportCSV: vi.fn(),
+    getMedications: vi.fn().mockResolvedValue([])
 }))
 
 // Mock categories
@@ -80,7 +81,7 @@ vi.mock('@/services/chartColors.js', () => ({
         systolicBg: 'transparent', diastolicBg: 'transparent',
         textSecondary: '#666', targetZoneBg: 'transparent',
         targetZoneBorder: '#000', targetLabelBg: '#000', targetLabelText: '#fff',
-        surfaceRaised: '#fff'
+        surfaceRaised: '#fff', categoryMap: {}
     })
 }))
 

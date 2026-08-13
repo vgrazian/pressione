@@ -1,46 +1,15 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { useConfirmDialogState, resolveConfirm } from '@/services/confirmDialog.js'
 
-const visible = ref(false)
-const title = ref('')
-const message = ref('')
-const confirmText = ref('Conferma')
-const cancelText = ref('Annulla')
-const variant = ref('default')
-let resolvePromise = null
-
-function show(options = {}) {
-  title.value = options.title || 'Conferma'
-  message.value = options.message || 'Sei sicuro?'
-  confirmText.value = options.confirmText || 'Conferma'
-  cancelText.value = options.cancelText || 'Annulla'
-  variant.value = options.variant || 'default'
-  visible.value = true
-
-  return new Promise((resolve) => {
-    resolvePromise = resolve
-  })
-}
+const { visible, title, message, confirmText, cancelText, variant } = useConfirmDialogState()
 
 function confirm() {
-  visible.value = false
-  if (resolvePromise) {
-    resolvePromise(true)
-    resolvePromise = null
-  }
+  resolveConfirm(true)
 }
 
 function cancel() {
-  visible.value = false
-  if (resolvePromise) {
-    resolvePromise(false)
-    resolvePromise = null
-  }
+  resolveConfirm(false)
 }
-
-provide('confirm-dialog', show)
-
-defineExpose({ show })
 </script>
 
 <template>

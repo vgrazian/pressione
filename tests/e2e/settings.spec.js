@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { loginAsBot } from './helpers/login.js'
+import { loginAsBot, expandAllSections } from './helpers/login.js'
 
 test.describe('Settings — Profile', () => {
     test.beforeEach(async ({ page }) => {
         await loginAsBot(page)
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
+        await expandAllSections(page)
     })
 
     test('S-01: Profile section has date of birth and gender fields', async ({ page }) => {
@@ -37,7 +38,7 @@ test.describe('Settings — Password', () => {
     })
 
     test('S-04: Password section is collapsible', async ({ page }) => {
-        const pwHeader = page.locator('h3:has-text("Cambia password")')
+        const pwHeader = page.locator('.collapsible__header:has-text("Cambio Password")')
         await expect(pwHeader).toBeVisible({ timeout: 3000 })
         await pwHeader.click()
         await page.waitForTimeout(300)
@@ -52,22 +53,23 @@ test.describe('Settings — Reminders', () => {
         await loginAsBot(page)
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
+        await expandAllSections(page)
     })
 
     test('S-05: Reminders section is visible', async ({ page }) => {
-        const remindersHeader = page.locator('h3:has-text("Promemoria")')
+        const remindersHeader = page.locator('.collapsible__header:has-text("Promemoria")')
         await expect(remindersHeader).toBeVisible({ timeout: 3000 })
     })
 
     test('S-06: Add reminder button is visible', async ({ page }) => {
-        const addBtn = page.locator('button:has-text("Aggiungi promemoria")')
+        const addBtn = page.getByRole('button', { name: '+ Aggiungi', exact: true })
         // Scroll down to find it
         await addBtn.scrollIntoViewIfNeeded()
         await expect(addBtn).toBeVisible({ timeout: 3000 })
     })
 
     test('S-07: Adding a reminder shows time input and day chips', async ({ page }) => {
-        const addBtn = page.locator('button:has-text("Aggiungi promemoria")')
+        const addBtn = page.getByRole('button', { name: '+ Aggiungi', exact: true })
         await addBtn.scrollIntoViewIfNeeded()
         await addBtn.click()
         await page.waitForTimeout(300)
@@ -89,6 +91,7 @@ test.describe('Settings — Data Management', () => {
         await loginAsBot(page)
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
+        await expandAllSections(page)
     })
 
     test('S-08: Export CSV button is visible', async ({ page }) => {
@@ -98,13 +101,13 @@ test.describe('Settings — Data Management', () => {
     })
 
     test('S-09: Backup JSON button is visible', async ({ page }) => {
-        const backupBtn = page.locator('button:has-text("Backup")')
+        const backupBtn = page.locator('button:has-text("Backup (JSON)")')
         await backupBtn.scrollIntoViewIfNeeded()
         await expect(backupBtn).toBeVisible({ timeout: 3000 })
     })
 
     test('S-10: Generate test data button is visible', async ({ page }) => {
-        const genBtn = page.locator('button:has-text("Genera dati test")')
+        const genBtn = page.locator('button:has-text("Genera Dati di Test")')
         await genBtn.scrollIntoViewIfNeeded()
         await expect(genBtn).toBeVisible({ timeout: 3000 })
     })
@@ -115,9 +118,11 @@ test.describe('Settings — Keep-Alive', () => {
         await loginAsBot(page)
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
+        await expandAllSections(page)
     })
 
-    test('S-11: Keep-Alive section is visible with toggle', async ({ page }) => {
+    // Keep-Alive UI was removed from Settings; feature kept only as dead code.
+    test.skip('S-11: Keep-Alive section is visible with toggle', async ({ page }) => {
         const kaHeader = page.locator('h3:has-text("Keep-Alive")')
         await kaHeader.scrollIntoViewIfNeeded()
         await expect(kaHeader).toBeVisible({ timeout: 3000 })
@@ -133,19 +138,20 @@ test.describe('Settings — Danger Zone', () => {
         await loginAsBot(page)
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
+        await expandAllSections(page)
     })
 
     test('S-12: Danger zone has delete button', async ({ page }) => {
-        const dangerHeader = page.locator('h3:has-text("Zona pericolo")')
+        const dangerHeader = page.locator('h4:has-text("Zona Pericolosa")')
         await dangerHeader.scrollIntoViewIfNeeded()
         await expect(dangerHeader).toBeVisible({ timeout: 3000 })
 
-        const deleteBtn = page.locator('button:has-text("Elimina tutti")')
+        const deleteBtn = page.locator('button:has-text("Elimina Tutte le Misurazioni")')
         await expect(deleteBtn).toBeVisible({ timeout: 3000 })
     })
 
     test('S-13: Delete all shows confirm dialog, cancel does not delete', async ({ page }) => {
-        const deleteBtn = page.locator('button:has-text("Elimina tutti")')
+        const deleteBtn = page.locator('button:has-text("Elimina Tutte le Misurazioni")')
         await deleteBtn.scrollIntoViewIfNeeded()
         await deleteBtn.click()
         await page.waitForTimeout(500)
@@ -204,6 +210,7 @@ test.describe('Settings — Cache & Diagnostics', () => {
         await loginAsBot(page)
         await page.goto('/#/settings')
         await page.waitForTimeout(500)
+        await expandAllSections(page)
     })
 
     test('S-15: Force update button is visible', async ({ page }) => {

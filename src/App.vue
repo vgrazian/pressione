@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, inject, watch } from 'vue'
+import { onMounted, ref, watch, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { initAuth, useAuth } from '@/services/auth.js'
 import { useTheme } from '@/services/theme.js'
@@ -11,6 +11,7 @@ import OfflineBanner from '@/components/OfflineBanner.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ProfilePrompt from '@/components/ProfilePrompt.vue'
 import { useSWUpdate } from '@/services/swUpdate.js'
+import { showConfirm } from '@/services/confirmDialog.js'
 import { startReminderScheduler, stopReminderScheduler, reminderAlert, dismissReminderAlert } from '@/services/reminderService.js'
 
 const router = useRouter()
@@ -18,9 +19,12 @@ const { isAuthenticated, isAuthReady, user, logout } = useAuth()
 const { theme, resolvedTheme, toggle: toggleTheme } = useTheme()
 const isInitializing = ref(true)
 const error = ref(null)
-const confirm = inject('confirm-dialog', null)
 const showProfilePrompt = ref(false)
 const { updateAvailable, updateFailed, applyUpdate } = useSWUpdate()
+
+// Provide the confirm-dialog to the whole app tree (views are siblings of
+// <ConfirmDialog />, so the dialog exposes its state via this shared store).
+provide('confirm-dialog', showConfirm)
 
 onMounted(async () => {
   initPWAInstall()
@@ -67,12 +71,7 @@ watch([() => user.value, () => isAuthReady.value], ([u, ready]) => {
 }, { immediate: true })
 
 async function handleLogout() {
-  if (!confirm) {
-    await logout()
-    router.push('/login')
-    return
-  }
-  const ok = await confirm({
+  const ok = await showConfirm({
     title: 'Logout',
     message: 'Vuoi effettuare il logout?',
     confirmText: 'Esci'

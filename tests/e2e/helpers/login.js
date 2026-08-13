@@ -49,3 +49,22 @@ export async function confirmDialog(page) {
     await page.waitForTimeout(300)
   }
 }
+
+/**
+ * Expands every CollapsibleSection on the page (Settings view).
+ * Sections are collapsed by default, so elements inside them are hidden
+ * until the header button is clicked.
+ */
+export async function expandAllSections(page) {
+  const headers = page.locator('.collapsible__header')
+  const count = await headers.count()
+  for (let i = 0; i < count; i++) {
+    const header = headers.nth(i)
+    const expanded = await header.getAttribute('aria-expanded').catch(() => null)
+    if (expanded !== 'true') {
+      await header.scrollIntoViewIfNeeded().catch(() => { })
+      await header.click().catch(() => { })
+      await page.waitForTimeout(60)
+    }
+  }
+}

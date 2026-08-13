@@ -14,7 +14,7 @@ test.describe('Profile Prompt', () => {
 
         // Either profile prompt or home page should be visible
         const hasPrompt = await page.locator('.profile-prompt-overlay').isVisible({ timeout: 2000 }).catch(() => false)
-        const hasHome = await page.locator('h1:has-text("Ciao")').isVisible({ timeout: 2000 }).catch(() => false)
+        const hasHome = await page.locator('h1:has-text("bot")').isVisible({ timeout: 2000 }).catch(() => false)
 
         expect(hasPrompt || hasHome).toBe(true)
     })

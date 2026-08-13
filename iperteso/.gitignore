@@ -1,0 +1,16 @@
+# Gradle build output
+.gradle/
+build/
+
+# Local configuration
+local.properties
+
+# Android signing keystore (secret — do not commit)
+android/keystore/
+
+# IDE
+.idea/
+*.iml
+
+# Misc
+.DS_Store
