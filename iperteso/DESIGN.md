@@ -72,6 +72,10 @@ components:
 ---
 # IperTeso Android — Design System
 
+> **Stato:** ✅ implementato e allineato all'app (2026-08-13).  
+> Questo documento descrive il design system **Android** (Jetpack Compose + Material 3).  
+> Per l'inventario funzionale unificato **Web + Android** (matrice di parità, casi di test) vedi [`../FEATURE_INVENTORY.md`](../FEATURE_INVENTORY.md). Per lo stato di sviluppo vedi [`../IPERTESO_ANDROID_PLAN.md`](../IPERTESO_ANDROID_PLAN.md).
+
 ## Overview
 
 IperTeso è un diario della pressione arteriosa nativo Android costruito con **Jetpack Compose + Material 3**. Il design system estende M3 con un tema medical-green personalizzato, una palette ESC/ESH per la classificazione della pressione, e pattern offline-first coerenti con la PWA web esistente.
@@ -169,6 +173,26 @@ Card per farmaco: icona pillola, nome, dosaggio, date inizio-fine. Sfondo `prima
 ### Filter Chips (ReadingList)
 
 4 chip raggruppati per gravità: Tutte | Normale | Ipertensione | Crisi. Il raggruppamento riduce il carico cognitivo da 8 a 4 opzioni.
+
+## Web ↔ Android design mapping
+
+Coerenza visiva tra le due versioni (stessa identità, implementazioni diverse):
+
+| Elemento | Web (CSS token) | Android (Compose) |
+| --- | --- | --- |
+| Primary verde medicale | `--color-accent` ≈ `#006C4C` | `Color.kt` Primary `#006C4C` |
+| Background light tinto | `--color-background` ≈ `#F8FDF8` | LightBackground `#F8FDF8` |
+| Error | `--color-error` ≈ `#BA1A1A` | LightError `#BA1A1A` |
+| Card radius | `--radius-md` 12px | `RoundedCornerShape(12.dp)` |
+| Badge radius | 12px (pill-ish) | `RoundedCornerShape(12.dp)` |
+| KPI card | `.insight-chip` / `.card` | `StatCard` (surfaceVariant, 12dp) |
+| Skeleton | shimmer su `--color-surface` | `SkeletonLoader` theme-aware |
+| Reading card | `.reading-card` hover/active | `ReadingCard` (elevation 1.dp) |
+| Categorie ESC/ESH | `categories.js` (6 cat.) | `Category.kt` (7 cat. 2024, label+labelEn) |
+| Font | Inter (Google Fonts) | system sans-serif |
+| Dark mode | `[data-theme]` toggle | `isSystemInDarkTheme()` |
+
+> **Differenza chiave categorie:** il Web usa 6 categorie (aggiunge `Ipotensione` ed `Elevata`), l'Android usa le 7 categorie ESC/ESH 2024 (Ottimale/Normale/Normale-Alta/Grado 1-3/Crisi). Le palette sono coerenti per le categorie condivise.
 
 ## Do's and Don'ts
 

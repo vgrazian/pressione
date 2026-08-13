@@ -1,37 +1,46 @@
 # IperTeso — Piano di Sviluppo Android (Kotlin)
 
-> **Versione target:** 1.0.0 | **Data piano:** 2026-08-12  
+> **Versione target:** 1.0.0 | **Data piano:** 2026-08-12 | **Stato:** ✅ COMPLETATO (2026-08-13)  
 > **Target device:** Samsung Galaxy S24 (Android 14, API 34)  
 > **Min SDK:** 26 (Android 8.0) | **Compile SDK:** 34  
-> **Stack:** Kotlin 2.3.0 · Jetpack Compose · Supabase Kotlin SDK · Room (offline cache)  
-> **Parità funzionale:** 1:1 con l'app web Pressione v1.2.1  
+> **Stack:** Kotlin 2.0.0 · Jetpack Compose (BOM 2024.06.00) · Supabase Kotlin SDK 2.4.0 · Room 2.6.1 (offline cache)  
+> **Parità funzionale:** allineata all'app web Pressione v1.2.1 (vedi matrice in fondo)  
 > **DB condiviso:** Stesso schema Supabase, stesse utenze, stesso backend
 
 ---
 
-## Stato dell'Ambiente (verificato 2026-08-12)
+## Stato dell'Ambiente (verificato 2026-08-13)
 
 | Componente | Versione | Stato |
 | --- | --- | --- |
 | Java | OpenJDK 17.0.18 | ✅ |
-| Kotlin | 2.3.0 | ✅ |
-| Android SDK | 34/35/36 (build-tools 36.1.0) | ✅ |
-| Android Studio | `/Applications/Android Studio.app` | ✅ |
+| Kotlin | 2.0.0 | ✅ |
+| AGP | 8.5.2 | ✅ |
+| Compose BOM | 2024.06.00 (Material3) | ✅ |
 | Gradle | 9.3.0 | ✅ |
-| Keystore release | `iperteso/android/keystore/release.keystore` | ✅ |
-| Icone Android | `iperteso/android/mipmap-*/` | ✅ |
+| KSP | 2.0.0-1.0.22 | ✅ |
+| Room | 2.6.1 | ✅ |
+| Supabase Kotlin SDK | 2.4.0 (postgrest-kt, gotrue-kt) | ✅ |
+| Ktor client Android | 2.3.12 | ✅ |
+| Koin | 3.5.6 | ✅ |
+| Navigation Compose | 2.7.7 | ✅ |
+| WorkManager | 2.9.0 | ✅ |
+| iText7 | 7.2.5 | ✅ |
+| Keystore release | `iperteso/android/keystore/release.keystore` (gitignored) | ✅ |
+| Test | JUnit4 · MockK 1.13.12 · coroutines-test · koin-test · room-testing | ✅ |
+| Icone Android | `iperteso/app/src/main/res/mipmap-*/` | ✅ |
 
 ---
 
-## Architettura
+## Architettura (realizzata)
 
 ```
 iperteso/
 ├── app/
 │   ├── src/main/
 │   │   ├── java/com/pressione/iperteso/
-│   │   │   ├── IperTesoApplication.kt          # Application class
-│   │   │   ├── MainActivity.kt                  # Single-activity entry
+│   │   │   ├── IperTesoApplication.kt          # Application + Koin + Room + sync
+│   │   │   ├── MainActivity.kt                  # Single-activity, deep link, locale
 │   │   │   ├── data/
 │   │   │   │   ├── local/
 │   │   │   │   │   ├── AppDatabase.kt           # Room DB (offline cache)
@@ -39,77 +48,68 @@ iperteso/
 │   │   │   │   │   │   ├── ReadingDao.kt
 │   │   │   │   │   │   ├── UserDao.kt
 │   │   │   │   │   │   ├── SettingsDao.kt
-│   │   │   │   │   │   └── ReminderDao.kt
+│   │   │   │   │   │   └── MedicationDao.kt
 │   │   │   │   │   └── entity/
 │   │   │   │   │       ├── ReadingEntity.kt
 │   │   │   │   │       ├── UserEntity.kt
-│   │   │   │   │       └── SettingEntity.kt
+│   │   │   │   │       ├── SettingEntity.kt
+│   │   │   │   │       └── MedicationEntity.kt
 │   │   │   │   ├── remote/
-│   │   │   │   │   ├── SupabaseClient.kt         # Inizializzazione Supabase
+│   │   │   │   │   ├── SupabaseClient.kt         # Singleton Supabase + logging
 │   │   │   │   │   └── api/
-│   │   │   │   │       ├── AuthApi.kt            # Login/register RPC
+│   │   │   │   │       ├── AuthApi.kt            # Login table-based + recovery stub
 │   │   │   │   │       ├── ReadingsApi.kt        # CRUD letture
-│   │   │   │   │       ├── SettingsApi.kt        # Settings key-value
-│   │   │   │   │       └── SharedReportApi.kt    # Report condivisi
-│   │   │   │   └── repository/
-│   │   │   │       ├── AuthRepository.kt
-│   │   │   │       ├── ReadingRepository.kt      # Offline-first logic
-│   │   │   │       ├── SettingsRepository.kt
-│   │   │   │       └── SyncRepository.kt
-│   │   │   ├── domain/
-│   │   │   │   ├── model/
-│   │   │   │   │   ├── Reading.kt
-│   │   │   │   │   ├── User.kt
-│   │   │   │   │   ├── Category.kt               # ESC/ESH enum
-│   │   │   │   │   └── TimeBand.kt
-│   │   │   │   └── usecase/
-│   │   │   │       ├── ClassifyReadingUseCase.kt
-│   │   │   │       ├── ComputeStatisticsUseCase.kt
-│   │   │   │       ├── GeneratePdfUseCase.kt
-│   │   │   │       └── ShareReportUseCase.kt
+│   │   │   │   │       ├── MedicationApi.kt      # CRUD farmaci
+│   │   │   │   │       ├── SharedReportApi.kt    # Link condivisi (tabella shared_reports)
+│   │   │   │   │       └── ReadingReportJson.kt  # (de)serializzazione report_data JSONB
+│   │   │   │   ├── repository/
+│   │   │   │   │   ├── AuthRepository.kt
+│   │   │   │   │   ├── ReadingRepository.kt      # Offline-first
+│   │   │   │   │   └── MedicationRepository.kt
+│   │   │   │   ├── SessionManager.kt             # DataStore, TTL 8h
+│   │   │   │   └── sync/
+│   │   │   │       └── SyncWorker.kt             # WorkManager 15min
+│   │   │   ├── di/
+│   │   │   │   └── AppModule.kt                  # Koin graph
+│   │   │   ├── domain/model/
+│   │   │   │   ├── Reading.kt
+│   │   │   │   ├── User.kt
+│   │   │   │   ├── Category.kt                   # ESC/ESH 7 categorie (label + labelEn)
+│   │   │   │   ├── AuthSession.kt
+│   │   │   │   ├── Medication.kt
+│   │   │   │   └── TimeBand.kt
+│   │   │   ├── services/
+│   │   │   │   ├── PdfReportGenerator.kt         # iText7 (header, stats, farmaci, tabella)
+│   │   │   │   ├── CsvExporter.kt
+│   │   │   │   ├── ReminderScheduler.kt          # AlarmManager giornaliero
+│   │   │   │   ├── ReminderReceiver.kt           # BroadcastReceiver + notifica
+│   │   │   │   └── LocaleManager.kt              # i18n it/en con riavvio
 │   │   │   ├── ui/
-│   │   │   │   ├── navigation/
-│   │   │   │   │   └── NavGraph.kt               # Navigation routes
-│   │   │   │   ├── theme/
-│   │   │   │   │   ├── Theme.kt                  # Material3 + dark mode
-│   │   │   │   │   ├── Color.kt
-│   │   │   │   │   └── Type.kt
+│   │   │   │   ├── navigation/NavGraph.kt        # Routes + deep link share/{token}
+│   │   │   │   ├── theme/ (Theme, Color, Type)   # M3 + dark mode di sistema
 │   │   │   │   ├── components/
 │   │   │   │   │   ├── ReadingCard.kt
 │   │   │   │   │   ├── CategoryBadge.kt
-│   │   │   │   │   ├── DateRangePicker.kt
-│   │   │   │   │   ├── TimeOfDayIcon.kt
-│   │   │   │   │   ├── SkeletonLoader.kt
-│   │   │   │   │   └── ConfirmDialog.kt
+│   │   │   │   │   └── SkeletonLoader.kt
 │   │   │   │   └── screens/
-│   │   │   │       ├── LoginScreen.kt
-│   │   │   │       ├── HomeScreen.kt             # Dashboard + KPI
-│   │   │   │       ├── AddEditReadingScreen.kt
-│   │   │   │       ├── ReadingListScreen.kt
-│   │   │   │       ├── AnalysisScreen.kt         # Statistiche + Grafici + Report
-│   │   │   │       ├── ReportScreen.kt           # PDF preview + share
-│   │   │   │       ├── SharedReportScreen.kt     # Report pubblico via token
-│   │   │   │       ├── SettingsScreen.kt
-│   │   │   │       └── AdminOperatorsScreen.kt
-│   │   │   └── util/
-│   │   │       ├── NetworkMonitor.kt
-│   │   │       ├── PasswordHasher.kt             # SHA-256
-│   │   │       └── DateTimeExt.kt
+│   │   │   │       ├── auth/ LoginScreen + AuthViewModel
+│   │   │   │       ├── home/ HomeScreen + HomeViewModel
+│   │   │   │       ├── readings/ AddEditReadingScreen/VM, ReadingListScreen/VM
+│   │   │   │       ├── analysis/ AnalysisScreen/VM, BpTrendChart, ExtraCharts
+│   │   │   │       ├── report/ SharedReportScreen/VM (PIN gate)
+│   │   │   │       └── settings/ SettingsScreen, MedicationViewModel
 │   │   ├── res/
-│   │   │   ├── values/
-│   │   │   │   ├── strings.xml                  # it (default) + en
-│   │   │   │   └── colors.xml
-│   │   │   ├── values-it/
-│   │   │   │   └── strings.xml
-│   │   │   ├── drawable/                         # Vector assets
-│   │   │   └── mipmap-*/                         # Launcher icons (già pronti)
+│   │   │   ├── values/strings.xml                # it (default) + values-en/
+│   │   │   └── mipmap-*/                         # Launcher icons
 │   │   └── AndroidManifest.xml
 │   ├── build.gradle.kts
 │   └── proguard-rules.pro
 ├── build.gradle.kts                              # Root build
 ├── settings.gradle.kts
-└── gradle.properties
+└── gradle.properties                             # SUPABASE_URL + publishable key
 ```
+
+> **Differenze rispetto al piano originale:** `usecase/`, `SettingsApi`, `SettingsRepository`, `SyncRepository`, `ReportScreen`, `AdminOperatorsScreen`, `util/` e `ReminderDao` non sono stati creati come moduli separati — le relative funzioni sono state implementate direttamente nelle schermate/repository esistenti. Le icone sono in `app/src/main/res/mipmap-*/` (non `android/mipmap-*/`).
 
 ---
 
@@ -224,67 +224,135 @@ iperteso/
 
 ---
 
-## Piano di Sviluppo — Fasi
+## Piano di Sviluppo — Fasi (stato finale)
 
-### Fase 0: Setup progetto (Giorno 1)
+### Fase 0: Setup progetto ✅ COMPLETATA
 
-- [ ] Creare progetto Android Studio con template Empty Compose Activity
-- [ ] Configurare `build.gradle.kts` con tutte le dipendenze
-- [ ] Configurare `gradle.properties` con le variabili da `.env`
-- [ ] Copiare icone da `iperteso/android/mipmap-*/` in `res/`
-- [ ] Configurare Supabase client (stesso URL, stessa publishable key)
-- [ ] Setup Room database con schema identico a Supabase
-- [ ] Setup Koin per dependency injection
-- [ ] Setup Navigation Compose con route
+- [x] Progetto Gradle + AGP 8.5.2 + Kotlin 2.0.0 + KSP
+- [x] Dipendenze: Compose BOM, Room, Supabase-kt, Ktor, Koin, WorkManager, iText7, serialization
+- [x] `gradle.properties` con `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY` (da `.env`)
+- [x] Icone launcher in `res/mipmap-*/`
+- [x] Supabase client singleton con logging
+- [x] Room database (readings, users, settings, medications)
+- [x] Koin + Navigation Compose
 
-### Fase 1: Auth + Core (Giorno 2-3)
+### Fase 1: Auth + Core ✅ COMPLETATA
 
-- [ ] LoginScreen (table-based auth, SHA-256)
-- [ ] Session management (DataStore, TTL 8h)
-- [ ] Password recovery flow (email → token → reset)
-- [ ] RBAC (admin/user) guard sulle route
-- [ ] Room DAO: UserEntity, migrazione schema
+- [x] LoginScreen table-based auth (SHA-256), placeholder come la Vue
+- [x] SessionManager DataStore, TTL 8h
+- [x] Password recovery flow (stub: form "Invia richiesta", RPC non cablato)
+- [x] RBAC admin/user guard (sezione Admin nelle impostazioni — stub)
+- [x] Room DAO: UserEntity
 
-### Fase 2: CRUD Misurazioni (Giorno 4-5)
+### Fase 2: CRUD Misurazioni ✅ COMPLETATA
 
-- [ ] Room DAO: ReadingEntity
-- [ ] ReadingRepository (offline-first: Room → Supabase sync)
-- [ ] AddEditReadingScreen (form con validazione)
-- [ ] Classificazione ESC/ESH live
-- [ ] ReadingListScreen (lista, filtri, ricerca, swipe-to-delete)
-- [ ] WorkManager sync worker
+- [x] Room DAO: ReadingEntity
+- [x] ReadingRepository offline-first (Room → Supabase)
+- [x] AddEditReadingScreen con validazione **localizzata** (range, DIA<SYS)
+- [x] Classificazione ESC/ESH live (7 categorie)
+- [x] ReadingListScreen (lista, 4 filtri raggruppati, ricerca, swipe-to-delete)
+- [x] SyncWorker WorkManager (15 min)
 
-### Fase 3: Dashboard + Stats (Giorno 6-8)
+### Fase 3: Dashboard + Stats ✅ COMPLETATA
 
-- [ ] HomeScreen (saluto, ultima lettura, KPI, letture recenti)
-- [ ] AnalysisScreen con TabRow
-- [ ] Grafici: line (SYS/DIA), bar (derivate), doughnut (OMS)
-- [ ] Annotazioni ESC/ESH (zona target, soglia 140)
-- [ ] Morning Surge, Carico Ipertensivo, HRV
-- [ ] Dark mode reattiva
+- [x] HomeScreen (saluto orario, ultima lettura, KPI, letture recenti, empty state)
+- [x] AnalysisScreen con TabRow (Andamento / Variazioni / Distribuzione)
+- [x] Grafici **Canvas nativi** (no libreria esterna): line `BpTrendChart`, bar derivate `ExtraCharts`, doughnut `CategoryDoughnutChart`
+- [x] Zona target 90-140 + soglia 140 tratteggiata
+- [x] Morning Surge, Carico Ipertensivo, HRV
+- [x] Dark mode di sistema (`isSystemInDarkTheme()`)
 
-### Fase 4: Report PDF + Condivisione (Giorno 9-10)
+### Fase 4: Report PDF + Condivisione ✅ COMPLETATA
 
-- [ ] GeneratePdfUseCase (iText7, header, stats, tabella, grafici)
-- [ ] Condivisione PDF (Intent.ACTION_SEND)
-- [ ] Link temporaneo + PIN
-- [ ] SharedReportScreen (dashboard pubblica)
-- [ ] Revoca link
+- [x] PdfReportGenerator iText7 (header, stats, ESC/ESH, farmaci, tabella, disclaimer)
+- [x] Condivisione PDF via Intent.ACTION_SEND
+- [x] Link temporaneo 48h + PIN 4 cifre (tabella `shared_reports`)
+- [x] SharedReportScreen con PIN gate (fetch via token)
+- [x] Deep link `iperteso://share/{token}`
 
-### Fase 5: Impostazioni + Polish (Giorno 11-12)
+### Fase 5: Impostazioni + Polish ✅ COMPLETATA
 
-- [ ] SettingsScreen (account, profilo, promemoria, fasce orarie)
-- [ ] Notifiche native per promemoria
-- [ ] Esportazione CSV
-- [ ] i18n (it/en)
-- [ ] Eliminazione dati massiva
-- [ ] Test su Samsung S24 (fisico/emulatore)
+- [x] SettingsScreen (account, admin stub, aspetto, lingua, promemoria, farmaci, dati, info)
+- [x] Notifiche native per promemoria (AlarmManager giornaliero 08:00)
+- [x] Esportazione CSV
+- [x] i18n it/en con riavvio (`LocaleManager` + `values-en`)
+- [x] Eliminazione dati massiva
+- [x] Test su emulatore Galaxy_S24_API_34
 
-### Fase 6: Release (Giorno 13)
+### Fase 6: Release ✅ COMPLETATA
 
-- [ ] Firmare APK/AAB con keystore release
-- [ ] Test E2E su dispositivo
-- [ ] Pubblicazione (Play Store / APK diretto)
+- [x] APK release firmata con keystore (21 MB)
+- [x] Test: 63 unit + 20 strumentati (Room DAO)
+- [ ] Pubblicazione (Play Store / APK diretto) — da fare
+
+---
+
+## Parità funzionale vs Web (verificata 2026-08-13)
+
+> **Esito:** parità quasi completa sulle funzioni core; la web app resta più ricca su alcune funzioni "power" (import/backup, fasce configurabili, interattività grafici). Le due app condividono lo stesso backend Supabase e le stesse utenze.
+
+### Al parità ✅
+
+| Funzione | Note |
+| --- | --- |
+| Auth table-based (SHA-256) + sessione 8h | Identico meccanismo |
+| CRUD letture offline-first | Room ↔ IndexedDB |
+| Classificazione live | ESC/ESH (Vue: 6 cat. con Ipotensione; Android: 7 cat. ESC/ESH 2024) |
+| Validazione range + DIA<SYS + duplicati 10min | Localizzata anche su Android |
+| Dashboard: saluto, ultima lettura, 4 KPI, recenti, empty state | |
+| Lista: filtri, ricerca, swipe-to-delete | Android: 4 chip raggruppati |
+| Analisi: line/bar/doughnut, zona target, soglia 140, Morning Surge, Carico Ipertensivo, HRV | Android: Canvas nativi vs Chart.js interattivo |
+| PDF + condivisione | Android: iText7 vs jsPDF |
+| Link temporaneo 48h + PIN | Vue: `settings._share_*`; Android: tabella `shared_reports` |
+| PIN gate su report condiviso | |
+| Promemoria | Vue: giorni+orari multipli; Android: singolo giornaliero 08:00 |
+| Lingua it/en | Vue: switch reattivo; Android: switch con riavvio |
+| Farmaci (medications) | Portata su Vue in questa sessione |
+| CSV export | |
+
+### Solo Web (non ancora su Android) ⚠️
+
+| Funzione | Note |
+| --- | --- |
+| CSV import / backup-restore JSON / dati di test | Non implementati su Android |
+| Fasce orarie configurabili | Android usa fasce fisse Mattina/Pomeriggio/Sera/Notte |
+| Confronto 7/30 giorni tabella multi-periodo | Android: filtri 7/30/90 giorni |
+| Tooltip hover + grafici cliccabili | Canvas statici su Android |
+| Cambio password/email in impostazioni | Android: recovery stub |
+| Profilo esteso (nome, cognome, CF, telefono, indirizzo) | Android: solo data nascita/genere assenti |
+| Gestione utenti admin (OperatoriView) | Android: sezione Admin stub |
+| PWA install, SW update, offline banner | N/A su Android nativo |
+
+### Solo Android (non su Web) ✅
+
+| Funzione | Note |
+| --- | --- |
+| Deep link nativo `iperteso://share/{token}` | |
+| Notifiche native di sistema | |
+
+## Test — Parità casi di test (verificata 2026-08-13)
+
+| Suite | Web (Vue) | Android |
+| --- | --- | --- |
+| Unit test | **270** (Vitest) | **63** (JUnit4 + MockK) |
+| Strumentati (device) | — | **20** (Room DAO su emulatore) |
+| E2E | **123 passed + 2 skipped** (Playwright) | — (test manuale su emulatore) |
+| Build | `vite build` ✅ | `assembleRelease` ✅ (APK firmata) |
+
+**Copertura casi di test a confronto (Vue ↔ Android unit test):**
+
+| Area | Vue | Android |
+| --- | --- | --- |
+| Auth | 34 test | AuthViewModel (login/hash/sessione) |
+| Statistiche (stats/derivate/surge/carico/HRV) | 29 test | — (logica inline, non estratta) |
+| Categorie/classificazione | 9 test | Category.classify coperto via DAO/VM |
+| Theme | 8 test | — |
+| KeepAlive / errorHandling / ids / rbac | 18 test | — |
+| DB locale (DAO) | — (IndexedDB) | 20 strumentati Room |
+| UI componenti | vari | — |
+| Validazioni letture | AddEditReadingView | AddEditReadingViewModel (range/DIA< SYS/duplicati) |
+
+> **Nota parità test:** la web app ha una suite molto più estesa (270 unit + 123 E2E) rispetto ad Android (63 unit + 20 strumentati). Le aree non coperte su Android sono principalmente la logica statistica (estratte in `statistics.js` su Vue, inline nelle schermate su Android) e le funzioni power (import/backup/fasce). Per allineare i casi di test andrebbe estratta la logica statistica Android in unit testabili (vedi § "Azioni raccomandate").
 
 ---
 

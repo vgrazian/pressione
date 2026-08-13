@@ -1,9 +1,28 @@
-# Pressione — Feature Inventory & Review
+# Pressione / IperTeso — Feature Inventory & Review (Web + Android)
 
-> **Versione:** 1.2.1 | **Data:** 2026-08-07  
-> **URL:** <https://vgrazian.github.io/pressione/>  
-> **Stack:** Vue 3 + Vite PWA · Supabase · Dexie/IndexedDB (+ localStorage bridge) · Chart.js (theme-aware) · chartjs-plugin-annotation · jsPDF  
-> **Test:** 241 unit (Vitest) + 60 E2E (Playwright)
+> **Versione Web:** 1.2.1 | **Versione Android:** 1.0.0 | **Data:** 2026-08-13  
+> **Web:** <https://vgrazian.github.io/pressione/> — Vue 3 + Vite PWA · Supabase · Dexie/IndexedDB (+ localStorage bridge) · Chart.js · jsPDF  
+> **Android:** Kotlin 2.0.0 + Jetpack Compose (M3) · Supabase Kotlin SDK · Room · Koin · WorkManager · iText7 · Canvas charts  
+> **Test Web:** 270 unit (Vitest) + 123 E2E (Playwright, 2 skipped)  
+> **Test Android:** 63 unit (JUnit4/MockK) + 20 strumentati (Room DAO su emulatore)  
+> **DB condiviso:** stesso Supabase, stesse utenze, stesso schema
+
+---
+
+## Indice
+
+1. [Auth & User Management](#1-auth--user-management)
+2. [Dashboard](#2-dashboard-home)
+3. [CRUD Misurazioni](#3-crud-misurazioni)
+4. [Lista Misurazioni](#4-lista-misurazioni)
+5. [Analisi](#5-analisi-statistiche--report-unificati)
+6. [Report e Condivisione](#6-report-e-condivisione-integrati-in-analisi)
+7. [Impostazioni](#7-impostazioni)
+8. [UI/UX](#8-uiux)
+9. [Infrastruttura](#9-infrastruttura)
+10. [Changelog Web (Agosto 2026)](#10-changelog-web-agosto-2026)
+11. [Feature Android](#11-feature-android)
+12. [Matrice di parità Web ↔ Android](#12-matrice-di-parità-web--android)
 
 ---
 
@@ -100,9 +119,10 @@
 
 | Feature | Note |
 | --- | --- |
-| Lingua IT/EN | Selettore in cima |
+| Lingua IT/EN | Selettore con radio button (Italiano/English) |
 | Account | Username, email, ruolo |
 | Modifica email/password | Password in sezione collassabile |
+| **Farmaci (medications)** | **NUOVO** — tracciamento farmaci: CRUD, dosaggio, frequenza, date inizio/fine, stato attivo/storico, inclusi nel PDF |
 | **Profilo** | Data di nascita con età calcolata + genere + anagrafica completa |
 | Promemoria | Multipli, orari + giorni |
 | **Fasce orarie configurabili** | Sezione collassabile, slider interattivo |
@@ -127,7 +147,7 @@
 | Font Inter | Google Fonts, swap |
 | Icone SVG | AppIcon (18 icone) |
 | Skeleton loader | Componente riutilizzabile |
-| Confirm dialog | Globale via provide/inject |
+| Confirm dialog | Globale via store condiviso (`confirmDialog.js`) |
 | Top bar + bottom nav | Sticky, 4 tab (logo-only topbar) |
 | Offline banner | Giallo se no Supabase |
 | Focus-visible, reduced-motion | A11y |
@@ -148,9 +168,9 @@
 | **Release script** | `scripts/deploy.sh` — git worktree isolato, safety gate .env, idempotente |
 | **Version from package.json** | Single source of truth, build number da git hash |
 | **Force cache clear** | `forceClearCache()` — deregistra SW, svuota caches, reload |
-| **81 test** | 81 unit + 60 E2E |
+| **270 unit + 123 E2E** | Suite Vitest + Playwright riallineata all'app corrente |
 
-## 10. Nuove Feature (Agosto 2026) — Portabili su BP-Tracker
+## 10. Changelog Web (Agosto 2026)
 
 | # | Feature | File(s) |
 | --- | --- | --- |
@@ -182,4 +202,85 @@
 
 ---
 
-*Documento generato per revisione — ultimo aggiornamento 2026-08-06*
+## 11. Feature Android
+
+> App nativa Android (Kotlin + Jetpack Compose). Stesso backend Supabase, stesse utenze. Vedere `IPERTESO_ANDROID_PLAN.md` e `iperteso/DESIGN.md` per dettagli.
+
+| Area | Feature | Note |
+| --- | --- | --- |
+| Auth | Login table-based (SHA-256) | Placeholder come la Vue, "Accesso in corso…" |
+| Auth | Sessione 8h TTL | DataStore |
+| Auth | Recovery password | Stub (form, RPC non cablato) |
+| Auth | RBAC admin/user | Sezione Admin stub |
+| Dashboard | Saluto orario + ultima lettura | Greeting time-based localizzato |
+| Dashboard | 4 KPI + letture recenti + empty state | |
+| CRUD | Add/Edit con validazione localizzata | Errori su `strings.xml` it/en |
+| CRUD | Classificazione ESC/ESH live | 7 categorie 2024 (Ottimale→Crisi) |
+| CRUD | Duplicati 10 min | |
+| Lista | 4 filtri raggruppati + ricerca + swipe-to-delete | |
+| Analisi | Tab Andamento/Variazioni/Distribuzione | |
+| Analisi | Grafici Canvas nativi | Line, bar derivate (dP/dt), doughnut — **senza librerie esterne** |
+| Analisi | Zona target 90-140 + soglia 140 | |
+| Analisi | Morning Surge, Carico Ipertensivo, HRV | |
+| Analisi | Filtri periodo 7/30/90 giorni | |
+| Report | PDF iText7 | Header, stats, ESC/ESH, farmaci, tabella |
+| Report | Link temporaneo 48h + PIN 4 cifre | Tabella Supabase `shared_reports` |
+| Report | SharedReportScreen con PIN gate | |
+| Report | Deep link `iperteso://share/{token}` | |
+| Impostazioni | Lingua it/en con riavvio | `LocaleManager` + `values-en` |
+| Impostazioni | **Farmaci (medications)** | CRUD completo, inclusi nel PDF |
+| Impostazioni | Promemoria giornaliero | AlarmManager fisso 08:00 (no giorni) |
+| Impostazioni | CSV export + elimina dati + info | |
+| Impostazioni | Dark mode | Solo di sistema (`isSystemInDarkTheme()`), toggle non cablato |
+| Infra | Offline-first Room → Supabase | SyncWorker 15 min |
+| Infra | Koin DI + Navigation Compose | |
+| Infra | i18n strings.xml it/en + valori | |
+
+---
+
+## 12. Matrice di parità Web ↔ Android
+
+**Legenda:** ✅ parità · 🟡 parziale · ⬜ assente
+
+| Funzione | Web | Android | Note |
+| --- | --- | --- | --- |
+| Login table-based + sessione 8h | ✅ | ✅ | |
+| Recovery password | ✅ | 🟡 | Android stub |
+| RBAC + gestione utenti admin | ✅ | 🟡 | Android: sezione Admin stub |
+| CRUD letture + validazione | ✅ | ✅ | validazione localizzata su entrambe |
+| Classificazione ESC/ESH | 🟡 | 🟡 | Vue 6 cat. (con Ipotensione) · Android 7 cat. 2024 |
+| Dashboard (saluto/KPI/recenti/empty) | ✅ | ✅ | |
+| Lista (filtri/ricerca/swipe) | ✅ | ✅ | |
+| Grafici line/bar/doughnut | ✅ | ✅ | Vue Chart.js interattivo · Android Canvas statico |
+| Zona target + soglia 140 | ✅ | ✅ | |
+| Morning Surge / Carico / HRV | ✅ | ✅ | |
+| Confronto 7/30 giorni | ✅ | 🟡 | Android solo filtri periodo |
+| Fasce orarie configurabili | ✅ | ⬜ | Android fisse |
+| PDF | ✅ | ✅ | jsPDF vs iText7 |
+| Link 48h + PIN + revoca | ✅ | 🟡 | Android: crea link ma senza lista/revoca |
+| PIN gate report condiviso | ✅ | ✅ | |
+| Promemoria | ✅ | 🟡 | Web: giorni+orari multipli · Android: 1 giornaliero |
+| Lingua it/en | ✅ | ✅ | Web reattivo · Android con riavvio |
+| Farmaci (medications) | ✅ | ✅ | Portata su Web in questa sessione |
+| CSV export | ✅ | ✅ | |
+| CSV import / backup / dati test | ✅ | ⬜ | |
+| Profilo esteso (anagrafica) | ✅ | ⬜ | |
+| Cambio password/email | ✅ | 🟡 | Android stub |
+| PWA install / SW update / offline banner | ✅ | ⬜ | N/A nativo |
+| Deep link nativo | ⬜ | ✅ | `iperteso://share/{token}` |
+| Notifiche native di sistema | 🟡 | ✅ | Web: Web Notifications · Android: native |
+
+### Parità casi di test
+
+| Suite | Web | Android |
+| --- | --- | --- |
+| Unit | 270 (Vitest) | 63 (JUnit4/MockK) |
+| Strumentati (device) | — | 20 (Room DAO su emulatore) |
+| E2E | 123 passed + 2 skipped (Playwright) | — (test manuale su emulatore) |
+| Build | `vite build` ✅ | `assembleRelease` ✅ APK firmata |
+
+**Gap copertura test (Android vs Web):** la logica statistica (derivate, morning surge, carico, HRV) è estratta in `statistics.js` su Web (29 unit test), mentre su Android è inline nelle schermate e **non ha unit test dedicati**. Per allineare i casi di test andrebbe estratta in un oggetto Kotlin testabile (`Statistics.kt`). Stessa cosa per CSV import/backup/fasce orarie, non presenti su Android.
+
+---
+
+*Documento unificato Web + Android — ultimo aggiornamento 2026-08-13*
