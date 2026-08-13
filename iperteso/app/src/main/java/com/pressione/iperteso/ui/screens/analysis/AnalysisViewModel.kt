@@ -43,7 +43,11 @@ class AnalysisViewModel(
     }
 
     fun getFilteredReadings(): List<Reading> {
-        val cutoff = System.currentTimeMillis() - _uiState.value.periodDays * 24 * 60 * 60 * 1000L
+        return getFilteredReadingsForDays(_uiState.value.periodDays)
+    }
+
+    fun getFilteredReadingsForDays(days: Int): List<Reading> {
+        val cutoff = System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L
         return _uiState.value.readings.filter {
             it.timestamp.toEpochMilli() >= cutoff
         }

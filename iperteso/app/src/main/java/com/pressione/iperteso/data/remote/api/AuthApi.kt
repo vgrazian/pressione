@@ -41,9 +41,33 @@ class AuthApi {
         return client.from("users").select().decodeList<UserResponse>()
     }
 
-    suspend fun updateProfile(username: String, birthDate: String?, gender: String?, profileCompleted: Boolean) {
+    suspend fun updateProfile(
+        username: String,
+        birthDate: String?,
+        gender: String?,
+        profileCompleted: Boolean,
+        firstName: String? = null,
+        lastName: String? = null,
+        fiscalCode: String? = null,
+        phone: String? = null,
+        street: String? = null,
+        streetNumber: String? = null,
+        city: String? = null,
+        postalCode: String? = null
+    ) {
         client.from("users").update({
-            set("birth_date", birthDate); set("gender", gender); set("profile_completed", profileCompleted)
+            set("birth_date", birthDate)
+            set("gender", gender)
+            set("profile_completed", profileCompleted)
+            set("first_name", firstName)
+            set("last_name", lastName)
+            set("fiscal_code", fiscalCode)
+            set("phone", phone)
+            set("street", street)
+            set("street_number", streetNumber)
+            set("city", city)
+            set("postal_code", postalCode)
+            set("updated_at", java.time.Instant.now().toString())
         }) { filter { eq("username", username) } }
     }
 
@@ -52,7 +76,7 @@ class AuthApi {
     }
 
     suspend fun updateEmail(username: String, newEmail: String) {
-        client.from("update_user_email").select()
+        client.from("users").update({ set("email", newEmail) }) { filter { eq("username", username) } }
     }
 
     suspend fun requestPasswordReset(email: String, resetBaseUrl: String): ResetResponse {
@@ -71,7 +95,15 @@ data class UserResponse(
     @SerialName("birth_date") val birthDate: String? = null,
     val gender: String? = null,
     @SerialName("profile_completed") val profileCompleted: Boolean = false,
-    @SerialName("skip_profile_prompt") val skipProfilePrompt: Boolean = false
+    @SerialName("skip_profile_prompt") val skipProfilePrompt: Boolean = false,
+    @SerialName("first_name") val firstName: String? = null,
+    @SerialName("last_name") val lastName: String? = null,
+    @SerialName("fiscal_code") val fiscalCode: String? = null,
+    val phone: String? = null,
+    val street: String? = null,
+    @SerialName("street_number") val streetNumber: String? = null,
+    val city: String? = null,
+    @SerialName("postal_code") val postalCode: String? = null
 )
 
 @Serializable

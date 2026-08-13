@@ -20,7 +20,7 @@ import com.pressione.iperteso.data.local.entity.UserEntity
         SettingEntity::class,
         MedicationEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

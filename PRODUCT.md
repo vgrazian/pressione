@@ -4,7 +4,26 @@
 
 ## Platform
 
-web
+web + android
+
+## Versioni di prodotto
+
+Il progetto è distribuito in **due versioni** che condividono lo stesso backend Supabase, lo stesso schema dati e le stesse utenze, con parità funzionale:
+
+| Versione | Tecnologia | Percorso | Target |
+| --- | --- | --- | --- |
+| **Pressione (Web)** | Vue 3 + Vite 6, PWA installabile | `src/` (root del repo) | Browser desktop/mobile, PWA su home screen |
+| **IperTeso (Android)** | Kotlin 2.0 + Jetpack Compose, Material3 | `iperteso/app/` | Smartphone Android 8.0+ (minSdk 26) |
+
+**Modello condiviso:**
+- Stesso database Supabase (`public.users`, `readings`, `medications`, `settings`, `shared_reports`)
+- Stessa auth table-based con hash SHA-256 delle password
+- Stesse regole cliniche: classificazione ESC/ESH, validazione range + DIA<SYS + duplicati 10 min
+- Stesse funzioni power: import CSV, backup/restore JSON, fasce orarie configurabili, confronto 7/30 giorni, profilo esteso, cambio password/email
+
+**Differenze di piattaforma:**
+- Web: PWA con service worker, offline via IndexedDB (Dexie), deploy su GitHub Pages
+- Android: offline via Room (SQLite), sync in background con WorkManager, notifiche native, deep link `iperteso://share/{token}`, PDF via iText7
 
 ## Users
 
@@ -68,8 +87,10 @@ Pressione combina la semplicità di un diario personale con strumenti analitici 
 
 - Design system CSS completo in `src/style.css` (tokens, componenti, utilità)
 - Schema database Supabase in `supabase/migrations/`
-- Suite di test: 24 file, 228 test (unit + E2E)
+- Suite di test Web: 270 unit (Vitest) + 123 E2E (Playwright)
+- Suite di test Android: 87 unit (JUnit4 + MockK) + 20 strumentati (Room DAO)
 - `progress.md` con cronologia sessioni di sviluppo
+- `IPERTESO_ANDROID_PLAN.md` con piano, architettura e matrice di parità
 - `README.md` con panoramica del progetto
 
 ## Product Principles

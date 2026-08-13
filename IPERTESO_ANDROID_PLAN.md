@@ -277,19 +277,24 @@ iperteso/
 - [x] Esportazione CSV
 - [x] i18n it/en con riavvio (`LocaleManager` + `values-en`)
 - [x] Eliminazione dati massiva
+- [x] Import CSV (`CsvImporter` — formati IperTeso/bp-tracker, modalità add/skip/overwrite)
+- [x] Backup/restore JSON (`BackupService` — export via ShareSheet, restore via file picker)
+- [x] Fasce orarie configurabili (`TimeBandsStore` + UI, usate anche in Analisi)
+- [x] Profilo esteso (nome, cognome, CF, telefono, indirizzo — migrazione 007)
+- [x] Cambio password (con verifica password attuale) e cambio email
 - [x] Test su emulatore Galaxy_S24_API_34
 
 ### Fase 6: Release ✅ COMPLETATA
 
 - [x] APK release firmata con keystore (21 MB)
-- [x] Test: 63 unit + 20 strumentati (Room DAO)
+- [x] Test: 87 unit + 20 strumentati (Room DAO)
 - [ ] Pubblicazione (Play Store / APK diretto) — da fare
 
 ---
 
 ## Parità funzionale vs Web (verificata 2026-08-13)
 
-> **Esito:** parità quasi completa sulle funzioni core; la web app resta più ricca su alcune funzioni "power" (import/backup, fasce configurabili, interattività grafici). Le due app condividono lo stesso backend Supabase e le stesse utenze.
+> **Esito:** parità completa sulle funzioni core e sulle funzioni "power" (import/backup, fasce configurabili, confronto 7/30, profilo esteso, cambio password/email). Restano web-only solo l'interattività dei grafici (tooltip/cliccabili) e la gestione utenti admin (stub su Android). Le due app condividono lo stesso backend Supabase e le stesse utenze.
 
 ### Al parità ✅
 
@@ -302,6 +307,8 @@ iperteso/
 | Dashboard: saluto, ultima lettura, 4 KPI, recenti, empty state | |
 | Lista: filtri, ricerca, swipe-to-delete | Android: 4 chip raggruppati |
 | Analisi: line/bar/doughnut, zona target, soglia 140, Morning Surge, Carico Ipertensivo, HRV | Android: Canvas nativi vs Chart.js interattivo |
+| Confronto 7/30 giorni (tabella multi-periodo) | Tab "Confronto" su Android |
+| Fasce orarie configurabili | `TimeBandsStore` + UI in Impostazioni |
 | PDF + condivisione | Android: iText7 vs jsPDF |
 | Link temporaneo 48h + PIN | Vue: `settings._share_*`; Android: tabella `shared_reports` |
 | PIN gate su report condiviso | |
@@ -309,17 +316,16 @@ iperteso/
 | Lingua it/en | Vue: switch reattivo; Android: switch con riavvio |
 | Farmaci (medications) | Portata su Vue in questa sessione |
 | CSV export | |
+| CSV import | `CsvImporter` (formati IperTeso + bp-tracker, modalità add/skip/overwrite) |
+| Backup/restore JSON | `BackupService` (export + restore) |
+| Profilo esteso (nome, cognome, CF, telefono, indirizzo) | Migrazione 007 + form in Impostazioni |
+| Cambio password/email | Verifica password attuale + update email via API |
 
 ### Solo Web (non ancora su Android) ⚠️
 
 | Funzione | Note |
 | --- | --- |
-| CSV import / backup-restore JSON / dati di test | Non implementati su Android |
-| Fasce orarie configurabili | Android usa fasce fisse Mattina/Pomeriggio/Sera/Notte |
-| Confronto 7/30 giorni tabella multi-periodo | Android: filtri 7/30/90 giorni |
 | Tooltip hover + grafici cliccabili | Canvas statici su Android |
-| Cambio password/email in impostazioni | Android: recovery stub |
-| Profilo esteso (nome, cognome, CF, telefono, indirizzo) | Android: solo data nascita/genere assenti |
 | Gestione utenti admin (OperatoriView) | Android: sezione Admin stub |
 | PWA install, SW update, offline banner | N/A su Android nativo |
 
@@ -334,7 +340,7 @@ iperteso/
 
 | Suite | Web (Vue) | Android |
 | --- | --- | --- |
-| Unit test | **270** (Vitest) | **63** (JUnit4 + MockK) |
+| Unit test | **270** (Vitest) | **87** (JUnit4 + MockK) |
 | Strumentati (device) | — | **20** (Room DAO su emulatore) |
 | E2E | **123 passed + 2 skipped** (Playwright) | — (test manuale su emulatore) |
 | Build | `vite build` ✅ | `assembleRelease` ✅ (APK firmata) |
@@ -344,7 +350,7 @@ iperteso/
 | Area | Vue | Android |
 | --- | --- | --- |
 | Auth | 34 test | AuthViewModel (login/hash/sessione) |
-| Statistiche (stats/derivate/surge/carico/HRV) | 29 test | — (logica inline, non estratta) |
+| Statistiche (stats/derivate/surge/carico/HRV) | 29 test | 24 test in `StatisticsCalculatorTest` (logica estratta in `StatisticsCalculator.kt`) |
 | Categorie/classificazione | 9 test | Category.classify coperto via DAO/VM |
 | Theme | 8 test | — |
 | KeepAlive / errorHandling / ids / rbac | 18 test | — |
@@ -352,7 +358,7 @@ iperteso/
 | UI componenti | vari | — |
 | Validazioni letture | AddEditReadingView | AddEditReadingViewModel (range/DIA< SYS/duplicati) |
 
-> **Nota parità test:** la web app ha una suite molto più estesa (270 unit + 123 E2E) rispetto ad Android (63 unit + 20 strumentati). Le aree non coperte su Android sono principalmente la logica statistica (estratte in `statistics.js` su Vue, inline nelle schermate su Android) e le funzioni power (import/backup/fasce). Per allineare i casi di test andrebbe estratta la logica statistica Android in unit testabili (vedi § "Azioni raccomandate").
+> **Nota parità test:** la logica statistica Android è ora estratta in `domain/statistics/StatisticsCalculator.kt` e coperta da 24 unit test, allineandola ai 29 test di `statistics.js` su Vue. Restano non coperte su Android le aree web-only (theme, keepAlive/errorHandling/ids/rbac, tooltip interattivi).
 
 ---
 

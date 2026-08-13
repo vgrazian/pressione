@@ -44,8 +44,12 @@ import com.pressione.iperteso.R
 import com.pressione.iperteso.domain.model.AuthSession
 import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Reading
+import com.pressione.iperteso.domain.model.TimeBand
+import com.pressione.iperteso.domain.statistics.Statistics
+import com.pressione.iperteso.domain.statistics.StatisticsCalculator
 import com.pressione.iperteso.services.LocaleManager
 import com.pressione.iperteso.services.PdfReportGenerator
+import com.pressione.iperteso.services.TimeBandsStore
 import com.pressione.iperteso.ui.components.SkeletonLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -67,8 +71,14 @@ fun AnalysisScreen(
     var showShareLinkDialog by remember { mutableStateOf(false) }
     var shareLink by remember { mutableStateOf<String?>(null) }
     var sharePin by remember { mutableStateOf<String?>(null) }
+    var timeBands by remember { mutableStateOf(TimeBand.defaults()) }
 
     LaunchedEffect(session) { viewModel.initialize(session.username) }
+
+    LaunchedEffect(session.username) {
+        val db = com.pressione.iperteso.IperTesoApplication.instance.database
+        timeBands = TimeBandsStore.load(session.username, db.settingsDao())
+    }
 
     Scaffold(
         topBar = {
@@ -181,7 +191,8 @@ fun AnalysisScreen(
                 val tabs = listOf(
                     stringResource(R.string.analysis_tab_trend),
                     stringResource(R.string.analysis_tab_variations),
-                    stringResource(R.string.analysis_tab_distribution)
+                    stringResource(R.string.analysis_tab_distribution),
+                    stringResource(R.string.analysis_tab_compare)
                 )
                 TabRow(selectedTabIndex = uiState.selectedTab) {
                     tabs.forEachIndexed { index, title ->
@@ -195,12 +206,16 @@ fun AnalysisScreen(
 
                 // ── Tab Content ──────────────────────────────
                 val filteredReadings = viewModel.getFilteredReadings()
-                val stats = computeStatistics(filteredReadings)
+                val stats = StatisticsCalculator.computeStatistics(filteredReadings)
 
                 when (uiState.selectedTab) {
                     0 -> TrendTab(readings = filteredReadings, stats = stats)
                     1 -> VariationsTab(readings = filteredReadings, stats = stats)
-                    2 -> DistributionTab(readings = filteredReadings)
+                    2 -> DistributionTab(readings = filteredReadings, bands = timeBands)
+                    3 -> ComparisonTab(
+                        readings7 = viewModel.getFilteredReadingsForDays(7),
+                        readings30 = viewModel.getFilteredReadingsForDays(30)
+                    )
                 }
             }
         }
@@ -368,7 +383,7 @@ private fun VariationsTab(readings: List<Reading>, stats: Statistics) {
 }
 
 @Composable
-private fun DistributionTab(readings: List<Reading>) {
+private fun DistributionTab(readings: List<Reading>, bands: List<TimeBand>) {
     // Compute distribution
     val distribution = readings.groupBy { it.category }
         .mapValues { it.value.size }
@@ -442,15 +457,11 @@ private fun DistributionTab(readings: List<Reading>) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(stringResource(R.string.analysis_by_time), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(4.dp))
-                // Show time-of-day averages instead of pie chart placeholder
-                val readingsByTod = readings.groupBy {
-                    val h = it.timestamp.atZone(ZoneId.systemDefault()).hour
-                    when {
-                        h in 6..11 -> stringResource(R.string.analysis_morning)
-                        h in 12..17 -> stringResource(R.string.analysis_afternoon)
-                        h in 18..21 -> stringResource(R.string.analysis_evening)
-                        else -> stringResource(R.string.analysis_night)
-                    }
+                // Show time-of-day averages using configurable time bands
+                val readingsByTod = readings.groupBy { reading ->
+                    val h = reading.timestamp.atZone(ZoneId.systemDefault()).hour
+                    bands.firstOrNull { it.contains(h) }?.label
+                        ?: stringResource(R.string.analysis_night)
                 }
                 readingsByTod.forEach { (label, list) ->
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -467,6 +478,96 @@ private fun DistributionTab(readings: List<Reading>) {
 }
 
 @Composable
+private fun ComparisonTab(readings7: List<Reading>, readings30: List<Reading>) {
+    val stats7 = StatisticsCalculator.computeStatistics(readings7)
+    val stats30 = StatisticsCalculator.computeStatistics(readings30)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            stringResource(R.string.analysis_compare_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            stringResource(R.string.analysis_compare_sub),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Header row
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.analysis_compare_col_period), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.analysis_compare_col_readings), modifier = Modifier.weight(0.8f), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                    Text(stringResource(R.string.analysis_compare_col_sys), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                    Text(stringResource(R.string.analysis_compare_col_dia), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                    Text(stringResource(R.string.analysis_compare_col_bpm), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                CompareRow(stringResource(R.string.analysis_period_7), stats7)
+                CompareRow(stringResource(R.string.analysis_period_30), stats30)
+            }
+        }
+
+        // Hypertensive load comparison
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                modifier = Modifier.weight(1f),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(stringResource(R.string.analysis_period_7), style = MaterialTheme.typography.labelSmall)
+                    Text("${stats7.readingsCount}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.analysis_compare_col_load) + " %.0f%%".format(stats7.hypertensiveLoad),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Card(
+                modifier = Modifier.weight(1f),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(stringResource(R.string.analysis_period_30), style = MaterialTheme.typography.labelSmall)
+                    Text("${stats30.readingsCount}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.analysis_compare_col_load) + " %.0f%%".format(stats30.hypertensiveLoad),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompareRow(period: String, stats: Statistics) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(period, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Text("${stats.readingsCount}", modifier = Modifier.weight(0.8f), style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+        Text("%.0f".format(stats.avgSystolic), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+        Text("%.0f".format(stats.avgDiastolic), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+        Text("%.0f".format(stats.avgHeartRate), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, textAlign = androidx.compose.ui.text.style.TextAlign.End)
+    }
+}
+
+@Composable
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
@@ -479,62 +580,4 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
     }
 }
 
-// ── Simple Statistics ──────────────────────────────────────
-
-data class Statistics(
-    val avgSystolic: Float = 0f,
-    val avgDiastolic: Float = 0f,
-    val avgHeartRate: Float = 0f,
-    val minSystolic: Int = 0,
-    val maxSystolic: Int = 0,
-    val readingsCount: Int = 0,
-    val morningSurge: Float = 0f,
-    val hypertensiveLoad: Float = 0f,
-    val hrv: Float = 0f
-)
-
-private fun computeStatistics(readings: List<Reading>): Statistics {
-    if (readings.isEmpty()) return Statistics()
-    val sys = readings.map { it.systolic }
-    val dia = readings.map { it.diastolic }
-    val hr = readings.map { it.heartRate }
-
-    val avg = { list: List<Int> -> list.average().toFloat() }
-
-    // Morning surge: average systolic 6-12 minus evening systolic
-    val morningReadings = readings.filter {
-        val h = it.timestamp.atZone(ZoneId.systemDefault()).hour
-        h in 6..11
-    }
-    val eveningReadings = readings.filter {
-        val h = it.timestamp.atZone(ZoneId.systemDefault()).hour
-        h in 18..21
-    }
-    val morningSurge = if (morningReadings.isNotEmpty() && eveningReadings.isNotEmpty()) {
-        morningReadings.map { it.systolic }.average().toFloat() -
-        eveningReadings.map { it.systolic }.average().toFloat()
-    } else 0f
-
-    // Hypertensive load: % readings where systolic > 140 or diastolic > 90
-    val hypertensiveCount = readings.count { it.systolic > 140 || it.diastolic > 90 }
-    val hypertensiveLoad = if (readings.isNotEmpty())
-        hypertensiveCount.toFloat() / readings.size * 100 else 0f
-
-    // HRV: standard deviation of heart rate
-    val hrv = if (hr.size > 1) {
-        val mean = hr.average()
-        kotlin.math.sqrt(hr.map { (it - mean) * (it - mean) }.average()).toFloat()
-    } else 0f
-
-    return Statistics(
-        avgSystolic = avg(sys),
-        avgDiastolic = avg(dia),
-        avgHeartRate = avg(hr),
-        minSystolic = sys.minOrNull() ?: 0,
-        maxSystolic = sys.maxOrNull() ?: 0,
-        readingsCount = readings.size,
-        morningSurge = morningSurge,
-        hypertensiveLoad = hypertensiveLoad,
-        hrv = hrv
-    )
-}
+// ── Statistics moved to domain/statistics/StatisticsCalculator.kt ──

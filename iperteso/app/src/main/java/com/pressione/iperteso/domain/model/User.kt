@@ -11,5 +11,13 @@ data class User(
     val birthDate: String? = null,      // ISO date string
     val gender: String? = null,         // "male", "female", "other"
     val profileCompleted: Boolean = false,
-    val skipProfilePrompt: Boolean = false
+    val skipProfilePrompt: Boolean = false,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val fiscalCode: String? = null,
+    val phone: String? = null,
+    val street: String? = null,
+    val streetNumber: String? = null,
+    val city: String? = null,
+    val postalCode: String? = null
 )

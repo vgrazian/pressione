@@ -32,5 +32,29 @@ data class UserEntity(
     val profileCompleted: Boolean = false,
 
     @ColumnInfo(name = "skip_profile_prompt")
-    val skipProfilePrompt: Boolean = false
+    val skipProfilePrompt: Boolean = false,
+
+    @ColumnInfo(name = "first_name")
+    val firstName: String? = null,
+
+    @ColumnInfo(name = "last_name")
+    val lastName: String? = null,
+
+    @ColumnInfo(name = "fiscal_code")
+    val fiscalCode: String? = null,
+
+    @ColumnInfo(name = "phone")
+    val phone: String? = null,
+
+    @ColumnInfo(name = "street")
+    val street: String? = null,
+
+    @ColumnInfo(name = "street_number")
+    val streetNumber: String? = null,
+
+    @ColumnInfo(name = "city")
+    val city: String? = null,
+
+    @ColumnInfo(name = "postal_code")
+    val postalCode: String? = null
 )

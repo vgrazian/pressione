@@ -74,16 +74,27 @@ class AuthRepository(
     }
 
     /**
-     * Update user profile.
+     * Update user profile (birth date, gender, extended anagrafica).
      */
     suspend fun updateProfile(
         username: String,
         birthDate: String?,
         gender: String?,
-        profileCompleted: Boolean
+        profileCompleted: Boolean,
+        firstName: String? = null,
+        lastName: String? = null,
+        fiscalCode: String? = null,
+        phone: String? = null,
+        street: String? = null,
+        streetNumber: String? = null,
+        city: String? = null,
+        postalCode: String? = null
     ): Result<Unit> {
         return try {
-            authApi.updateProfile(username, birthDate, gender, profileCompleted)
+            authApi.updateProfile(
+                username, birthDate, gender, profileCompleted,
+                firstName, lastName, fiscalCode, phone, street, streetNumber, city, postalCode
+            )
             // Update local cache
             val cached = userDao.getUser(username)
             if (cached != null) {
@@ -91,7 +102,15 @@ class AuthRepository(
                     cached.copy(
                         birthDate = birthDate,
                         gender = gender,
-                        profileCompleted = profileCompleted
+                        profileCompleted = profileCompleted,
+                        firstName = firstName,
+                        lastName = lastName,
+                        fiscalCode = fiscalCode,
+                        phone = phone,
+                        street = street,
+                        streetNumber = streetNumber,
+                        city = city,
+                        postalCode = postalCode
                     )
                 )
             }
@@ -102,12 +121,31 @@ class AuthRepository(
     }
 
     /**
-     * Change password.
+     * Change password — verifies the current password first (like the web app).
      */
-    suspend fun changePassword(username: String, newPassword: String): Result<Unit> {
+    suspend fun changePassword(username: String, currentPassword: String, newPassword: String): Result<Unit> {
         return try {
-            val hash = PasswordHasher.hash(newPassword)
-            authApi.changePassword(username, hash)
+            val currentHash = PasswordHasher.hash(currentPassword)
+            val user = authApi.login(username, currentHash)
+            if (user == null) return Result.failure(AuthError.InvalidCredentials())
+            val newHash = PasswordHasher.hash(newPassword)
+            authApi.changePassword(username, newHash)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update user email.
+     */
+    suspend fun changeEmail(username: String, newEmail: String): Result<Unit> {
+        return try {
+            authApi.updateEmail(username, newEmail)
+            val cached = userDao.getUser(username)
+            if (cached != null) {
+                userDao.upsertUser(cached.copy(email = newEmail))
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -167,7 +205,15 @@ fun UserResponse.toUserEntity() = UserEntity(
     birthDate = birthDate,
     gender = gender,
     profileCompleted = profileCompleted,
-    skipProfilePrompt = skipProfilePrompt
+    skipProfilePrompt = skipProfilePrompt,
+    firstName = firstName,
+    lastName = lastName,
+    fiscalCode = fiscalCode,
+    phone = phone,
+    street = street,
+    streetNumber = streetNumber,
+    city = city,
+    postalCode = postalCode
 )
 
 fun UserResponse.toDomainUser() = User(
@@ -178,7 +224,15 @@ fun UserResponse.toDomainUser() = User(
     birthDate = birthDate,
     gender = gender,
     profileCompleted = profileCompleted,
-    skipProfilePrompt = skipProfilePrompt
+    skipProfilePrompt = skipProfilePrompt,
+    firstName = firstName,
+    lastName = lastName,
+    fiscalCode = fiscalCode,
+    phone = phone,
+    street = street,
+    streetNumber = streetNumber,
+    city = city,
+    postalCode = postalCode
 )
 
 fun UserEntity.toDomainUser() = User(
@@ -189,5 +243,13 @@ fun UserEntity.toDomainUser() = User(
     birthDate = birthDate,
     gender = gender,
     profileCompleted = profileCompleted,
-    skipProfilePrompt = skipProfilePrompt
+    skipProfilePrompt = skipProfilePrompt,
+    firstName = firstName,
+    lastName = lastName,
+    fiscalCode = fiscalCode,
+    phone = phone,
+    street = street,
+    streetNumber = streetNumber,
+    city = city,
+    postalCode = postalCode
 )

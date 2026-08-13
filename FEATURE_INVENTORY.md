@@ -4,7 +4,7 @@
 > **Web:** <https://vgrazian.github.io/pressione/> — Vue 3 + Vite PWA · Supabase · Dexie/IndexedDB (+ localStorage bridge) · Chart.js · jsPDF  
 > **Android:** Kotlin 2.0.0 + Jetpack Compose (M3) · Supabase Kotlin SDK · Room · Koin · WorkManager · iText7 · Canvas charts  
 > **Test Web:** 270 unit (Vitest) + 123 E2E (Playwright, 2 skipped)  
-> **Test Android:** 63 unit (JUnit4/MockK) + 20 strumentati (Room DAO su emulatore)  
+> **Test Android:** 87 unit (JUnit4/MockK) + 20 strumentati (Room DAO su emulatore)  
 > **DB condiviso:** stesso Supabase, stesse utenze, stesso schema
 
 ---
@@ -223,6 +223,8 @@
 | Analisi | Zona target 90-140 + soglia 140 | |
 | Analisi | Morning Surge, Carico Ipertensivo, HRV | |
 | Analisi | Filtri periodo 7/30/90 giorni | |
+| Analisi | **Confronto 7/30 giorni** | Tab "Confronto" con tabella multi-periodo |
+| Analisi | **Fasce orarie configurabili** | `TimeBandsStore` usate in Distribuzione |
 | Report | PDF iText7 | Header, stats, ESC/ESH, farmaci, tabella |
 | Report | Link temporaneo 48h + PIN 4 cifre | Tabella Supabase `shared_reports` |
 | Report | SharedReportScreen con PIN gate | |
@@ -231,6 +233,10 @@
 | Impostazioni | **Farmaci (medications)** | CRUD completo, inclusi nel PDF |
 | Impostazioni | Promemoria giornaliero | AlarmManager fisso 08:00 (no giorni) |
 | Impostazioni | CSV export + elimina dati + info | |
+| Impostazioni | **CSV import** | `CsvImporter` (IperTeso + bp-tracker, add/skip/overwrite) |
+| Impostazioni | **Backup/restore JSON** | `BackupService` (export via ShareSheet, restore via file picker) |
+| Impostazioni | **Profilo esteso** | nome, cognome, CF, telefono, indirizzo (migrazione 007) |
+| Impostazioni | **Cambio password/email** | Verifica pw attuale + update email via API |
 | Impostazioni | Dark mode | Solo di sistema (`isSystemInDarkTheme()`), toggle non cablato |
 | Infra | Offline-first Room → Supabase | SyncWorker 15 min |
 | Infra | Koin DI + Navigation Compose | |
@@ -254,8 +260,8 @@
 | Grafici line/bar/doughnut | ✅ | ✅ | Vue Chart.js interattivo · Android Canvas statico |
 | Zona target + soglia 140 | ✅ | ✅ | |
 | Morning Surge / Carico / HRV | ✅ | ✅ | |
-| Confronto 7/30 giorni | ✅ | 🟡 | Android solo filtri periodo |
-| Fasce orarie configurabili | ✅ | ⬜ | Android fisse |
+| Confronto 7/30 giorni | ✅ | ✅ | Tabella multi-periodo su entrambe |
+| Fasce orarie configurabili | ✅ | ✅ | `timeBands.js` vs `TimeBandsStore` |
 | PDF | ✅ | ✅ | jsPDF vs iText7 |
 | Link 48h + PIN + revoca | ✅ | 🟡 | Android: crea link ma senza lista/revoca |
 | PIN gate report condiviso | ✅ | ✅ | |
@@ -263,9 +269,9 @@
 | Lingua it/en | ✅ | ✅ | Web reattivo · Android con riavvio |
 | Farmaci (medications) | ✅ | ✅ | Portata su Web in questa sessione |
 | CSV export | ✅ | ✅ | |
-| CSV import / backup / dati test | ✅ | ⬜ | |
-| Profilo esteso (anagrafica) | ✅ | ⬜ | |
-| Cambio password/email | ✅ | 🟡 | Android stub |
+| CSV import / backup / dati test | ✅ | 🟡 | Import CSV + backup/restore su Android; "genera dati test" solo Web |
+| Profilo esteso (anagrafica) | ✅ | ✅ | |
+| Cambio password/email | ✅ | ✅ | |
 | PWA install / SW update / offline banner | ✅ | ⬜ | N/A nativo |
 | Deep link nativo | ⬜ | ✅ | `iperteso://share/{token}` |
 | Notifiche native di sistema | 🟡 | ✅ | Web: Web Notifications · Android: native |
@@ -274,12 +280,12 @@
 
 | Suite | Web | Android |
 | --- | --- | --- |
-| Unit | 270 (Vitest) | 63 (JUnit4/MockK) |
+| Unit | 270 (Vitest) | 87 (JUnit4/MockK) |
 | Strumentati (device) | — | 20 (Room DAO su emulatore) |
 | E2E | 123 passed + 2 skipped (Playwright) | — (test manuale su emulatore) |
 | Build | `vite build` ✅ | `assembleRelease` ✅ APK firmata |
 
-**Gap copertura test (Android vs Web):** la logica statistica (derivate, morning surge, carico, HRV) è estratta in `statistics.js` su Web (29 unit test), mentre su Android è inline nelle schermate e **non ha unit test dedicati**. Per allineare i casi di test andrebbe estratta in un oggetto Kotlin testabile (`Statistics.kt`). Stessa cosa per CSV import/backup/fasce orarie, non presenti su Android.
+**Gap copertura test (Android vs Web):** la logica statistica (derivate, morning surge, carico, HRV) è ora estratta in `domain/statistics/StatisticsCalculator.kt` su Android e coperta da **24 unit test**, allineandosi ai 29 test di `statistics.js` su Web. Restano non coperte su Android le aree web-only (theme, keepAlive/errorHandling/ids/rbac, tooltip interattivi, "genera dati test").
 
 ---
 
