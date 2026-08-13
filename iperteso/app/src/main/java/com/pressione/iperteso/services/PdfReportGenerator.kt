@@ -6,8 +6,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.itextpdf.io.font.constants.StandardFonts
 import com.itextpdf.kernel.colors.ColorConstants
 import com.itextpdf.kernel.colors.DeviceRgb
+import com.itextpdf.kernel.font.PdfFont
+import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
 import com.itextpdf.kernel.pdf.canvas.draw.SolidLine
@@ -51,12 +54,15 @@ object PdfReportGenerator {
         val pdf = PdfDocument(writer)
         val doc = Document(pdf, com.itextpdf.kernel.geom.PageSize.A4)
         doc.setMargins(36f, 36f, 36f, 36f)
+        val regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA)
+        val boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD)
+        doc.setFont(regularFont)
 
         // Header
         doc.add(
             Paragraph("IperTeso — Report Pressione Arteriosa")
                 .setFontSize(18f)
-                .setBold()
+                .setFont(boldFont)
                 .setFontColor(medicalGreen)
         )
 
@@ -77,7 +83,7 @@ object PdfReportGenerator {
             val hr = readings.map { it.heartRate }
             val avg = { l: List<Int> -> l.average() }
 
-            doc.add(Paragraph("Statistiche").setFontSize(13f).setBold().setFontColor(medicalGreen))
+            doc.add(Paragraph("Statistiche").setFontSize(13f).setFont(boldFont).setFontColor(medicalGreen))
             doc.add(Paragraph(
                 "Media SYS: %.0f mmHg  |  Media DIA: %.0f mmHg  |  Media FC: %.0f BPM  |  Totale: %d misurazioni".format(
                     avg(sys), avg(dia), avg(hr), readings.size
@@ -99,13 +105,13 @@ object PdfReportGenerator {
 
         // ESC/ESH Classification
         if (readings.isNotEmpty()) {
-            doc.add(Paragraph("Classificazione ESC/ESH").setFontSize(13f).setBold().setFontColor(medicalGreen))
+            doc.add(Paragraph("Classificazione ESC/ESH").setFontSize(13f).setFont(boldFont).setFontColor(medicalGreen))
             val distribution = readings.groupBy { it.category }.mapValues { it.value.size }
             val table = Table(UnitValue.createPercentArray(floatArrayOf(60f, 20f, 20f)))
             table.setWidth(UnitValue.createPercentValue(100f))
-            table.addHeaderCell(Cell().add(Paragraph("Categoria").setBold().setFontSize(9f)))
-            table.addHeaderCell(Cell().add(Paragraph("N.").setBold().setFontSize(9f)))
-            table.addHeaderCell(Cell().add(Paragraph("%").setBold().setFontSize(9f)))
+            table.addHeaderCell(Cell().add(Paragraph("Categoria").setFont(boldFont).setFontSize(9f)))
+            table.addHeaderCell(Cell().add(Paragraph("N.").setFont(boldFont).setFontSize(9f)))
+            table.addHeaderCell(Cell().add(Paragraph("%").setFont(boldFont).setFontSize(9f)))
 
             for (cat in Category.entries) {
                 val count = distribution[cat] ?: 0
@@ -122,7 +128,7 @@ object PdfReportGenerator {
 
         // Medications
         if (medications.isNotEmpty()) {
-            doc.add(Paragraph("Farmaci").setFontSize(13f).setBold().setFontColor(medicalGreen))
+            doc.add(Paragraph("Farmaci").setFontSize(13f).setFont(boldFont).setFontColor(medicalGreen))
             for (med in medications) {
                 val status = if (med.isActive) "In corso" else "Interrotto"
                 val dates = "${dateFormat.format(med.startDate.atZone(ZoneId.systemDefault()))} — " +
@@ -141,14 +147,14 @@ object PdfReportGenerator {
         }
 
         // Readings table (last 30)
-        doc.add(Paragraph("Ultime misurazioni").setFontSize(13f).setBold().setFontColor(medicalGreen))
+        doc.add(Paragraph("Ultime misurazioni").setFontSize(13f).setFont(boldFont).setFontColor(medicalGreen))
         val readingsTable = Table(UnitValue.createPercentArray(floatArrayOf(25f, 20f, 20f, 15f, 20f)))
         readingsTable.setWidth(UnitValue.createPercentValue(100f))
-        readingsTable.addHeaderCell(Cell().add(Paragraph("Data/Ora").setBold().setFontSize(8f)))
-        readingsTable.addHeaderCell(Cell().add(Paragraph("SYS/DIA").setBold().setFontSize(8f)))
-        readingsTable.addHeaderCell(Cell().add(Paragraph("FC").setBold().setFontSize(8f)))
-        readingsTable.addHeaderCell(Cell().add(Paragraph("Categoria").setBold().setFontSize(8f)))
-        readingsTable.addHeaderCell(Cell().add(Paragraph("Note").setBold().setFontSize(8f)))
+        readingsTable.addHeaderCell(Cell().add(Paragraph("Data/Ora").setFont(boldFont).setFontSize(8f)))
+        readingsTable.addHeaderCell(Cell().add(Paragraph("SYS/DIA").setFont(boldFont).setFontSize(8f)))
+        readingsTable.addHeaderCell(Cell().add(Paragraph("FC").setFont(boldFont).setFontSize(8f)))
+        readingsTable.addHeaderCell(Cell().add(Paragraph("Categoria").setFont(boldFont).setFontSize(8f)))
+        readingsTable.addHeaderCell(Cell().add(Paragraph("Note").setFont(boldFont).setFontSize(8f)))
 
         for (r in readings.take(30)) {
             val ts = dateTimeFormat.format(r.timestamp.atZone(ZoneId.systemDefault()))
@@ -167,7 +173,7 @@ object PdfReportGenerator {
         // Disclaimer
         doc.add(LineSeparator(SolidLine(0.5f)).setMarginTop(12f).setMarginBottom(6f))
         doc.add(
-            Paragraph("⚠️ Questo report è generato automaticamente e non sostituisce il parere medico.")
+            Paragraph("Questo report è generato automaticamente e non sostituisce il parere medico.")
                 .setFontSize(8f).setFontColor(textMuted).setTextAlignment(TextAlignment.CENTER)
         )
 
