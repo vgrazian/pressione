@@ -169,13 +169,17 @@ fun MedicationsScreen(
 @Composable
 private fun EmptyMedications(modifier: Modifier = Modifier, onAdd: () -> Unit) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            modifier = Modifier.padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text("💊", style = MaterialTheme.typography.displayLarge)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 stringResource(R.string.medications_empty),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
             androidx.compose.material3.FilledTonalButton(onClick = onAdd) {
