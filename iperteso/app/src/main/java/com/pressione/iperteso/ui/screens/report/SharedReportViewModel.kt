@@ -63,10 +63,13 @@ class SharedReportViewModel(
     fun verifyPin(pin: String) {
         val report = cachedReport ?: return
         viewModelScope.launch {
-            val expected = report.pin
-            if (expected != null && pin != expected) {
-                _uiState.update { it.copy(error = SharedReportError.PIN_WRONG) }
-                return@launch
+            val expectedHash = report.pinHash
+            if (expectedHash != null) {
+                val inputHash = com.pressione.iperteso.util.PasswordHasher.hash(pin)
+                if (inputHash != expectedHash) {
+                    _uiState.update { it.copy(error = SharedReportError.PIN_WRONG) }
+                    return@launch
+                }
             }
             // Decode report data
             val data = report.reportData

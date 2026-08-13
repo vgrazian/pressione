@@ -249,6 +249,33 @@
     <string name="analysis_share_created">Shared link created</string>
     <string name="analysis_share_hint">Valid 48 hours. Share this link with your doctor:</string>
     <string name="analysis_share_app_link">App link:</string>
+    <string name="analysis_sysdia_media">Avg SYS/DIA</string>
+    <string name="analysis_bpm_medio">Avg BPM</string>
+    <string name="analysis_count">Readings</string>
+    <string name="analysis_alert_derivative">%1$d rapid-change episodes (&gt;10 mmHg/h) detected</string>
+    <string name="analysis_tod_title">By time of day</string>
+    <string name="analysis_tod_readings">%1$d readings</string>
+    <string name="analysis_picco">Morning surge</string>
+    <string name="analysis_picco_info">Morning surge: %1$s mmHg</string>
+    <string name="analysis_compare_var_up">Max change ↑</string>
+    <string name="analysis_compare_var_down">Max change ↓</string>
+    <string name="analysis_compare_dpdt">dP/dt alarms</string>
+    <string name="analysis_compare_picco">Morning surge</string>
+    <string name="analysis_history">History</string>
+    <string name="analysis_history_list">List</string>
+    <string name="analysis_history_grouped">By band</string>
+    <string name="analysis_history_more">…and %1$d more readings</string>
+    <string name="analysis_share_email">Email</string>
+    <string name="analysis_share_whatsapp">WhatsApp</string>
+    <string name="analysis_share_pin_opt">Protect with PIN</string>
+    <string name="analysis_share_anonymize">Anonymize data</string>
+    <string name="analysis_link_active">Active links</string>
+    <string name="analysis_link_revoke">Revoke</string>
+    <string name="analysis_link_copy">Copy</string>
+    <string name="analysis_link_expires">Expires %1$s</string>
+    <string name="analysis_link_revoked">Link revoked.</string>
+    <string name="analysis_link_copied">Link copied!</string>
+    <string name="analysis_share_generating">Generating…</string>
 
     <!-- Shared report -->
     <string name="report_title">Shared report</string>

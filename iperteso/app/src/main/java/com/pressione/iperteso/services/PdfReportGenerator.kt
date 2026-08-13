@@ -187,4 +187,36 @@ object PdfReportGenerator {
         }
         context.startActivity(Intent.createChooser(intent, "Condividi report"))
     }
+
+    fun sharePdfViaEmail(context: Context, file: File, subject: String, body: String) {
+        val uri = FileProvider.getUriForFile(
+            context, "${context.packageName}.fileprovider", file
+        )
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:")
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, body)
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Invia report via email"))
+    }
+
+    fun sharePdfViaWhatsApp(context: Context, file: File, subject: String) {
+        val uri = FileProvider.getUriForFile(
+            context, "${context.packageName}.fileprovider", file
+        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            `package` = "com.whatsapp"
+        }
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            context.startActivity(Intent.createChooser(intent.apply { `package` = null }, "Invia report via WhatsApp"))
+        }
+    }
 }

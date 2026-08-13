@@ -46,14 +46,15 @@ object ReadingReportJson {
         val readings = arr.mapNotNull { el ->
             try {
                 val o = el.jsonObject
-                val ts = o["timestamp"]?.jsonPrimitive?.longOrNull ?: return@mapNotNull null
+                val ts = parseTimestamp(o["timestamp"]?.jsonPrimitive?.contentOrNull) ?: return@mapNotNull null
                 Reading(
                     id = o["id"]?.jsonPrimitive?.contentOrNull ?: java.util.UUID.randomUUID().toString(),
                     username = username,
                     systolic = o["systolic"]?.jsonPrimitive?.int ?: 0,
                     diastolic = o["diastolic"]?.jsonPrimitive?.int ?: 0,
-                    heartRate = o["heartRate"]?.jsonPrimitive?.int ?: 0,
-                    timestamp = Instant.ofEpochMilli(ts),
+                    heartRate = o["heartRate"]?.jsonPrimitive?.int
+                        ?: o["heart_rate"]?.jsonPrimitive?.int ?: 0,
+                    timestamp = ts,
                     notes = o["notes"]?.jsonPrimitive?.contentOrNull ?: "",
                     category = o["category"]?.jsonPrimitive?.contentOrNull
                         ?.let { runCatching { Category.valueOf(it) }.getOrNull() }
@@ -62,5 +63,12 @@ object ReadingReportJson {
             } catch (_: Exception) { null }
         }
         return username to readings
+    }
+
+    /** Accepts either epoch-millis (Long) or an ISO-8601 string timestamp. */
+    private fun parseTimestamp(raw: String?): Instant? {
+        if (raw == null) return null
+        raw.toLongOrNull()?.let { return Instant.ofEpochMilli(it) }
+        return runCatching { Instant.parse(raw) }.getOrNull()
     }
 }

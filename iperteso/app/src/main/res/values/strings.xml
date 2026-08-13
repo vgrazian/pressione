@@ -249,6 +249,33 @@
     <string name="analysis_share_created">Link condiviso creato</string>
     <string name="analysis_share_hint">Valido 48 ore. Condividi questo link col tuo medico:</string>
     <string name="analysis_share_app_link">Link app:</string>
+    <string name="analysis_sysdia_media">SYS/DIA media</string>
+    <string name="analysis_bpm_medio">BPM medio</string>
+    <string name="analysis_count">Misurazioni</string>
+    <string name="analysis_alert_derivative">%1$d episodi di variazione rapida (&gt;10 mmHg/h) rilevati</string>
+    <string name="analysis_tod_title">Per fascia oraria</string>
+    <string name="analysis_tod_readings">%1$d letture</string>
+    <string name="analysis_picco">Picco mattutino</string>
+    <string name="analysis_picco_info">Picco mattutino: %1$s mmHg</string>
+    <string name="analysis_compare_var_up">Variazione max ↑</string>
+    <string name="analysis_compare_var_down">Variazione max ↓</string>
+    <string name="analysis_compare_dpdt">Allarmi dP/dt</string>
+    <string name="analysis_compare_picco">Picco mattutino</string>
+    <string name="analysis_history">Storico</string>
+    <string name="analysis_history_list">Lista</string>
+    <string name="analysis_history_grouped">Per fascia</string>
+    <string name="analysis_history_more">…e altre %1$d misurazioni</string>
+    <string name="analysis_share_email">Email</string>
+    <string name="analysis_share_whatsapp">WhatsApp</string>
+    <string name="analysis_share_pin_opt">Proteggi con PIN</string>
+    <string name="analysis_share_anonymize">Anonimizza dati</string>
+    <string name="analysis_link_active">Link attivi</string>
+    <string name="analysis_link_revoke">Revoca</string>
+    <string name="analysis_link_copy">Copia</string>
+    <string name="analysis_link_expires">Scade %1$s</string>
+    <string name="analysis_link_revoked">Link revocato.</string>
+    <string name="analysis_link_copied">Link copiato!</string>
+    <string name="analysis_share_generating">Generazione…</string>
 
     <!-- Shared report -->
     <string name="report_title">Report condiviso</string>
