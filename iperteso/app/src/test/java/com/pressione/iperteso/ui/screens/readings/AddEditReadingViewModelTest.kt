@@ -2,6 +2,7 @@ package com.pressione.iperteso.ui.screens.readings
 
 import com.pressione.iperteso.R
 import com.pressione.iperteso.data.local.dao.SettingsDao
+import com.pressione.iperteso.data.local.dao.UserDao
 import com.pressione.iperteso.data.repository.ReadingRepository
 import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Reading
@@ -27,6 +28,7 @@ class AddEditReadingViewModelTest {
 
     private lateinit var readingRepository: ReadingRepository
     private lateinit var settingsDao: SettingsDao
+    private lateinit var userDao: UserDao
     private lateinit var viewModel: AddEditReadingViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -35,9 +37,11 @@ class AddEditReadingViewModelTest {
         Dispatchers.setMain(testDispatcher)
         readingRepository = mockk()
         settingsDao = mockk()
+        userDao = mockk()
         coEvery { settingsDao.getSetting(any(), any()) } returns null
         coEvery { settingsDao.deleteSetting(any(), any()) } returns Unit
-        viewModel = AddEditReadingViewModel(readingRepository, settingsDao)
+        coEvery { userDao.getUser(any()) } returns null
+        viewModel = AddEditReadingViewModel(readingRepository, settingsDao, userDao)
     }
 
     @After
