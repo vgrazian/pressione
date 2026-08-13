@@ -214,8 +214,8 @@
     <string name="analysis_readings_suffix">meas.</string>
     <string name="analysis_morning_surge">Morning Surge</string>
     <string name="analysis_tab_trend">Trend</string>
-    <string name="analysis_tab_variations">Variations</string>
-    <string name="analysis_tab_distribution">Distribution</string>
+    <string name="analysis_tab_variations">Variat.</string>
+    <string name="analysis_tab_distribution">Distrib.</string>
     <string name="analysis_tab_compare">Compare</string>
     <string name="analysis_period_7">7 days</string>
     <string name="analysis_period_30">30 days</string>
@@ -242,6 +242,9 @@
     <string name="analysis_compare_col_dia">Avg DIA</string>
     <string name="analysis_compare_col_bpm">Avg BPM</string>
     <string name="analysis_compare_col_load">Hypertensive load</string>
+    <string name="analysis_compare_derivative">Hourly derivative (dP/dt)</string>
+    <string name="analysis_compare_max_rate">Max Δ/h</string>
+    <string name="analysis_compare_alarms">alarms &gt;10 mmHg/h</string>
     <string name="analysis_share_created">Shared link created</string>
     <string name="analysis_share_hint">Valid 48 hours. Share this link with your doctor:</string>
     <string name="analysis_share_app_link">App link:</string>

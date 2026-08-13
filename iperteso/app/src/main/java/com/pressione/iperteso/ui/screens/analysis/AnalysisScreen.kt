@@ -495,6 +495,8 @@ private fun DistributionTab(readings: List<Reading>, bands: List<TimeBand>) {
 private fun ComparisonTab(readings7: List<Reading>, readings30: List<Reading>) {
     val stats7 = StatisticsCalculator.computeStatistics(readings7)
     val stats30 = StatisticsCalculator.computeStatistics(readings30)
+    val deriv7 = StatisticsCalculator.computeDerivatives(readings7)
+    val deriv30 = StatisticsCalculator.computeDerivatives(readings30)
 
     Column(
         modifier = Modifier
@@ -563,6 +565,57 @@ private fun ComparisonTab(readings7: List<Reading>, readings30: List<Reading>) {
                     )
                 }
             }
+        }
+
+        // Hourly derivative (dP/dt) comparison
+        Text(
+            stringResource(R.string.analysis_compare_derivative),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            DerivativeCard(
+                label = stringResource(R.string.analysis_period_7),
+                maxRate = deriv7.maxRate,
+                alarmCount = deriv7.alarmSegments.size,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            DerivativeCard(
+                label = stringResource(R.string.analysis_period_30),
+                maxRate = deriv30.maxRate,
+                alarmCount = deriv30.alarmSegments.size,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DerivativeCard(label: String, maxRate: Float, alarmCount: Int, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                "%.1f mmHg/h".format(maxRate),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (maxRate > 10f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            )
+            Text(
+                stringResource(R.string.analysis_compare_max_rate),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.analysis_compare_alarms) + " $alarmCount",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (alarmCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

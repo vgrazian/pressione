@@ -213,9 +213,9 @@
     <string name="analysis_sys_label">SYS</string>
     <string name="analysis_readings_suffix">rilev.</string>
     <string name="analysis_morning_surge">Morning Surge</string>
-    <string name="analysis_tab_trend">Andamento</string>
-    <string name="analysis_tab_variations">Variazioni</string>
-    <string name="analysis_tab_distribution">Distribuzione</string>
+    <string name="analysis_tab_trend">Trend</string>
+    <string name="analysis_tab_variations">Variaz.</string>
+    <string name="analysis_tab_distribution">Distrib.</string>
     <string name="analysis_tab_compare">Confronto</string>
     <string name="analysis_period_7">7 giorni</string>
     <string name="analysis_period_30">30 giorni</string>
@@ -242,6 +242,9 @@
     <string name="analysis_compare_col_dia">Media DIA</string>
     <string name="analysis_compare_col_bpm">Media BPM</string>
     <string name="analysis_compare_col_load">Carico ipert.</string>
+    <string name="analysis_compare_derivative">Derivata oraria (dP/dt)</string>
+    <string name="analysis_compare_max_rate">Max Δ/h</string>
+    <string name="analysis_compare_alarms">allarmi &gt;10 mmHg/h</string>
     <string name="analysis_share_created">Link condiviso creato</string>
     <string name="analysis_share_hint">Valido 48 ore. Condividi questo link col tuo medico:</string>
     <string name="analysis_share_app_link">Link app:</string>
