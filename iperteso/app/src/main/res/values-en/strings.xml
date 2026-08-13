@@ -14,6 +14,7 @@
     <string name="common_loading">Loading…</string>
     <string name="common_update">Update</string>
     <string name="common_confirm">Confirm</string>
+    <string name="common_retry">Retry</string>
 
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>

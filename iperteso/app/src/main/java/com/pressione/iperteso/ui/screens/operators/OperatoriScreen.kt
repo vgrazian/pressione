@@ -96,7 +96,7 @@ fun OperatoriScreen(
         ) {
             // Error / success banners
             uiState.errorMessage?.let { msg ->
-                Banner(msg, isError = true, onDismiss = { viewModel.clearMessages() })
+                Banner(msg, isError = true, onDismiss = { viewModel.clearMessages() }, onRetry = { viewModel.loadUsers() })
             }
             uiState.successMessage?.let { msg ->
                 Banner(msg, isError = false, onDismiss = { viewModel.clearMessages() })
@@ -195,7 +195,7 @@ fun OperatoriScreen(
 }
 
 @Composable
-private fun Banner(msg: String, isError: Boolean, onDismiss: () -> Unit) {
+private fun Banner(msg: String, isError: Boolean, onDismiss: () -> Unit, onRetry: (() -> Unit)? = null) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
@@ -210,7 +210,10 @@ private fun Banner(msg: String, isError: Boolean, onDismiss: () -> Unit) {
                 color = if (isError) MaterialTheme.colorScheme.onErrorContainer
                 else MaterialTheme.colorScheme.onPrimaryContainer
             )
-            TextButton(onClick = onDismiss) { Text("OK") }
+            if (isError && onRetry != null) {
+                TextButton(onClick = onRetry) { Text(stringResource(R.string.common_retry)) }
+            }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_ok)) }
         }
     }
 }
@@ -291,10 +294,18 @@ private fun UserRow(
                         user.username,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         color = if (user.active) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text(user.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        user.email,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
                     Row {
                         Text(
                             if (user.role == "admin") stringResource(R.string.operators_role_admin)

@@ -137,8 +137,8 @@ fun TimeBandSlider(
                     val centerX = (b.endHour / 24f * trackWidth).roundToInt()
                     Box(
                         modifier = Modifier
-                            .offset { IntOffset(centerX - 16, 0) }
-                            .width(32.dp)
+                            .offset { IntOffset(centerX - 24, 0) }
+                            .width(48.dp)
                             .fillMaxHeight()
                             .pointerInput(Unit) {
                                 var cumulative = 0f

@@ -14,6 +14,7 @@
     <string name="common_loading">Caricamento…</string>
     <string name="common_update">Aggiorna</string>
     <string name="common_confirm">Conferma</string>
+    <string name="common_retry">Riprova</string>
 
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>

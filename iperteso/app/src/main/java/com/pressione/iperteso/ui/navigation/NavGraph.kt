@@ -1,5 +1,10 @@
 package com.pressione.iperteso.ui.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -82,7 +87,17 @@ fun NavGraph(sharedToken: String? = null) {
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN
+        startDestination = Routes.LOGIN,
+        enterTransition = {
+            fadeIn(animationSpec = tween(220)) +
+                slideInVertically(animationSpec = tween(220)) { it / 20 }
+        },
+        exitTransition = { fadeOut(animationSpec = tween(180)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(220)) },
+        popExitTransition = {
+            fadeOut(animationSpec = tween(180)) +
+                slideOutVertically(animationSpec = tween(180)) { it / 20 }
+        }
     ) {
         composable(Routes.LOGIN) {
             LoginScreen(

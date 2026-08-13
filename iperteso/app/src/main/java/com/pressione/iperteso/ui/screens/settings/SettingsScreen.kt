@@ -362,7 +362,13 @@ fun SettingsScreen(
             SectionHeader(stringResource(R.string.settings_account))
             ListItem(
                 headlineContent = { Text(session.username) },
-                supportingContent = { Text(session.email) },
+                supportingContent = {
+                    Text(
+                        session.email,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                },
                 leadingContent = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.settings_profile)) }
             )
             ListItem(

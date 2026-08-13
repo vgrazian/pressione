@@ -68,7 +68,7 @@ import org.koin.androidx.compose.koinViewModel
 private val normotensionCategories = setOf(Category.OPTIMAL, Category.NORMAL, Category.HIGH_NORMAL)
 private val hypertensionCategories = setOf(Category.GRADE_1, Category.GRADE_2, Category.GRADE_3)
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun ReadingListScreen(
     session: AuthSession,
@@ -236,7 +236,8 @@ fun ReadingListScreen(
                         SwipeableReadingItem(
                             reading = reading,
                             onEdit = { onEditReading(reading.id) },
-                            onDelete = { readingToDelete = reading }
+                            onDelete = { readingToDelete = reading },
+                            modifier = Modifier.animateItemPlacement()
                         )
                     }
                 }
@@ -276,7 +277,8 @@ fun ReadingListScreen(
 private fun SwipeableReadingItem(
     reading: Reading,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -289,6 +291,7 @@ private fun SwipeableReadingItem(
 
     SwipeToDismissBox(
         state = dismissState,
+        modifier = modifier,
         backgroundContent = {
             val color by animateColorAsState(
                 when (dismissState.targetValue) {
