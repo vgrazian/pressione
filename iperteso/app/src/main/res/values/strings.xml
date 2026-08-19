@@ -63,6 +63,10 @@
     <string name="readings_search">Cerca</string>
     <string name="readings_clear">Pulisci</string>
     <string name="readings_filter_all">Tutte</string>
+    <string name="readings_period_7">7 gg</string>
+    <string name="readings_period_30">30 gg</string>
+    <string name="readings_period_90">3 mesi</string>
+    <string name="readings_period_180">6 mesi</string>
     <string name="readings_filter_normal">Normale</string>
     <string name="readings_filter_hypertension">Ipertensione</string>
     <string name="readings_filter_crisis">Crisi</string>

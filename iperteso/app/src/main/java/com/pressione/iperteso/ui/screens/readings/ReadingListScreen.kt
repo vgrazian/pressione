@@ -169,38 +169,63 @@ fun ReadingListScreen(
             )
             AnimatedVisibility(visible = filtersExpanded) {
                 Column {
-                    // Period filter (wraps onto new lines when space is tight)
+                    // Period filter (compact row with abbreviated labels)
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            .padding(horizontal = 12.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         FilterChip(
                             selected = uiState.periodDays == null,
                             onClick = { viewModel.setPeriod(null) },
-                            label = { Text(stringResource(R.string.readings_filter_all)) }
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.readings_filter_all),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         )
                         FilterChip(
                             selected = uiState.periodDays == 7,
                             onClick = { viewModel.setPeriod(7) },
-                            label = { Text(stringResource(R.string.analysis_period_7)) }
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.readings_period_7),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         )
                         FilterChip(
                             selected = uiState.periodDays == 30,
                             onClick = { viewModel.setPeriod(30) },
-                            label = { Text(stringResource(R.string.analysis_period_30)) }
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.readings_period_30),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         )
                         FilterChip(
                             selected = uiState.periodDays == 90,
                             onClick = { viewModel.setPeriod(90) },
-                            label = { Text(stringResource(R.string.analysis_period_90)) }
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.readings_period_90),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         )
                         FilterChip(
                             selected = uiState.periodDays == 180,
                             onClick = { viewModel.setPeriod(180) },
-                            label = { Text(stringResource(R.string.analysis_period_180)) }
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.readings_period_180),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         )
                     }
                 }

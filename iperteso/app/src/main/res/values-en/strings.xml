@@ -63,6 +63,10 @@
     <string name="readings_search">Search</string>
     <string name="readings_clear">Clear</string>
     <string name="readings_filter_all">All</string>
+    <string name="readings_period_7">7 d</string>
+    <string name="readings_period_30">30 d</string>
+    <string name="readings_period_90">3 mo</string>
+    <string name="readings_period_180">6 mo</string>
     <string name="readings_filter_normal">Normal</string>
     <string name="readings_filter_hypertension">Hypertension</string>
     <string name="readings_filter_crisis">Crisis</string>
