@@ -452,6 +452,7 @@ export async function upsertMedication(medication, username) {
         id: medication.id || generateId(),
         username,
         name: medication.name,
+        activeIngredient: medication.activeIngredient || '',
         dosage: medication.dosage || '',
         frequency: medication.frequency || '',
         notes: medication.notes || '',
@@ -469,6 +470,7 @@ export async function upsertMedication(medication, username) {
                 id: normalized.id,
                 username,
                 name: normalized.name,
+                active_ingredient: normalized.activeIngredient,
                 dosage: normalized.dosage,
                 frequency: normalized.frequency,
                 notes: normalized.notes,
@@ -769,5 +771,35 @@ export async function generateTestData(username, count = 30) {
         }
     }
 
+    // Seed a medication timeline so chart milestones can be validated
+    await seedTestMedications(username)
+
     return count
+}
+
+/**
+ * Seed a realistic medication timeline for a test user.
+ * Start/end dates fall within the last 30 days so milestone markers
+ * (therapy changes) are visible in the trend chart alongside the readings.
+ */
+export async function seedTestMedications(username) {
+    const daysAgo = (d) => new Date(Date.now() - d * 86400000).toISOString()
+    const meds = [
+        { name: 'Losartan', activeIngredient: 'Losartan potassico', dosage: '50 mg', frequency: '1 volta al giorno', notes: 'al mattino', startDaysAgo: 30, endDaysAgo: null },
+        { name: 'Amlodipina', activeIngredient: 'Amlodipina besilato', dosage: '5 mg', frequency: '1 volta al giorno', notes: 'alla sera', startDaysAgo: 20, endDaysAgo: null },
+        { name: 'Bisoprololo', activeIngredient: 'Bisoprololo fumarato', dosage: '2,5 mg', frequency: '1 volta al giorno', notes: 'al mattino', startDaysAgo: 30, endDaysAgo: 10 },
+        { name: 'Ramipril', activeIngredient: 'Ramipril', dosage: '5 mg', frequency: '1 volta al giorno', notes: '', startDaysAgo: 12, endDaysAgo: 3 }
+    ]
+    for (const m of meds) {
+        await upsertMedication({
+            name: m.name,
+            activeIngredient: m.activeIngredient,
+            dosage: m.dosage,
+            frequency: m.frequency,
+            notes: m.notes,
+            startDate: daysAgo(m.startDaysAgo),
+            endDate: m.endDaysAgo != null ? daysAgo(m.endDaysAgo) : null
+        }, username)
+    }
+    return meds.length
 }

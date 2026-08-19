@@ -158,6 +158,7 @@ fun NavGraph(sharedToken: String? = null) {
                     session = session,
                     onNavigateBack = { goHome() },
                     onEditReading = { id -> navController.navigate("edit_reading/$id") },
+                    onNavigateToAdd = { navController.navigate(Routes.ADD_READING) },
                     onNavigateTab = { navigateToTab(it) }
                 )
             }
@@ -180,6 +181,7 @@ fun NavGraph(sharedToken: String? = null) {
                 MedicationsScreen(
                     session = session,
                     onNavigateBack = { goHome() },
+                    onNavigateToAdd = { navController.navigate(Routes.ADD_READING) },
                     onNavigateTab = { navigateToTab(it) }
                 )
             }

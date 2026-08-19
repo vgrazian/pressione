@@ -1,7 +1,9 @@
 package com.pressione.iperteso.ui.screens.readings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,13 +22,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DismissValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +80,7 @@ fun ReadingListScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
     onEditReading: (String) -> Unit,
+    onNavigateToAdd: () -> Unit,
     onNavigateTab: (AppTab) -> Unit,
     viewModel: ReadingListViewModel = koinViewModel()
 ) {
@@ -86,6 +93,7 @@ fun ReadingListScreen(
     var searchActive by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var readingToDelete by remember { mutableStateOf<Reading?>(null) }
+    var filtersExpanded by remember { mutableStateOf(true) }
 
     Scaffold(
         topBar = {
@@ -140,6 +148,14 @@ fun ReadingListScreen(
                 }
             )
         },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToAdd,
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_new_reading))
+            }
+        },
         bottomBar = {
             AppBottomNav(
                 current = AppTab.LIST,
@@ -152,50 +168,93 @@ fun ReadingListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // ── Category Filter Chips (grouped by severity) ──
-            FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                FilterChip(
-                    selected = uiState.selectedCategory == null,
-                    onClick = { viewModel.setCategoryFilter(null) },
-                    label = { Text(stringResource(R.string.readings_filter_all)) }
-                )
-                // Grouped: only 3 severity bands instead of 7 individual categories
-                FilterChip(
-                    selected = uiState.selectedCategory in normotensionCategories,
-                    onClick = {
-                        viewModel.setCategoryFilter(
-                            if (uiState.selectedCategory in normotensionCategories) null
-                            else Category.OPTIMAL
+            // ── Collapsible Filters (period + severity) ──
+            FilterHeader(
+                expanded = filtersExpanded,
+                onToggle = { filtersExpanded = !filtersExpanded }
+            )
+            AnimatedVisibility(visible = filtersExpanded) {
+                Column {
+                    // Period filter
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        FilterChip(
+                            selected = uiState.periodDays == null,
+                            onClick = { viewModel.setPeriod(null) },
+                            label = { Text(stringResource(R.string.readings_filter_all)) }
                         )
-                    },
-                    label = { Text(stringResource(R.string.readings_filter_normal)) }
-                )
-                FilterChip(
-                    selected = uiState.selectedCategory in hypertensionCategories,
-                    onClick = {
-                        viewModel.setCategoryFilter(
-                            if (uiState.selectedCategory in hypertensionCategories) null
-                            else Category.GRADE_1
+                        FilterChip(
+                            selected = uiState.periodDays == 7,
+                            onClick = { viewModel.setPeriod(7) },
+                            label = { Text(stringResource(R.string.analysis_period_7)) }
                         )
-                    },
-                    label = { Text(stringResource(R.string.readings_filter_hypertension)) }
-                )
-                FilterChip(
-                    selected = uiState.selectedCategory == Category.CRISIS,
-                    onClick = {
-                        viewModel.setCategoryFilter(
-                            if (uiState.selectedCategory == Category.CRISIS) null
-                            else Category.CRISIS
+                        FilterChip(
+                            selected = uiState.periodDays == 30,
+                            onClick = { viewModel.setPeriod(30) },
+                            label = { Text(stringResource(R.string.analysis_period_30)) }
                         )
-                    },
-                    label = { Text(stringResource(R.string.readings_filter_crisis)) }
-                )
+                        FilterChip(
+                            selected = uiState.periodDays == 90,
+                            onClick = { viewModel.setPeriod(90) },
+                            label = { Text(stringResource(R.string.analysis_period_90)) }
+                        )
+                        FilterChip(
+                            selected = uiState.periodDays == 180,
+                            onClick = { viewModel.setPeriod(180) },
+                            label = { Text(stringResource(R.string.analysis_period_180)) }
+                        )
+                    }
+                    // Category Filter Chips (grouped by severity)
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        FilterChip(
+                            selected = uiState.selectedCategory == null,
+                            onClick = { viewModel.setCategoryFilter(null) },
+                            label = { Text(stringResource(R.string.readings_filter_all)) }
+                        )
+                        // Grouped: only 3 severity bands instead of 7 individual categories
+                        FilterChip(
+                            selected = uiState.selectedCategory in normotensionCategories,
+                            onClick = {
+                                viewModel.setCategoryFilter(
+                                    if (uiState.selectedCategory in normotensionCategories) null
+                                    else Category.OPTIMAL
+                                )
+                            },
+                            label = { Text(stringResource(R.string.readings_filter_normal)) }
+                        )
+                        FilterChip(
+                            selected = uiState.selectedCategory in hypertensionCategories,
+                            onClick = {
+                                viewModel.setCategoryFilter(
+                                    if (uiState.selectedCategory in hypertensionCategories) null
+                                    else Category.GRADE_1
+                                )
+                            },
+                            label = { Text(stringResource(R.string.readings_filter_hypertension)) }
+                        )
+                        FilterChip(
+                            selected = uiState.selectedCategory == Category.CRISIS,
+                            onClick = {
+                                viewModel.setCategoryFilter(
+                                    if (uiState.selectedCategory == Category.CRISIS) null
+                                    else Category.CRISIS
+                                )
+                            },
+                            label = { Text(stringResource(R.string.readings_filter_crisis)) }
+                        )
+                    }
+                }
             }
 
             // ── Reading List ─────────────────────────────
@@ -225,8 +284,10 @@ fun ReadingListScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        horizontal = 16.dp,
-                        vertical = 8.dp
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 8.dp,
+                        bottom = 88.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -327,6 +388,31 @@ private fun SwipeableReadingItem(
         ReadingCard(
             reading = reading,
             onClick = onEdit
+        )
+    }
+}
+
+@Composable
+private fun FilterHeader(expanded: Boolean, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            stringResource(R.string.readings_filters),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+            contentDescription = stringResource(
+                if (expanded) R.string.readings_filters_hide else R.string.readings_filters_show
+            ),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

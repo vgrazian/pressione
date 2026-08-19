@@ -1,5 +1,8 @@
 package com.pressione.iperteso.ui.screens.report
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,12 +17,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -99,6 +105,9 @@ fun SharedReportScreen(
                 ReportContent(
                     readings = uiState.readings,
                     username = uiState.username,
+                    displayName = uiState.displayName,
+                    birthDate = uiState.birthDate,
+                    gender = uiState.gender,
                     dateFormat = dateFormat,
                     modifier = Modifier.padding(padding)
                 )
@@ -176,12 +185,34 @@ private fun PinGate(
 private fun ReportContent(
     readings: List<Reading>,
     username: String,
+    displayName: String?,
+    birthDate: String?,
+    gender: String?,
     dateFormat: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
-    val sys = readings.map { it.systolic }
-    val dia = readings.map { it.diastolic }
-    val hr = readings.map { it.heartRate }
+    var periodDays by remember { mutableStateOf<Int?>(null) }
+    var showReadings by remember { mutableStateOf(true) }
+
+    val filtered = remember(readings, periodDays) {
+        if (periodDays == null) readings
+        else {
+            val cutoff = System.currentTimeMillis() - periodDays!! * 24 * 60 * 60 * 1000L
+            readings.filter { it.timestamp.toEpochMilli() >= cutoff }
+        }
+    }
+
+    val patientName = displayName?.takeIf { it.isNotBlank() } ?: username
+    val age = remember(birthDate) { computeAge(birthDate) }
+    val genderText = when (gender) {
+        "male" -> stringResource(R.string.report_gender_male)
+        "female" -> stringResource(R.string.report_gender_female)
+        else -> null
+    }
+
+    val sys = filtered.map { it.systolic }
+    val dia = filtered.map { it.diastolic }
+    val hr = filtered.map { it.heartRate }
     val avgSys = if (sys.isNotEmpty()) sys.average().toFloat() else 0f
     val avgDia = if (dia.isNotEmpty()) dia.average().toFloat() else 0f
     val avgHr = if (hr.isNotEmpty()) hr.average().toFloat() else 0f
@@ -192,8 +223,31 @@ private fun ReportContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text(stringResource(R.string.report_patient) + " $username", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
+        // Anagrafica paziente
+        Text(
+            stringResource(R.string.report_patient) + " $patientName",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            buildString {
+                append(stringResource(R.string.report_birth))
+                append(" ")
+                append(birthDate ?: "—")
+                if (age != null) append(" ($age " + stringResource(R.string.report_age_years) + ")")
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (genderText != null) {
+            Text(
+                stringResource(R.string.report_gender) + " $genderText",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
 
         // KPI row
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -206,38 +260,104 @@ private fun ReportContent(
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(modifier = Modifier.fillMaxWidth()) {
-            StatChip(stringResource(R.string.report_total), "${readings.size}", Modifier.weight(1f))
+            StatChip(stringResource(R.string.report_total), "${filtered.size}", Modifier.weight(1f))
             Spacer(modifier = Modifier.width(8.dp))
-            val hypertensive = readings.count { it.systolic > 140 || it.diastolic > 90 }
-            val load = if (readings.isNotEmpty()) hypertensive.toFloat() / readings.size * 100 else 0f
+            val hypertensive = filtered.count { it.systolic > 140 || it.diastolic > 90 }
+            val load = if (filtered.isNotEmpty()) hypertensive.toFloat() / filtered.size * 100 else 0f
             StatChip(stringResource(R.string.report_load), "%.0f%%".format(load), Modifier.weight(1f))
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(stringResource(R.string.report_recent), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(8.dp))
+        // Period filter
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = periodDays == null,
+                onClick = { periodDays = null },
+                label = { Text(stringResource(R.string.readings_filter_all)) }
+            )
+            FilterChip(
+                selected = periodDays == 7,
+                onClick = { periodDays = 7 },
+                label = { Text(stringResource(R.string.analysis_period_7)) }
+            )
+            FilterChip(
+                selected = periodDays == 30,
+                onClick = { periodDays = 30 },
+                label = { Text(stringResource(R.string.analysis_period_30)) }
+            )
+            FilterChip(
+                selected = periodDays == 90,
+                onClick = { periodDays = 90 },
+                label = { Text(stringResource(R.string.analysis_period_90)) }
+            )
+            FilterChip(
+                selected = periodDays == 180,
+                onClick = { periodDays = 180 },
+                label = { Text(stringResource(R.string.analysis_period_180)) }
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
 
-        readings.take(20).forEach { r ->
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(dateFormat.format(r.timestamp), style = MaterialTheme.typography.labelSmall)
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text("${r.systolic}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text(" / ", style = MaterialTheme.typography.titleMedium)
-                            Text("${r.diastolic}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("${r.heartRate} BPM", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Ultime misurazioni (collapsible)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showReadings = !showReadings },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                stringResource(R.string.report_recent) + " (${filtered.size})",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (showReadings) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        if (showReadings) {
+            Spacer(modifier = Modifier.height(8.dp))
+            filtered.take(20).forEach { r ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(dateFormat.format(r.timestamp), style = MaterialTheme.typography.labelSmall)
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text("${r.systolic}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(" / ", style = MaterialTheme.typography.titleMedium)
+                                Text("${r.diastolic}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("${r.heartRate} BPM", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
+                        CategoryBadge(category = r.category)
                     }
-                    CategoryBadge(category = r.category)
                 }
             }
         }
     }
+}
+
+private fun computeAge(birthDate: String?): Int? {
+    if (birthDate == null) return null
+    val birth = runCatching { java.time.LocalDate.parse(birthDate) }.getOrNull() ?: return null
+    val today = java.time.LocalDate.now()
+    var age = today.year - birth.year
+    if (today.monthValue < birth.monthValue ||
+        (today.monthValue == birth.monthValue && today.dayOfMonth < birth.dayOfMonth)
+    ) age--
+    return age
 }
 
 @Composable

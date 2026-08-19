@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +26,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,6 +70,7 @@ import java.time.format.DateTimeFormatter
 fun MedicationsScreen(
     session: AuthSession,
     onNavigateBack: () -> Unit,
+    onNavigateToAdd: () -> Unit,
     onNavigateTab: (AppTab) -> Unit,
     viewModel: MedicationViewModel = koinViewModel()
 ) {
@@ -88,10 +91,10 @@ fun MedicationsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.showAddDialog() },
+                onClick = onNavigateToAdd,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.settings_add_medication))
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_new_reading))
             }
         },
         bottomBar = {
@@ -108,11 +111,22 @@ fun MedicationsScreen(
                 val active = uiState.medications.filter { it.isActive }
                 val historical = uiState.medications.filter { !it.isActive }
                 val showHeaders = active.isNotEmpty() && historical.isNotEmpty()
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    FilledTonalButton(
+                        onClick = { viewModel.showAddDialog() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.settings_add_medication))
+                    }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 88.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                     if (showHeaders) {
                         item {
                             Text(
@@ -151,6 +165,7 @@ fun MedicationsScreen(
                         }
                     }
                 }
+                }
             }
         }
     }
@@ -173,7 +188,12 @@ private fun EmptyMedications(modifier: Modifier = Modifier, onAdd: () -> Unit) {
             modifier = Modifier.padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("💊", style = MaterialTheme.typography.displayLarge)
+            Icon(
+                Icons.Default.Medication,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 stringResource(R.string.medications_empty),
@@ -182,7 +202,7 @@ private fun EmptyMedications(modifier: Modifier = Modifier, onAdd: () -> Unit) {
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            androidx.compose.material3.FilledTonalButton(onClick = onAdd) {
+            FilledTonalButton(onClick = onAdd) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.settings_add_medication))

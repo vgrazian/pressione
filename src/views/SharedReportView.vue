@@ -23,20 +23,66 @@ const derivChartEl = ref(null)
 const pieChartEl = ref(null)
 let bpChart = null, derivChart = null, pieChart = null
 const dateFilter = ref('all')
+const sections = ref({ summary: true, chart: true, details: true, timeOfDay: true, table: true })
+
+// Period options aligned with the app UI (7/30/90/180 giorni)
+const periodOptions = [
+  { k: 'all', l: 'Tutto' },
+  { k: '7', l: '7 giorni' },
+  { k: '30', l: '30 giorni' },
+  { k: '90', l: '3 mesi' },
+  { k: '180', l: '6 mesi' }
+]
+
+async function toggleSection(key) {
+  sections.value[key] = !sections.value[key]
+  await nextTick()
+  renderCharts()
+}
+
+function computeAge(birthDateStr) {
+  if (!birthDateStr) return null
+  const birth = new Date(birthDateStr)
+  if (isNaN(birth.getTime())) return null
+  const now = new Date()
+  let age = now.getFullYear() - birth.getFullYear()
+  const m = now.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+  return age
+}
+
+function genderLabel(g) {
+  if (g === 'male') return 'Maschile'
+  if (g === 'female') return 'Femminile'
+  return null
+}
+
+function formatDate(d) {
+  if (!d) return ''
+  const dt = new Date(d)
+  return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('it-IT')
+}
+
+const age = computed(() => computeAge(report.value?.birthDate))
 
 const bands = getDefaultBands()
 
 const filteredReadings = computed(() => {
   if (!report.value?.readings) return []
   let result = [...report.value.readings].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-  if (dateFilter.value === '7') {
-    const c = new Date(Date.now() - 7 * 86400000)
-    result = result.filter(r => new Date(r.timestamp) >= c)
-  } else if (dateFilter.value === '30') {
-    const c = new Date(Date.now() - 30 * 86400000)
+  if (dateFilter.value !== 'all') {
+    const c = new Date(Date.now() - parseInt(dateFilter.value, 10) * 86400000)
     result = result.filter(r => new Date(r.timestamp) >= c)
   }
   return result
+})
+
+const dateRangeLabel = computed(() => {
+  const r = filteredReadings.value
+  if (!r.length) return ''
+  const first = new Date(r[0].timestamp)
+  const last = new Date(r[r.length - 1].timestamp)
+  return `${first.toLocaleDateString('it-IT')} – ${last.toLocaleDateString('it-IT')}`
 })
 
 const stats = computed(() => computeStatistics(filteredReadings.value, bands))
@@ -173,24 +219,38 @@ const readingsByTimeOfDay = computed(() => {
     <div v-if="isLoading" style="text-align:center;padding:4rem;"><p>Caricamento...</p></div>
 
     <div v-else-if="needsPin" style="text-align:center;padding:4rem;">
-      <h2 style="color:var(--color-accent);margin-bottom:1rem">🔒 Report Protetto</h2>
+      <h2 style="color:var(--color-accent);margin-bottom:1rem">Report Protetto</h2>
       <p style="color:var(--color-text-secondary);margin-bottom:1.5rem">Inserisci il PIN di 4 cifre fornito dal paziente.</p>
       <input v-model="pinInput" type="text" inputmode="numeric" maxlength="4" placeholder="1234" aria-label="PIN di accesso" style="font-size:2rem;text-align:center;width:120px;padding:8px;border:2px solid var(--color-accent);border-radius:8px;letter-spacing:8px" />
       <div v-if="pinError" style="color:var(--color-error);margin-top:8px;font-size:0.875rem">{{ pinError }}</div>
       <button @click="submitPin" style="margin-top:1rem;padding:8px 24px;background:var(--color-accent);color:var(--color-on-accent);border:none;border-radius:8px;font-size:1rem;cursor:pointer">Sblocca</button>
     </div>
 
-    <div v-else-if="error" style="text-align:center;padding:4rem;"><h2 style="color:var(--color-error)">⚠️ {{ error }}</h2></div>
+    <div v-else-if="error" style="text-align:center;padding:4rem;"><h2 style="color:var(--color-error)">{{ error }}</h2></div>
 
     <template v-else-if="report && filteredReadings.length">
       <!-- Header -->
       <div style="background:var(--color-accent);color:var(--color-on-accent);padding:1.5rem;border-radius:12px 12px 0 0">
-        <h1 style="margin:0 0 4px;font-size:1.5rem">📊 Report IperTeso</h1>
-        <p style="margin:0;opacity:0.85;font-size:0.875rem">{{ filteredReadings.length }} misurazioni — {{ new Date(filteredReadings[filteredReadings.length-1].timestamp).toLocaleDateString('it-IT') }} – {{ new Date(filteredReadings[0].timestamp).toLocaleDateString('it-IT') }}</p>
+        <h1 style="margin:0 0 4px;font-size:1.5rem">Report Pressione Arteriosa</h1>
+        <p style="margin:0;opacity:0.85;font-size:0.875rem">{{ filteredReadings.length }} misurazioni — {{ dateRangeLabel }}</p>
       </div>
 
-      <!-- Clinical Summary -->
-      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-top:none;padding:1.5rem;border-radius:0 0 12px 12px;margin-bottom:1.5rem">
+      <!-- Anagrafica paziente -->
+      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-top:none;padding:1rem 1.5rem;border-radius:0 0 12px 12px;margin-bottom:1.5rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:0.875rem;color:var(--color-text-primary)">
+          <div><span style="color:var(--color-text-tertiary)">Paziente:</span> <strong>{{ report.displayName || 'Anonimo' }}</strong></div>
+          <div><span style="color:var(--color-text-tertiary)">Data di nascita:</span> {{ report.birthDate ? formatDate(report.birthDate) : '—' }}<span v-if="age !== null"> ({{ age }} anni)</span></div>
+          <div><span style="color:var(--color-text-tertiary)">Sesso:</span> {{ genderLabel(report.gender) || '—' }}</div>
+        </div>
+      </div>
+
+      <!-- Sintesi clinica -->
+      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1rem">
+        <button @click="toggleSection('summary')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:0;cursor:pointer;color:var(--color-text-primary)">
+          <h3 style="margin:0;font-size:1rem">Sintesi clinica</h3>
+          <span style="font-size:0.75rem;color:var(--color-text-tertiary)">{{ sections.summary ? '▾' : '▸' }}</span>
+        </button>
+        <div v-if="sections.summary" style="padding-top:0.75rem">
         <div style="display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.875rem;font-weight:600;color:var(--color-on-accent);margin-bottom:1rem" :style="{ background: getChartColors().categoryMap[classification] }">{{ getCategoryLabel(classification) }}</div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1rem">
@@ -212,53 +272,76 @@ const readingsByTimeOfDay = computed(() => {
           </div>
         </div>
 
-        <div v-if="morningSurge.alert" style="background:var(--color-warning-muted);border-left:3px solid var(--color-warning);padding:8px 12px;margin-bottom:8px;border-radius:4px;font-size:0.8125rem">⚠️ Picco mattutino elevato: Δ {{ morningSurge.delta }} mmHg — Rischio cardiovascolare aumentato (ESC/ESH 2024)</div>
-        <div v-if="htnLoad.percentage > 30" style="background:var(--color-error-muted);border-left:3px solid var(--color-error);padding:8px 12px;margin-bottom:8px;border-radius:4px;font-size:0.8125rem">⚠️ Carico ipertensivo &gt;30%: {{ htnLoad.abnormal }} letture fuori range su {{ htnLoad.total }}</div>
-        <div v-if="derivatives.alarmSegments.length > 0" style="background:var(--color-warning-muted);border-left:3px solid var(--color-warning);padding:8px 12px;margin-bottom:8px;border-radius:4px;font-size:0.8125rem">⚠️ {{ derivatives.alarmSegments.length }} episodi di variazione rapida (&gt;10 mmHg/ora)</div>
-        <div v-if="!morningSurge.alert && htnLoad.percentage <= 30 && derivatives.alarmSegments.length === 0" style="background:var(--color-accent-muted);border-left:3px solid var(--color-accent);padding:8px 12px;border-radius:4px;font-size:0.8125rem;color:var(--color-accent)">✅ Nessun indicatore di rischio critico rilevato nel periodo.</div>
-      </div>
-
-      <!-- Date filter -->
-      <div style="display:flex;gap:8px;margin-bottom:1rem">
-        <button v-for="f in [{k:'all',l:'Tutto'},{k:'30',l:'30 giorni'},{k:'7',l:'7 giorni'}]" :key="f.k" @click="dateFilter = f.k" :style="{ padding:'5px 16px',borderRadius:'20px',border:'1px solid '+(dateFilter===f.k?'var(--color-accent)':'var(--color-border-strong)'),background:dateFilter===f.k?'var(--color-accent)':'var(--color-on-accent)',color:dateFilter===f.k?'var(--color-on-accent)':'var(--color-text-secondary)',fontSize:'0.8125rem',cursor:'pointer',fontWeight:dateFilter===f.k?'600':'400' }">{{ f.l }}</button>
-      </div>
-
-      <!-- BP Chart -->
-      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1.5rem;margin-bottom:1rem">
-        <h3 style="margin:0 0 1rem;font-size:1rem;color:var(--color-text-primary)">Andamento IperTeso</h3>
-        <div style="position:relative;height:300px"><canvas ref="bpChartEl"></canvas></div>
-        <p style="font-size:0.6875rem;color:var(--color-text-tertiary);margin-top:8px">Zona verde tratteggiata: range target ESC/ESH (&lt;140/90 mmHg). Passa il mouse sui punti per i dettagli.</p>
-      </div>
-
-      <!-- Derivative + Pie -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <div v-if="derivatives.timestamps.length" style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1.5rem">
-          <h3 style="margin:0 0 0.5rem;font-size:0.9375rem;color:var(--color-text-primary)">Variazione oraria (dP/dt)</h3>
-          <p style="font-size:0.6875rem;color:var(--color-text-tertiary);margin-bottom:0.75rem">mmHg/ora — rosso &gt;10</p>
-          <div style="position:relative;height:200px"><canvas ref="derivChartEl"></canvas></div>
-        </div>
-        <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1.5rem">
-          <h3 style="margin:0 0 0.5rem;font-size:0.9375rem;color:var(--color-text-primary)">Distribuzione categorie</h3>
-          <div style="position:relative;height:200px"><canvas ref="pieChartEl"></canvas></div>
+        <div v-if="morningSurge.alert" style="background:var(--color-warning-muted);border-left:3px solid var(--color-warning);padding:8px 12px;margin-bottom:8px;border-radius:4px;font-size:0.8125rem">Picco mattutino elevato: Δ {{ morningSurge.delta }} mmHg — Rischio cardiovascolare aumentato (ESC/ESH 2024)</div>
+        <div v-if="htnLoad.percentage > 30" style="background:var(--color-error-muted);border-left:3px solid var(--color-error);padding:8px 12px;margin-bottom:8px;border-radius:4px;font-size:0.8125rem">Carico ipertensivo &gt;30%: {{ htnLoad.abnormal }} letture fuori range su {{ htnLoad.total }}</div>
+        <div v-if="derivatives.alarmSegments.length > 0" style="background:var(--color-warning-muted);border-left:3px solid var(--color-warning);padding:8px 12px;margin-bottom:8px;border-radius:4px;font-size:0.8125rem">{{ derivatives.alarmSegments.length }} episodi di variazione rapida (&gt;10 mmHg/ora)</div>
+        <div v-if="!morningSurge.alert && htnLoad.percentage <= 30 && derivatives.alarmSegments.length === 0" style="background:var(--color-accent-muted);border-left:3px solid var(--color-accent);padding:8px 12px;border-radius:4px;font-size:0.8125rem;color:var(--color-accent)">Nessun indicatore di rischio critico rilevato nel periodo.</div>
         </div>
       </div>
 
-      <!-- Time of day -->
-      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1.5rem;margin-bottom:1rem">
-        <h3 style="margin:0 0 0.75rem;font-size:0.9375rem;color:var(--color-text-primary)">Per fascia oraria</h3>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          <div v-for="b in readingsByTimeOfDay" :key="b.label" style="background:var(--color-surface);border-radius:8px;padding:10px;text-align:center" :style="{ opacity: b.count > 0 ? 1 : 0.4 }">
-            <div style="font-size:1.25rem">{{ b.icon }}</div>
-            <div style="font-size:0.6875rem;color:var(--color-text-tertiary);margin-top:2px">{{ b.label }}</div>
-            <div v-if="b.avgSys" style="font-size:0.9375rem;font-weight:600;margin-top:4px">{{ b.avgSys }} mmHg</div>
-            <div style="font-size:0.6875rem;color:var(--color-text-tertiary)">{{ b.count }} letture</div>
+      <!-- Period filter -->
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+        <button v-for="f in periodOptions" :key="f.k" @click="dateFilter = f.k" :style="{ padding:'5px 16px',borderRadius:'20px',border:'1px solid '+(dateFilter===f.k?'var(--color-accent)':'var(--color-border-strong)'),background:dateFilter===f.k?'var(--color-accent)':'var(--color-on-accent)',color:dateFilter===f.k?'var(--color-on-accent)':'var(--color-text-secondary)',fontSize:'0.8125rem',cursor:'pointer',fontWeight:dateFilter===f.k?'600':'400' }">{{ f.l }}</button>
+      </div>
+
+      <!-- Andamento pressione -->
+      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1rem">
+        <button @click="toggleSection('chart')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:0;cursor:pointer;color:var(--color-text-primary)">
+          <h3 style="margin:0;font-size:1rem">Andamento pressione</h3>
+          <span style="font-size:0.75rem;color:var(--color-text-tertiary)">{{ sections.chart ? '▾' : '▸' }}</span>
+        </button>
+        <div v-if="sections.chart" style="padding-top:0.75rem">
+          <div style="position:relative;height:300px"><canvas ref="bpChartEl"></canvas></div>
+          <p style="font-size:0.6875rem;color:var(--color-text-tertiary);margin-top:8px">Zona verde tratteggiata: range target ESC/ESH (&lt;140/90 mmHg). Passa il mouse sui punti per i dettagli.</p>
+        </div>
+      </div>
+
+      <!-- Approfondimenti -->
+      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1rem">
+        <button @click="toggleSection('details')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:0;cursor:pointer;color:var(--color-text-primary)">
+          <h3 style="margin:0;font-size:1rem">Approfondimenti</h3>
+          <span style="font-size:0.75rem;color:var(--color-text-tertiary)">{{ sections.details ? '▾' : '▸' }}</span>
+        </button>
+        <div v-if="sections.details" style="padding-top:0.75rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div v-if="derivatives.timestamps.length" style="background:var(--color-surface);border-radius:8px;padding:1rem">
+              <h3 style="margin:0 0 0.5rem;font-size:0.9375rem;color:var(--color-text-primary)">Variazione oraria (dP/dt)</h3>
+              <p style="font-size:0.6875rem;color:var(--color-text-tertiary);margin-bottom:0.75rem">mmHg/ora — rosso &gt;10</p>
+              <div style="position:relative;height:200px"><canvas ref="derivChartEl"></canvas></div>
+            </div>
+            <div style="background:var(--color-surface);border-radius:8px;padding:1rem">
+              <h3 style="margin:0 0 0.5rem;font-size:0.9375rem;color:var(--color-text-primary)">Distribuzione categorie</h3>
+              <div style="position:relative;height:200px"><canvas ref="pieChartEl"></canvas></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Readings table -->
-      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1.5rem;margin-bottom:1rem">
-        <h3 style="margin:0 0 0.75rem;font-size:0.9375rem;color:var(--color-text-primary)">Misurazioni <span style="font-weight:400;color:var(--color-text-tertiary);font-size:0.8125rem">({{ filteredReadings.length }} totali)</span></h3>
+      <!-- Per fascia oraria -->
+      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1rem">
+        <button @click="toggleSection('timeOfDay')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:0;cursor:pointer;color:var(--color-text-primary)">
+          <h3 style="margin:0;font-size:1rem">Per fascia oraria</h3>
+          <span style="font-size:0.75rem;color:var(--color-text-tertiary)">{{ sections.timeOfDay ? '▾' : '▸' }}</span>
+        </button>
+        <div v-if="sections.timeOfDay" style="padding-top:0.75rem">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div v-for="b in readingsByTimeOfDay" :key="b.label" style="background:var(--color-surface);border-radius:8px;padding:10px;text-align:center" :style="{ opacity: b.count > 0 ? 1 : 0.4 }">
+              <div style="font-size:1.25rem">{{ b.icon }}</div>
+              <div style="font-size:0.6875rem;color:var(--color-text-tertiary);margin-top:2px">{{ b.label }}</div>
+              <div v-if="b.avgSys" style="font-size:0.9375rem;font-weight:600;margin-top:4px">{{ b.avgSys }} mmHg</div>
+              <div style="font-size:0.6875rem;color:var(--color-text-tertiary)">{{ b.count }} letture</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Misurazioni -->
+      <div style="background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1rem">
+        <button @click="toggleSection('table')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:0;cursor:pointer;color:var(--color-text-primary)">
+          <h3 style="margin:0;font-size:1rem">Misurazioni <span style="font-weight:400;color:var(--color-text-tertiary);font-size:0.8125rem">({{ filteredReadings.length }} totali)</span></h3>
+          <span style="font-size:0.75rem;color:var(--color-text-tertiary)">{{ sections.table ? '▾' : '▸' }}</span>
+        </button>
+        <div v-if="sections.table" style="padding-top:0.75rem">
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:0.8125rem">
             <thead><tr style="background:var(--color-surface);border-bottom:2px solid var(--color-border)">
@@ -274,6 +357,7 @@ const readingsByTimeOfDay = computed(() => {
               </tr>
             </tbody>
           </table>
+        </div>
         </div>
       </div>
 

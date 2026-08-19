@@ -118,7 +118,7 @@ Scala M3 standard con `fontFamily = FontFamily.Default` (sans-serif di sistema).
 
 Layout a scorrimento verticale con `Scaffold` + `TopAppBar` su ogni schermata. Pattern comune:
 
-```
+```kotlin
 Scaffold(
     topBar = TopAppBar(title, navigationIcon = back),
     floatingActionButton = FAB (solo Home)

@@ -14,6 +14,7 @@ data class ReadingListUiState(
     val isLoading: Boolean = true,
     val readings: List<Reading> = emptyList(),
     val selectedCategory: Category? = null,
+    val periodDays: Int? = null,
     val searchQuery: String = ""
 )
 
@@ -47,6 +48,13 @@ class ReadingListViewModel(
         )
     }
 
+    fun setPeriod(days: Int?) {
+        _uiState.value = _uiState.value.copy(periodDays = days)
+        _uiState.value = _uiState.value.copy(
+            readings = applyFilters(allReadings)
+        )
+    }
+
     fun setSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
         _uiState.value = _uiState.value.copy(
@@ -63,6 +71,11 @@ class ReadingListViewModel(
     private fun applyFilters(readings: List<Reading>): List<Reading> {
         val state = _uiState.value
         var filtered = readings
+
+        state.periodDays?.let { days ->
+            val cutoff = System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L
+            filtered = filtered.filter { it.timestamp.toEpochMilli() >= cutoff }
+        }
 
         state.selectedCategory?.let { category ->
             filtered = when (category) {

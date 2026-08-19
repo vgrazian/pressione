@@ -69,6 +69,9 @@
     <string name="readings_none_found">Nessuna misurazione trovata</string>
     <string name="readings_delete_title">Elimina misurazione</string>
     <string name="readings_delete_message">Sei sicuro di voler eliminare questa misurazione?</string>
+    <string name="readings_filters">Filtri</string>
+    <string name="readings_filters_show">Mostra filtri</string>
+    <string name="readings_filters_hide">Nascondi filtri</string>
 
     <!-- Add / Edit reading -->
     <string name="add_edit_title_edit">Modifica misurazione</string>
@@ -285,6 +288,11 @@
     <string name="report_pin_label">PIN</string>
     <string name="report_unlock">Sblocca report</string>
     <string name="report_patient">Paziente:</string>
+    <string name="report_birth">Data di nascita:</string>
+    <string name="report_gender">Sesso:</string>
+    <string name="report_gender_male">Maschile</string>
+    <string name="report_gender_female">Femminile</string>
+    <string name="report_age_years">anni</string>
     <string name="report_avg_sys">Media SYS</string>
     <string name="report_avg_dia">Media DIA</string>
     <string name="report_avg_bpm">Media BPM</string>

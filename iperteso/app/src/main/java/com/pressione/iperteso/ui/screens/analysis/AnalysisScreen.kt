@@ -65,6 +65,7 @@ import com.pressione.iperteso.data.remote.api.SharedReportRequest
 import com.pressione.iperteso.data.remote.api.SharedReportResponse
 import com.pressione.iperteso.domain.model.AuthSession
 import com.pressione.iperteso.domain.model.Category
+import com.pressione.iperteso.domain.model.Medication
 import com.pressione.iperteso.domain.model.Reading
 import com.pressione.iperteso.domain.model.TimeBand
 import com.pressione.iperteso.domain.statistics.Statistics
@@ -173,7 +174,25 @@ fun AnalysisScreen(
             }
             val api = SharedReportApi()
             val expiresAt = java.time.Instant.now().plusSeconds(48 * 3600).toString()
-            val reportData = ReadingReportJson.readingsToJson(uiState.readings, anonymize = anonymizeLink)
+            val profile = runCatching {
+                com.pressione.iperteso.IperTesoApplication.instance.database
+                    .userDao().getUser(session.username)
+            }.getOrNull()
+            val firstName = profile?.firstName?.trim().orEmpty()
+            val lastName = profile?.lastName?.trim().orEmpty()
+            val displayName = when {
+                firstName.isNotBlank() && lastName.isNotBlank() -> "$firstName $lastName"
+                firstName.isNotBlank() -> firstName
+                lastName.isNotBlank() -> lastName
+                else -> session.username
+            }
+            val reportData = ReadingReportJson.readingsToJson(
+                uiState.readings,
+                anonymize = anonymizeLink,
+                displayName = displayName,
+                birthDate = profile?.birthDate,
+                gender = profile?.gender
+            )
             api.createSharedReport(
                 SharedReportRequest(
                     username = session.username,
@@ -426,7 +445,7 @@ fun AnalysisScreen(
                 val stats = StatisticsCalculator.computeStatistics(filteredReadings)
 
                 when (uiState.selectedTab) {
-                    0 -> TrendTab(readings = filteredReadings, stats = stats)
+                    0 -> TrendTab(readings = filteredReadings, stats = stats, medications = medState.medications)
                     1 -> VariationsTab(readings = filteredReadings, stats = stats)
                     2 -> DistributionTab(readings = filteredReadings, bands = timeBands)
                     3 -> ComparisonTab(
@@ -485,9 +504,18 @@ fun AnalysisScreen(
 }
 
 @Composable
-private fun TrendTab(readings: List<Reading>, stats: Statistics) {
+private fun TrendTab(readings: List<Reading>, stats: Statistics, medications: List<Medication> = emptyList()) {
     val derivatives = remember(readings) { StatisticsCalculator.computeDerivatives(readings) }
     val surge = remember(readings) { StatisticsCalculator.computeMorningSurge(readings) }
+    val medDateFormat = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy") }
+    val relevantMeds = remember(readings, medications) {
+        val minT = readings.minOfOrNull { it.timestamp.toEpochMilli() } ?: return@remember emptyList()
+        val maxT = readings.maxOfOrNull { it.timestamp.toEpochMilli() } ?: return@remember emptyList()
+        medications.filter { med ->
+            med.startDate.toEpochMilli() in minT..maxT ||
+                (med.endDate?.toEpochMilli()?.let { it in minT..maxT } ?: false)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -540,7 +568,42 @@ private fun TrendTab(readings: List<Reading>, stats: Statistics) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(stringResource(R.string.analysis_trend), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    BpTrendChart(readings = readings)
+                    BpTrendChart(readings = readings, medications = relevantMeds)
+                    if (relevantMeds.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.nav_medications),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        relevantMeds.forEach { med ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(top = 4.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(50))
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    buildString {
+                                        append(med.name)
+                                        append(" — ")
+                                        append(medDateFormat.format(med.startDate.atZone(ZoneId.systemDefault())))
+                                        med.endDate?.let {
+                                            append(" → ")
+                                            append(medDateFormat.format(it.atZone(ZoneId.systemDefault())))
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
             }
         } else {

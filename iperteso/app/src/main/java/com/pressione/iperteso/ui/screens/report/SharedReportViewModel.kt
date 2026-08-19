@@ -19,6 +19,9 @@ data class SharedReportUiState(
     val isPinVerified: Boolean = false,
     val isExpired: Boolean = false,
     val username: String = "",
+    val displayName: String? = null,
+    val birthDate: String? = null,
+    val gender: String? = null,
     val readings: List<Reading> = emptyList()
 )
 
@@ -73,17 +76,17 @@ class SharedReportViewModel(
             }
             // Decode report data
             val data = report.reportData
-            val (username, readings) = if (data != null) {
-                ReadingReportJson.jsonToReadings(data)
-            } else {
-                report.username to emptyList()
-            }
+            val decoded = if (data != null) ReadingReportJson.jsonToReadings(data) else null
+            val username = decoded?.username?.ifBlank { report.username } ?: report.username
             _uiState.update {
                 it.copy(
                     isPinVerified = true,
                     error = null,
-                    username = username.ifBlank { report.username },
-                    readings = readings
+                    username = username,
+                    displayName = decoded?.displayName,
+                    birthDate = decoded?.birthDate,
+                    gender = decoded?.gender,
+                    readings = decoded?.readings ?: emptyList()
                 )
             }
         }

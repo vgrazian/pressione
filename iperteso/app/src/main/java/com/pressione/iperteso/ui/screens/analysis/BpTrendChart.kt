@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.pressione.iperteso.domain.model.Medication
 import com.pressione.iperteso.domain.model.Reading
 import com.pressione.iperteso.ui.theme.CategoryGrade1
 
@@ -19,12 +20,17 @@ import com.pressione.iperteso.ui.theme.CategoryGrade1
  * No external library needed — pure Compose Canvas.
  */
 @Composable
-fun BpTrendChart(readings: List<Reading>, modifier: Modifier = Modifier) {
+fun BpTrendChart(
+    readings: List<Reading>,
+    medications: List<Medication> = emptyList(),
+    modifier: Modifier = Modifier
+) {
     val sorted = readings.sortedBy { it.timestamp.toEpochMilli() }
     val sysColor = MaterialTheme.colorScheme.error
     val diaColor = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     val targetColor = Color(0xFF2E7D32).copy(alpha = 0.25f)
+    val milestoneColor = MaterialTheme.colorScheme.tertiary
 
     Canvas(
         modifier = modifier
@@ -46,9 +52,13 @@ fun BpTrendChart(readings: List<Reading>, modifier: Modifier = Modifier) {
         val maxY = 220f
         val rangeY = maxY - minY
 
+        val minT = sorted.first().timestamp.toEpochMilli()
+        val maxT = sorted.last().timestamp.toEpochMilli()
+        val timeSpan = (maxT - minT).coerceAtLeast(1L)
+
         fun yFor(v: Float): Float = paddingTop + chartH * (1f - (v - minY) / rangeY)
-        fun xFor(i: Int): Float = if (sorted.size <= 1) paddingLeft + chartW / 2
-            else paddingLeft + chartW * (i.toFloat() / (sorted.size - 1))
+        fun xForTime(t: Long): Float =
+            paddingLeft + chartW * ((t - minT).toFloat() / timeSpan).coerceIn(0f, 1f)
 
         // Target zone 90-140
         val zoneTop = yFor(140f)
@@ -74,7 +84,7 @@ fun BpTrendChart(readings: List<Reading>, modifier: Modifier = Modifier) {
         if (sorted.isNotEmpty()) {
             val sysPath = Path()
             sorted.forEachIndexed { i, r ->
-                val x = xFor(i)
+                val x = xForTime(r.timestamp.toEpochMilli())
                 val y = yFor(r.systolic.toFloat())
                 if (i == 0) sysPath.moveTo(x, y) else sysPath.lineTo(x, y)
             }
@@ -85,7 +95,7 @@ fun BpTrendChart(readings: List<Reading>, modifier: Modifier = Modifier) {
         if (sorted.isNotEmpty()) {
             val diaPath = Path()
             sorted.forEachIndexed { i, r ->
-                val x = xFor(i)
+                val x = xForTime(r.timestamp.toEpochMilli())
                 val y = yFor(r.diastolic.toFloat())
                 if (i == 0) diaPath.moveTo(x, y) else diaPath.lineTo(x, y)
             }
@@ -100,5 +110,42 @@ fun BpTrendChart(readings: List<Reading>, modifier: Modifier = Modifier) {
             end = Offset(paddingLeft + chartW, thresholdY),
             strokeWidth = 1.5.dp.toPx()
         )
+
+        // Medication milestones (therapy changes)
+        fun drawMilestone(x: Float, isEnd: Boolean) {
+            var y = paddingTop
+            val dash = 8.dp.toPx()
+            val gap = 6.dp.toPx()
+            while (y < paddingTop + chartH) {
+                val yEnd = minOf(y + dash, paddingTop + chartH)
+                drawLine(
+                    color = milestoneColor,
+                    start = Offset(x, y),
+                    end = Offset(x, yEnd),
+                    strokeWidth = 1.5.dp.toPx()
+                )
+                y += dash + gap
+            }
+            val marker = Path()
+            if (!isEnd) {
+                marker.moveTo(x - 6.dp.toPx(), paddingTop + 9.dp.toPx())
+                marker.lineTo(x + 6.dp.toPx(), paddingTop + 9.dp.toPx())
+                marker.lineTo(x, paddingTop)
+            } else {
+                marker.moveTo(x - 6.dp.toPx(), paddingTop + chartH - 9.dp.toPx())
+                marker.lineTo(x + 6.dp.toPx(), paddingTop + chartH - 9.dp.toPx())
+                marker.lineTo(x, paddingTop + chartH)
+            }
+            marker.close()
+            drawPath(marker, milestoneColor)
+        }
+
+        medications.forEach { med ->
+            val start = med.startDate.toEpochMilli()
+            if (start in minT..maxT) drawMilestone(xForTime(start), isEnd = false)
+            med.endDate?.toEpochMilli()?.let { end ->
+                if (end in minT..maxT) drawMilestone(xForTime(end), isEnd = true)
+            }
+        }
     }
 }

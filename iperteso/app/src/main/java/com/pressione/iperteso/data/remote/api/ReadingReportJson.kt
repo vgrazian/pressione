@@ -21,8 +21,25 @@ import java.time.Instant
  */
 object ReadingReportJson {
 
-    fun readingsToJson(readings: List<Reading>, anonymize: Boolean = false): JsonElement = buildJsonObject {
+    data class DecodedReport(
+        val username: String,
+        val displayName: String?,
+        val birthDate: String?,
+        val gender: String?,
+        val readings: List<Reading>
+    )
+
+    fun readingsToJson(
+        readings: List<Reading>,
+        anonymize: Boolean = false,
+        displayName: String? = null,
+        birthDate: String? = null,
+        gender: String? = null
+    ): JsonElement = buildJsonObject {
         put("username", if (anonymize) "" else readings.firstOrNull()?.username ?: "")
+        put("displayName", if (anonymize) null else displayName)
+        put("birthDate", if (anonymize) null else birthDate)
+        put("gender", if (anonymize) null else gender)
         put("anonymize", anonymize)
         put("readings", buildJsonArray {
             readings.forEach { r ->
@@ -39,10 +56,16 @@ object ReadingReportJson {
         })
     }
 
-    fun jsonToReadings(json: JsonElement): Pair<String, List<Reading>> {
-        val obj = try { json.jsonObject } catch (_: Exception) { return "" to emptyList() }
+    fun jsonToReadings(json: JsonElement): DecodedReport {
+        val obj = try { json.jsonObject } catch (_: Exception) {
+            return DecodedReport("", null, null, null, emptyList())
+        }
         val username = obj["username"]?.jsonPrimitive?.contentOrNull ?: ""
-        val arr = obj["readings"]?.jsonArray ?: return username to emptyList()
+        val displayName = obj["displayName"]?.jsonPrimitive?.contentOrNull
+        val birthDate = obj["birthDate"]?.jsonPrimitive?.contentOrNull
+        val gender = obj["gender"]?.jsonPrimitive?.contentOrNull
+        val arr = obj["readings"]?.jsonArray
+            ?: return DecodedReport(username, displayName, birthDate, gender, emptyList())
 
         val readings = arr.mapNotNull { el ->
             try {
@@ -64,7 +87,7 @@ object ReadingReportJson {
                 )
             } catch (_: Exception) { null }
         }
-        return username to readings
+        return DecodedReport(username, displayName, birthDate, gender, readings)
     }
 
     /** Accepts either epoch-millis (Long) or an ISO-8601 string timestamp. */

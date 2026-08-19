@@ -53,3 +53,80 @@ VALUES (
         'user',
         true
     ) ON CONFLICT (username) DO NOTHING;
+-- Seed farmaci: timeline terapeutica realistica per ogni utente seed,
+-- così i marker di cambio terapia sono visibili nei grafici.
+-- Date di inizio/fine entro gli ultimi 30 giorni per sovrapporsi alle letture.
+INSERT INTO medications (
+        id,
+        username,
+        name,
+        active_ingredient,
+        dosage,
+        frequency,
+        notes,
+        start_date,
+        end_date,
+        created_at,
+        updated_at
+    )
+SELECT gen_random_uuid(),
+    u.username,
+    m.name,
+    m.active_ingredient,
+    m.dosage,
+    m.frequency,
+    m.notes,
+    now() - (m.start_days_ago || ' days')::interval,
+    CASE
+        WHEN m.end_days_ago IS NULL THEN NULL
+        ELSE now() - (m.end_days_ago || ' days')::interval
+    END,
+    now(),
+    now()
+FROM users u
+    CROSS JOIN (
+        VALUES (
+                'Losartan',
+                'Losartan potassico',
+                '50 mg',
+                '1 volta al giorno',
+                'al mattino',
+                30,
+                NULL
+            ),
+            (
+                'Amlodipina',
+                'Amlodipina besilato',
+                '5 mg',
+                '1 volta al giorno',
+                'alla sera',
+                20,
+                NULL
+            ),
+            (
+                'Bisoprololo',
+                'Bisoprololo fumarato',
+                '2,5 mg',
+                '1 volta al giorno',
+                'al mattino',
+                30,
+                10
+            ),
+            (
+                'Ramipril',
+                'Ramipril',
+                '5 mg',
+                '1 volta al giorno',
+                '',
+                12,
+                3
+            )
+    ) AS m(
+        name,
+        active_ingredient,
+        dosage,
+        frequency,
+        notes,
+        start_days_ago,
+        end_days_ago
+    ) ON CONFLICT DO NOTHING;
