@@ -19,11 +19,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Reading
+import com.pressione.iperteso.ui.theme.CategoryGrade1
+import com.pressione.iperteso.ui.theme.CategoryGrade1Dark
+import com.pressione.iperteso.ui.theme.CategoryOptimal
+import com.pressione.iperteso.ui.theme.CategoryOptimalDark
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.Instant
@@ -126,9 +131,12 @@ fun ReadingCard(
  */
 @Composable
 private fun systolicColor(category: Category): Color {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     return when (category) {
-        Category.OPTIMAL, Category.NORMAL -> Color(0xFF2E7D32)
-        Category.HIGH_NORMAL -> Color(0xFFEF6C00)
+        Category.OPTIMAL, Category.NORMAL ->
+            if (dark) CategoryOptimalDark else CategoryOptimal
+        Category.HIGH_NORMAL ->
+            if (dark) CategoryGrade1Dark else CategoryGrade1
         else -> MaterialTheme.colorScheme.error
     }
 }

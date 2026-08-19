@@ -2,11 +2,11 @@
 name: IperTeso Android
 description: Diario digitale della pressione arteriosa per Android — Jetpack Compose + Material 3
 colors:
-  primary: "#006C4C"
-  primary-light: "#4DD9A0"
-  primary-bg: "#E8F5E9"
-  primary-dark-bg: "#1B3A2D"
-  primary-variant: "#00855C"
+  primary: "#3B5D45"
+  primary-light: "#AAD0B2"
+  primary-bg: "#C6ECCD"
+  primary-dark-bg: "#2C4E37"
+  primary-variant: "#43664D"
   error: "#BA1A1A"
   error-container: "#FFDAD6"
   warning: "#EF6C00"
@@ -88,7 +88,7 @@ IperTeso è un diario della pressione arteriosa nativo Android costruito con **J
 
 ### Primary: Medical Green
 
-Il colore primario è il verde medicale `#006C4C`, scelto per comunicare fiducia in ambito salute. In dark mode diventa `#4DD9A0` (verde chiaro su sfondo scuro). Il colore di sfondo è un verde leggermente tinto `#F8FDF8` in light, `#191C1A` in dark.
+Il colore primario è il verde medicale `#3B5D45` (allineato al colore dell'icona dell'app), scelto per comunicare fiducia in ambito salute. In dark mode diventa `#AAD0B2` (verde chiaro su sfondo scuro). Il colore di sfondo è un verde leggermente tinto `#F8FDF8` in light, `#191C1A` in dark.
 
 ### ESC/ESH Semantic Colors
 
@@ -180,7 +180,7 @@ Coerenza visiva tra le due versioni (stessa identità, implementazioni diverse):
 
 | Elemento | Web (CSS token) | Android (Compose) |
 | --- | --- | --- |
-| Primary verde medicale | `--color-accent` ≈ `#006C4C` | `Color.kt` Primary `#006C4C` |
+| Primary verde medicale | `--color-accent` ≈ `#3B5D45` | `Color.kt` Primary `#3B5D45` |
 | Background light tinto | `--color-background` ≈ `#F8FDF8` | LightBackground `#F8FDF8` |
 | Error | `--color-error` ≈ `#BA1A1A` | LightError `#BA1A1A` |
 | Card radius | `--radius-md` 12px | `RoundedCornerShape(12.dp)` |

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Medical green palette -->
-    <color name="medical_green">#006C4C</color>
-    <color name="medical_green_light">#4DD9A0</color>
-    <color name="medical_green_bg">#E8F5E9</color>
-    <color name="medical_green_dark_bg">#1B3A2D</color>
+    <!-- Medical green palette (aligned with app icon #3B5D45) -->
+    <color name="medical_green">#3B5D45</color>
+    <color name="medical_green_light">#AAD0B2</color>
+    <color name="medical_green_bg">#C6ECCD</color>
+    <color name="medical_green_dark_bg">#2C4E37</color>
 
     <!-- Status colors -->
     <color name="error_red">#BA1A1A</color>

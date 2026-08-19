@@ -35,7 +35,7 @@ import java.time.format.DateTimeFormatter
  */
 object PdfReportGenerator {
 
-    private val medicalGreen = DeviceRgb(0, 108, 76) // #006C4C
+    private val medicalGreen = DeviceRgb(59, 93, 69) // #3B5D45 (app icon green)
     private val textDark = DeviceRgb(51, 51, 51)
     private val textMuted = DeviceRgb(136, 136, 136)
     private val errorRed = DeviceRgb(186, 26, 26)

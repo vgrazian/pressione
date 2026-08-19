@@ -3,12 +3,13 @@ package com.pressione.iperteso.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ── Medical Green Palette ──────────────────────────────────
-// Matching the web app: #006C4C (light), #4DD9A0 (dark)
-val MedicalGreen = Color(0xFF006C4C)
-val MedicalGreenLight = Color(0xFF4DD9A0)
-val MedicalGreenBg = Color(0xFFE8F5E9)
-val MedicalGreenDarkBg = Color(0xFF1B3A2D)
-val MedicalGreenVariant = Color(0xFF00855C)
+// Aligned with the app icon #3B5D45 (muted forest green, hue 157°).
+// Tonal ramp derived via Material 3 HCT from the icon color.
+val MedicalGreen = Color(0xFF3B5D45)        // light primary = icon color (tone ~36)
+val MedicalGreenLight = Color(0xFFAAD0B2)   // dark primary (tone 80)
+val MedicalGreenBg = Color(0xFFC6ECCD)      // primaryContainer (tone 90)
+val MedicalGreenDarkBg = Color(0xFF2C4E37)  // dark primaryContainer (tone 30)
+val MedicalGreenVariant = Color(0xFF43664D) // tone 40 variant
 
 // ── Status Colors ──────────────────────────────────────────
 val ErrorRed = Color(0xFFBA1A1A)
@@ -20,7 +21,7 @@ val CriticalRed = Color(0xFFD32F2F)
 val LightPrimary = MedicalGreen
 val LightOnPrimary = Color.White
 val LightPrimaryContainer = MedicalGreenBg
-val LightOnPrimaryContainer = Color(0xFF002114)
+val LightOnPrimaryContainer = Color(0xFF00210E)
 val LightSecondary = Color(0xFF4D6356)
 val LightOnSecondary = Color.White
 val LightSecondaryContainer = Color(0xFFCFE9D8)
@@ -44,8 +45,8 @@ val LightOutlineVariant = Color(0xFFBFC9C2)
 
 // ── Dark Theme ─────────────────────────────────────────────
 val DarkPrimary = MedicalGreenLight
-val DarkOnPrimary = Color(0xFF003825)
-val DarkPrimaryContainer = Color(0xFF005238)
+val DarkOnPrimary = Color(0xFF153722)
+val DarkPrimaryContainer = MedicalGreenDarkBg
 val DarkOnPrimaryContainer = MedicalGreenBg
 val DarkSecondary = Color(0xFFB3CDBD)
 val DarkOnSecondary = Color(0xFF1F352A)
@@ -77,3 +78,13 @@ val CategoryGrade1 = Color(0xFFEF6C00)           // Dark orange
 val CategoryGrade2 = Color(0xFFD32F2F)           // Red
 val CategoryGrade3 = Color(0xFFBA1A1A)           // Deep red
 val CategoryCrisis = Color(0xFF880E4F)           // Purple-red
+
+// ── ESC/ESH Category Colors — Dark Mode ───────────────────
+// Lighter tones so badge text and systolic values stay readable on dark surfaces.
+val CategoryOptimalDark = Color(0xFF81C784)      // Green 300
+val CategoryNormalDark = Color(0xFFA5D6A7)       // Green 200
+val CategoryHighNormalDark = Color(0xFFFFCC80)   // Orange 200
+val CategoryGrade1Dark = Color(0xFFFFB74D)       // Orange 300
+val CategoryGrade2Dark = Color(0xFFEF9A9A)       // Red 200
+val CategoryGrade3Dark = Color(0xFFE57373)       // Red 300
+val CategoryCrisisDark = Color(0xFFF48FB1)       // Pink 200
