@@ -287,12 +287,12 @@ async function shareViaEmail() {
   try {
     const file = await getPDFFile()
     const s = stats.value
-    const text = `Report IperTeso${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    const text = `Report Pressione${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Report IperTeso', text })
+      await navigator.share({ files: [file], title: 'Report Pressione', text })
     } else {
-      const body = `REPORT PRESSIONE ARTERIOSA${titleSuffix.value}\n\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg\nBPM medio: ${s.avgHeartRate}\nMisurazioni: ${s.readingsCount}\n\nGenerato da IperTeso App`
-      window.open(`mailto:?subject=Report IperTeso${titleSuffix.value}&body=${encodeURIComponent(body)}`, '_blank')
+      const body = `Report Pressione${titleSuffix.value}\n\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg\nBPM medio: ${s.avgHeartRate}\nMisurazioni: ${s.readingsCount}\n\nGenerato automaticamente`
+      window.open(`mailto:?subject=Report Pressione${titleSuffix.value}&body=${encodeURIComponent(body)}`, '_blank')
     }
   } catch (e) {
     linkMessage.value = 'Condivisione non supportata su questo browser'
@@ -305,9 +305,9 @@ async function shareViaWhatsApp() {
   try {
     const file = await getPDFFile()
     const s = stats.value
-    const text = `📊 Report IperTeso${titleSuffix.value.replace(/-/g, '')}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    const text = `📊 Report Pressione${titleSuffix.value.replace(/-/g, '')}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Report IperTeso', text })
+      await navigator.share({ files: [file], title: 'Report Pressione', text })
     } else {
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
     }
@@ -322,11 +322,11 @@ async function shareNative() {
   try {
     const file = await getPDFFile()
     const s = stats.value
-    const text = `Report IperTeso${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
+    const text = `Report Pressione${titleSuffix.value}\nMedia: ${s.avgSystolic}/${s.avgDiastolic} mmHg | BPM: ${s.avgHeartRate} | ${s.readingsCount} misurazioni`
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Report IperTeso', text })
+      await navigator.share({ files: [file], title: 'Report Pressione', text })
     } else if (navigator.share) {
-      await navigator.share({ title: 'Report IperTeso', text })
+      await navigator.share({ title: 'Report Pressione', text })
     } else {
       await navigator.clipboard.writeText(text)
       linkMessage.value = 'Report copiato negli appunti!'

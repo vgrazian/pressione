@@ -24,6 +24,7 @@ import com.itextpdf.layout.properties.UnitValue
 import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Medication
 import com.pressione.iperteso.domain.model.Reading
+import com.pressione.iperteso.domain.model.User
 import java.io.File
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -42,12 +43,26 @@ object PdfReportGenerator {
     private val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     private val dateTimeFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
+    private fun ageYears(birthDate: String?): Int? {
+        if (birthDate.isNullOrBlank()) return null
+        return runCatching {
+            val bd = java.time.LocalDate.parse(birthDate)
+            val now = java.time.LocalDate.now()
+            var age = now.year - bd.year
+            if (now.monthValue < bd.monthValue ||
+                (now.monthValue == bd.monthValue && now.dayOfMonth < bd.dayOfMonth)
+            ) age--
+            age
+        }.getOrNull()
+    }
+
     fun generate(
         context: Context,
         username: String,
         readings: List<Reading>,
         medications: List<Medication>,
-        anonimizza: Boolean = false
+        anonimizza: Boolean = false,
+        user: User? = null
     ): File {
         val file = File(context.cacheDir, "report_iperteso_${username}.pdf")
         val writer = PdfWriter(file)
@@ -60,14 +75,51 @@ object PdfReportGenerator {
 
         // Header
         doc.add(
-            Paragraph("IperTeso — Report Pressione Arteriosa")
+            Paragraph("Report Pressione")
                 .setFontSize(18f)
                 .setFont(boldFont)
                 .setFontColor(medicalGreen)
         )
 
         if (!anonimizza) {
+            val fullName = listOfNotNull(
+                user?.firstName?.trim()?.takeIf { it.isNotEmpty() },
+                user?.lastName?.trim()?.takeIf { it.isNotEmpty() }
+            ).joinToString(" ")
+            if (fullName.isNotBlank()) {
+                doc.add(Paragraph(fullName).setFontSize(13f).setFont(boldFont).setFontColor(textDark))
+            }
             doc.add(Paragraph("Paziente: $username").setFontSize(11f).setFontColor(textDark))
+
+            val anagrafica = mutableListOf<String>()
+            user?.birthDate?.takeIf { it.isNotBlank() }?.let { bd ->
+                val age = ageYears(bd)
+                anagrafica += if (age != null) "Data di nascita: $bd ($age anni)" else "Data di nascita: $bd"
+            }
+            user?.gender?.let { g ->
+                val label = when (g) {
+                    "male" -> "Maschile"
+                    "female" -> "Femminile"
+                    else -> null
+                }
+                if (label != null) anagrafica += "Sesso: $label"
+            }
+            user?.fiscalCode?.takeIf { it.isNotBlank() }?.let { anagrafica += "Codice fiscale: $it" }
+            user?.phone?.takeIf { it.isNotBlank() }?.let { anagrafica += "Telefono: $it" }
+            val street = listOfNotNull(
+                user?.street?.trim()?.takeIf { it.isNotEmpty() },
+                user?.streetNumber?.trim()?.takeIf { it.isNotEmpty() }
+            ).joinToString(" ")
+            val city = listOfNotNull(
+                user?.postalCode?.trim()?.takeIf { it.isNotEmpty() },
+                user?.city?.trim()?.takeIf { it.isNotEmpty() }
+            ).joinToString(" ")
+            val address = listOf(street, city).filter { it.isNotBlank() }.joinToString(", ")
+            if (address.isNotBlank()) anagrafica += "Indirizzo: $address"
+
+            if (anagrafica.isNotEmpty()) {
+                doc.add(Paragraph(anagrafica.joinToString("   •   ")).setFontSize(9f).setFontColor(textMuted))
+            }
         }
 
         doc.add(
@@ -181,7 +233,7 @@ object PdfReportGenerator {
         return file
     }
 
-    fun sharePdf(context: Context, file: File, subject: String = "Report IperTeso") {
+    fun sharePdf(context: Context, file: File, subject: String = "Report Pressione") {
         val uri = FileProvider.getUriForFile(
             context, "${context.packageName}.fileprovider", file
         )

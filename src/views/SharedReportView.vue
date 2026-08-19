@@ -231,7 +231,7 @@ const readingsByTimeOfDay = computed(() => {
     <template v-else-if="report && filteredReadings.length">
       <!-- Header -->
       <div style="background:var(--color-accent);color:var(--color-on-accent);padding:1.5rem;border-radius:12px 12px 0 0">
-        <h1 style="margin:0 0 4px;font-size:1.5rem">Report Pressione Arteriosa</h1>
+        <h1 style="margin:0 0 4px;font-size:1.5rem">Report Pressione</h1>
         <p style="margin:0;opacity:0.85;font-size:0.875rem">{{ filteredReadings.length }} misurazioni — {{ dateRangeLabel }}</p>
       </div>
 
@@ -361,7 +361,7 @@ const readingsByTimeOfDay = computed(() => {
         </div>
       </div>
 
-      <p style="color:var(--color-text-tertiary);font-size:0.75rem;margin:2rem 0;text-align:center">Report generato da IperTeso App — Autodistruzione 48 ore<br>Riferimenti: linee guida ESC/ESH 2024</p>
+      <p style="color:var(--color-text-tertiary);font-size:0.75rem;margin:2rem 0;text-align:center">Report generato automaticamente — Autodistruzione 48 ore<br>Riferimenti: linee guida ESC/ESH 2024</p>
     </template>
 
     <template v-else-if="report">

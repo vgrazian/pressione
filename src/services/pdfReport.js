@@ -123,7 +123,7 @@ function addHeader(doc, opts) {
     doc.rect(0, 0, pw, 14, 'F')
     doc.setFontSize(10)
     doc.setTextColor(...C.white)
-    doc.text('REPORT PRESSIONE ARTERIOSA', S.m, 9)
+    doc.text('Report Pressione', S.m, 9)
 
     // Patient info line
     let y = 20
@@ -202,7 +202,7 @@ function addClinicalSummary(doc, y, stats, readings, opts) {
     const cardW = (doc.internal.pageSize.getWidth() - S.m * 2 - S.in * 2) / 3
     const cardY = y + 10
     const cards = [
-        { label: 'IperTeso media', value: `${avgSys}/${avgDia}`, unit: 'mmHg', alert: classification !== 'Normale' },
+        { label: 'Media', value: `${avgSys}/${avgDia}`, unit: 'mmHg', alert: classification !== 'Normale' },
         { label: 'Frequenza cardiaca', value: String(stats.avgHeartRate), unit: 'BPM', alert: stats.avgHeartRate > 100 || stats.avgHeartRate < 50 },
         { label: 'Letture totali', value: String(stats.readingsCount), unit: 'misurazioni', alert: false }
     ]
@@ -339,7 +339,7 @@ async function addCharts(doc, y, readings, stats) {
     doc.setFontSize(T.sm)
     doc.setTextColor(...C.body)
     const sysRange = `(${stats.minSystolic} – ${stats.maxSystolic})`
-    doc.text(`Andamento IperTeso  —  Media ${stats.avgSystolic}/${stats.avgDiastolic} mmHg  ${sysRange}`, S.m, y)
+    doc.text(`Andamento pressione  —  Media ${stats.avgSystolic}/${stats.avgDiastolic} mmHg  ${sysRange}`, S.m, y)
     y += 2.5
 
     const lineImg = await renderChart(makeLineChart(readings), 800, 340)
@@ -546,7 +546,7 @@ function addFooter(doc, pageNum, totalPages) {
     doc.setFontSize(6)
     doc.setTextColor(180, 180, 180)
     const pw = doc.internal.pageSize.getWidth()
-    doc.text(`Report IperTeso App — Non costituisce diagnosi medica. Consultare sempre un medico.`, S.m, 290)
+    doc.text(`Report Pressione — Non costituisce diagnosi medica. Consultare sempre un medico.`, S.m, 290)
     doc.text(`Pagina ${pageNum} di ${totalPages}`, pw - S.m, 290, { align: 'right' })
 }
 

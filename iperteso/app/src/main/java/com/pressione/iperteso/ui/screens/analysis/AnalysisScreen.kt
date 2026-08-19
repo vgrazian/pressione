@@ -61,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pressione.iperteso.R
+import com.pressione.iperteso.data.repository.toDomainUser
 import com.pressione.iperteso.data.remote.api.ReadingReportJson
 import com.pressione.iperteso.data.remote.api.SharedReportApi
 import com.pressione.iperteso.data.remote.api.SharedReportRequest
@@ -124,9 +125,11 @@ fun AnalysisScreen(
             }
     }
 
-    fun generatePdfFile(): java.io.File? = runCatching {
+    suspend fun generatePdfFile(): java.io.File? = runCatching {
+        val user = com.pressione.iperteso.IperTesoApplication.instance.database
+            .userDao().getUser(session.username)?.toDomainUser()
         PdfReportGenerator.generate(
-            context, session.username, uiState.readings, medState.medications
+            context, session.username, uiState.readings, medState.medications, user = user
         )
     }.getOrNull()
 
@@ -143,11 +146,11 @@ fun AnalysisScreen(
         withContext(Dispatchers.IO) {
             val file = generatePdfFile()
             val s = StatisticsCalculator.computeStatistics(uiState.readings)
-            val subject = "Report IperTeso - ${session.username}"
-            val body = "REPORT PRESSIONE ARTERIOSA - ${session.username}\n\n" +
+            val subject = "Report Pressione - ${session.username}"
+            val body = "Report Pressione - ${session.username}\n\n" +
                 "Media: ${"%.0f".format(s.avgSystolic)}/${"%.0f".format(s.avgDiastolic)} mmHg\n" +
                 "BPM medio: ${"%.0f".format(s.avgHeartRate)}\n" +
-                "Misurazioni: ${s.readingsCount}\n\nGenerato da IperTeso App"
+                "Misurazioni: ${s.readingsCount}\n\nGenerato automaticamente"
             withContext(Dispatchers.Main) {
                 if (file != null) PdfReportGenerator.sharePdfViaEmail(context, file, subject, body)
             }
@@ -158,7 +161,7 @@ fun AnalysisScreen(
         withContext(Dispatchers.IO) {
             val file = generatePdfFile()
             withContext(Dispatchers.Main) {
-                if (file != null) PdfReportGenerator.sharePdfViaWhatsApp(context, file, "Report IperTeso - ${session.username}")
+                if (file != null) PdfReportGenerator.sharePdfViaWhatsApp(context, file, "Report Pressione - ${session.username}")
             }
         }
     }
