@@ -71,7 +71,8 @@ fun DerivativesBarChart(
         fun yFor(v: Float): Float = centerY - (v / scale) * plotHalf
 
         // Y-axis gridlines + value labels
-        listOf(-scale, -10f, 0f, 10f, scale).distinct().forEach { v ->
+        val ticks = listOf(-scale, -10f, 0f, 10f, scale).distinct()
+        ticks.forEach { v ->
             val y = yFor(v)
             drawLine(
                 color = if (v == 0f) zeroLineColor else gridColor,
@@ -79,11 +80,27 @@ fun DerivativesBarChart(
                 end = Offset(plotLeft + plotW, y),
                 strokeWidth = 1.dp.toPx()
             )
+        }
+
+        // Draw tick labels top-to-bottom, staggering sideways when they overlap
+        val labelGap = 2.dp.toPx()
+        val colBottom = floatArrayOf(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY)
+        ticks.sortedBy { yFor(it) }.forEach { v ->
             val label = if (v == 0f) "0" else "%+.0f".format(v)
             val layout = textMeasurer.measure(label, axisStyle)
+            val y = yFor(v)
+            val top = y - layout.size.height / 2f
+            val bottom = y + layout.size.height / 2f
+            val col = if (top >= colBottom[0] - labelGap) 0 else 1
+            val x = if (col == 0) {
+                plotLeft - layout.size.width - 4.dp.toPx()
+            } else {
+                plotLeft - layout.size.width - 4.dp.toPx() - (layout.size.width + 6.dp.toPx())
+            }
+            colBottom[col] = bottom
             drawText(
                 textLayoutResult = layout,
-                topLeft = Offset(plotLeft - layout.size.width - 4.dp.toPx(), y - layout.size.height / 2f)
+                topLeft = Offset(x, top)
             )
         }
 
