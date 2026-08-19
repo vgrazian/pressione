@@ -60,19 +60,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pressione.iperteso.R
 import com.pressione.iperteso.domain.model.AuthSession
-import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Reading
 import com.pressione.iperteso.ui.components.AppBottomNav
 import com.pressione.iperteso.ui.components.AppTab
-import com.pressione.iperteso.ui.components.CategoryBadge
 import com.pressione.iperteso.ui.components.ReadingCard
 import com.pressione.iperteso.ui.components.SkeletonLoader
 import com.pressione.iperteso.ui.theme.ErrorRed
 import org.koin.androidx.compose.koinViewModel
-
-// Severity-grouped filter constants (reduces 8 chips to 4)
-private val normotensionCategories = setOf(Category.OPTIMAL, Category.NORMAL, Category.HIGH_NORMAL)
-private val hypertensionCategories = setOf(Category.GRADE_1, Category.GRADE_2, Category.GRADE_3)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -168,20 +162,20 @@ fun ReadingListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // ── Collapsible Filters (period + severity) ──
+            // ── Collapsible Filters (period) ──
             FilterHeader(
                 expanded = filtersExpanded,
                 onToggle = { filtersExpanded = !filtersExpanded }
             )
             AnimatedVisibility(visible = filtersExpanded) {
                 Column {
-                    // Period filter
+                    // Period filter (wraps onto new lines when space is tight)
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                            .padding(horizontal = 16.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         FilterChip(
                             selected = uiState.periodDays == null,
@@ -207,51 +201,6 @@ fun ReadingListScreen(
                             selected = uiState.periodDays == 180,
                             onClick = { viewModel.setPeriod(180) },
                             label = { Text(stringResource(R.string.analysis_period_180)) }
-                        )
-                    }
-                    // Category Filter Chips (grouped by severity)
-                    FlowRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        FilterChip(
-                            selected = uiState.selectedCategory == null,
-                            onClick = { viewModel.setCategoryFilter(null) },
-                            label = { Text(stringResource(R.string.readings_filter_all)) }
-                        )
-                        // Grouped: only 3 severity bands instead of 7 individual categories
-                        FilterChip(
-                            selected = uiState.selectedCategory in normotensionCategories,
-                            onClick = {
-                                viewModel.setCategoryFilter(
-                                    if (uiState.selectedCategory in normotensionCategories) null
-                                    else Category.OPTIMAL
-                                )
-                            },
-                            label = { Text(stringResource(R.string.readings_filter_normal)) }
-                        )
-                        FilterChip(
-                            selected = uiState.selectedCategory in hypertensionCategories,
-                            onClick = {
-                                viewModel.setCategoryFilter(
-                                    if (uiState.selectedCategory in hypertensionCategories) null
-                                    else Category.GRADE_1
-                                )
-                            },
-                            label = { Text(stringResource(R.string.readings_filter_hypertension)) }
-                        )
-                        FilterChip(
-                            selected = uiState.selectedCategory == Category.CRISIS,
-                            onClick = {
-                                viewModel.setCategoryFilter(
-                                    if (uiState.selectedCategory == Category.CRISIS) null
-                                    else Category.CRISIS
-                                )
-                            },
-                            label = { Text(stringResource(R.string.readings_filter_crisis)) }
                         )
                     }
                 }
