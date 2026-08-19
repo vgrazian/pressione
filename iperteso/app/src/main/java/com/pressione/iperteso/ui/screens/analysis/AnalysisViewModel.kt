@@ -13,7 +13,7 @@ data class AnalysisUiState(
     val isLoading: Boolean = true,
     val readings: List<Reading> = emptyList(),
     val selectedTab: Int = 0,
-    val periodDays: Int = 7
+    val periodDays: Int? = 7
 )
 
 class AnalysisViewModel(
@@ -38,12 +38,13 @@ class AnalysisViewModel(
         _uiState.value = _uiState.value.copy(selectedTab = index)
     }
 
-    fun setPeriod(days: Int) {
+    fun setPeriod(days: Int?) {
         _uiState.value = _uiState.value.copy(periodDays = days)
     }
 
     fun getFilteredReadings(): List<Reading> {
-        return getFilteredReadingsForDays(_uiState.value.periodDays)
+        val days = _uiState.value.periodDays ?: return _uiState.value.readings
+        return getFilteredReadingsForDays(days)
     }
 
     fun getFilteredReadingsForDays(days: Int): List<Reading> {

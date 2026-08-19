@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -84,7 +86,7 @@ import org.koin.androidx.compose.koinViewModel
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AnalysisScreen(
     session: AuthSession,
@@ -402,22 +404,38 @@ fun AnalysisScreen(
                 }
 
                 // ── Period Selector ──────────────────────────
-                Row(
+                FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
+                    androidx.compose.material3.FilterChip(
+                        selected = uiState.periodDays == null,
+                        onClick = { viewModel.setPeriod(null) },
+                        label = {
+                            Text(
+                                text = stringResource(R.string.readings_filter_all),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    )
                     listOf(
-                        7 to stringResource(R.string.analysis_period_7),
-                        30 to stringResource(R.string.analysis_period_30),
-                        90 to stringResource(R.string.analysis_period_90),
-                        180 to stringResource(R.string.analysis_period_180)
+                        7 to stringResource(R.string.readings_period_7),
+                        30 to stringResource(R.string.readings_period_30),
+                        90 to stringResource(R.string.readings_period_90),
+                        180 to stringResource(R.string.readings_period_180)
                     ).forEach { (days, label) ->
                         androidx.compose.material3.FilterChip(
                             selected = uiState.periodDays == days,
                             onClick = { viewModel.setPeriod(days) },
-                            label = { Text(label) }
+                            label = {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         )
                     }
                 }
