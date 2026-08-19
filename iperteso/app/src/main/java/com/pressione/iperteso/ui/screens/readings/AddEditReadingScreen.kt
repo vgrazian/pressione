@@ -134,7 +134,9 @@ fun AddEditReadingScreen(
                     onValueChange = { viewModel.updateSystolic(it) },
                     label = { Text(stringResource(R.string.add_edit_systolic)) },
                     isError = uiState.systolicError != null,
-                    supportingText = uiState.systolicError?.let { { Text(stringResource(it)) } },
+                    supportingText = {
+                        Text(uiState.systolicError?.let { stringResource(it) } ?: "")
+                    },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { diaFocus.requestFocus() }),
@@ -148,7 +150,9 @@ fun AddEditReadingScreen(
                     onValueChange = { viewModel.updateDiastolic(it) },
                     label = { Text(stringResource(R.string.add_edit_diastolic)) },
                     isError = uiState.diastolicError != null,
-                    supportingText = uiState.diastolicError?.let { { Text(stringResource(it)) } },
+                    supportingText = {
+                        Text(uiState.diastolicError?.let { stringResource(it) } ?: "")
+                    },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { hrFocus.requestFocus() }),
@@ -166,7 +170,9 @@ fun AddEditReadingScreen(
                 onValueChange = { viewModel.updateHeartRate(it) },
                 label = { Text(stringResource(R.string.add_edit_heart_rate)) },
                 isError = uiState.heartRateError != null,
-                supportingText = uiState.heartRateError?.let { { Text(stringResource(it)) } },
+                supportingText = {
+                    Text(uiState.heartRateError?.let { stringResource(it) } ?: "")
+                },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
