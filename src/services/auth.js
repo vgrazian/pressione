@@ -22,7 +22,9 @@ import {
 } from './supabaseTableAuth'
 
 const SESSION_KEY = 'pressione_session'
-const DEFAULT_TTL_MINUTES = 480 // 8 hours
+// 30 days: keeps users logged in on mobile Safari / installed PWA so they
+// aren't asked for the password again after a short idle period.
+const DEFAULT_TTL_MINUTES = 43200
 
 const state = reactive({
     user: null,
@@ -85,6 +87,7 @@ export async function initAuth() {
                     postalCode: session.postalCode || ''
                 }
                 state.isAuthenticated = true
+                refreshSession() // slide expiry on every open (long-lived session)
                 // Refresh profile from settings (bypasses PostgREST cache) — with 5s timeout
                 try {
                     const p = await Promise.race([
@@ -138,6 +141,7 @@ export async function initAuth() {
                     }
                     state.isAuthenticated = true
                     localStorage.setItem(SESSION_KEY, dbSession)
+                    refreshSession() // slide expiry on every open (long-lived session)
                     try {
                         const p = await Promise.race([
                             getProfile(session.username),

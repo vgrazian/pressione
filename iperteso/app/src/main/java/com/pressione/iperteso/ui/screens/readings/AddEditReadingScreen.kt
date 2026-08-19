@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -41,8 +42,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pressione.iperteso.R
@@ -83,6 +88,18 @@ fun AddEditReadingScreen(
         }
     }
 
+    val sysFocus = remember { FocusRequester() }
+    val diaFocus = remember { FocusRequester() }
+    val hrFocus = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(Unit) {
+        if (editingReading == null) {
+            // Auto-focus the first field for new readings (saves a tap)
+            sysFocus.requestFocus()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -119,8 +136,11 @@ fun AddEditReadingScreen(
                     isError = uiState.systolicError != null,
                     supportingText = uiState.systolicError?.let { { Text(stringResource(it)) } },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { diaFocus.requestFocus() }),
+                    modifier = Modifier
+                        .weight(1f)
+                        .focusRequester(sysFocus)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 OutlinedTextField(
@@ -130,8 +150,11 @@ fun AddEditReadingScreen(
                     isError = uiState.diastolicError != null,
                     supportingText = uiState.diastolicError?.let { { Text(stringResource(it)) } },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { hrFocus.requestFocus() }),
+                    modifier = Modifier
+                        .weight(1f)
+                        .focusRequester(diaFocus)
                 )
             }
 
@@ -145,8 +168,11 @@ fun AddEditReadingScreen(
                 isError = uiState.heartRateError != null,
                 supportingText = uiState.heartRateError?.let { { Text(stringResource(it)) } },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(hrFocus)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
