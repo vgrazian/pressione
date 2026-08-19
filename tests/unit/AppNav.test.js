@@ -29,15 +29,15 @@ describe('AppNav', () => {
         mockUser.value = { username: 'test', role: 'user' }
     })
 
-    it('renders 4 navigation items for regular user', () => {
-        const wrapper = shallowMount(AppNav)
-        expect(wrapper.findAll('.nav-item')).toHaveLength(4)
-    })
-
-    it('renders 5 navigation items for admin user', () => {
-        mockUser.value = { username: 'admin', role: 'admin' }
+    it('renders 5 navigation items for regular user', () => {
         const wrapper = shallowMount(AppNav)
         expect(wrapper.findAll('.nav-item')).toHaveLength(5)
+    })
+
+    it('renders 6 navigation items for admin user', () => {
+        mockUser.value = { username: 'admin', role: 'admin' }
+        const wrapper = shallowMount(AppNav)
+        expect(wrapper.findAll('.nav-item')).toHaveLength(6)
     })
 
     it('nav items have correct labels for regular user', () => {
@@ -46,17 +46,19 @@ describe('AppNav', () => {
         expect(labels[0].text()).toBe('Home')
         expect(labels[1].text()).toBe('Lista')
         expect(labels[2].text()).toBe('Analisi')
-        expect(labels[3].text()).toBe('Altro')
+        expect(labels[3].text()).toBe('Farmaci')
+        expect(labels[4].text()).toBe('Altro')
     })
 
     it('admin sees Gestione item between Analisi and Altro', () => {
         mockUser.value = { username: 'admin', role: 'admin' }
         const wrapper = shallowMount(AppNav)
         const labels = wrapper.findAll('.nav-label')
-        expect(labels).toHaveLength(5)
+        expect(labels).toHaveLength(6)
         expect(labels[2].text()).toBe('Analisi')
-        expect(labels[3].text()).toBe('Gestione')
-        expect(labels[4].text()).toBe('Altro')
+        expect(labels[3].text()).toBe('Farmaci')
+        expect(labels[4].text()).toBe('Gestione')
+        expect(labels[5].text()).toBe('Altro')
     })
 
     it('Gestione item is not visible when user is not admin', () => {
@@ -86,14 +88,14 @@ describe('AppNav', () => {
         currentPath = '/operators'
         const wrapper = shallowMount(AppNav)
         const items = wrapper.findAll('.nav-item')
-        expect(items[3].classes()).toContain('active')
+        expect(items[4].classes()).toContain('active')
     })
 
     it('renders all nav items with correct structure for admin', () => {
         mockUser.value = { username: 'admin', role: 'admin' }
         const wrapper = shallowMount(AppNav)
         const items = wrapper.findAll('.nav-item')
-        expect(items).toHaveLength(5)
+        expect(items).toHaveLength(6)
         items.forEach((item) => {
             expect(item.find('.nav-label').exists()).toBe(true)
             expect(item.classes()).toContain('nav-item')

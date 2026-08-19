@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, computed, inject, reactive } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth.js'
-import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, importCSV, generateTestData, refreshFromServer, backupData, restoreData, getMedications, upsertMedication, deleteMedication, stopMedication } from '@/services/dataService.js'
+import { deleteAllReadings, getReminders, upsertReminder, deleteReminder, getReadings, exportCSV, importCSV, generateTestData, refreshFromServer, backupData, restoreData } from '@/services/dataService.js'
 import { useI18n } from '@/services/i18n.js'
 import { startKeepAlive, stopKeepAlive, isKeepAliveActive, isKeepAliveEnabled, getStorageInfo, formatBytes } from '@/services/keepAlive.js'
 import { promptInstall, isInstallPromptAvailable, isIOS, isStandalone } from '@/services/pwaInstall.js'
@@ -20,11 +20,6 @@ const { forceClearCache } = useSWUpdate()
 
 const confirm = inject('confirm-dialog', null)
 const reminders = ref([])
-const medications = ref([])
-const showMedForm = ref(false)
-const editingMedication = ref(null)
-const medForm = reactive({ name: '', dosage: '', frequency: '', notes: '', startDate: '', endDate: '', stillTaking: true })
-const medMessage = ref('')
 const showPasswordForm = ref(false)
 const showEmailForm = ref(false)
 const currentPassword = ref('')
@@ -103,9 +98,6 @@ onMounted(async () => {
   try {
     reminders.value = await getReminders(user.value.username).catch(() => [])
   } catch { reminders.value = [] }
-  try {
-    medications.value = await getMedications(user.value.username)
-  } catch { medications.value = [] }
   keepAliveOn.value = await isKeepAliveEnabled(user.value.username)
   if (keepAliveOn.value) {
     storageInfo.value = await getStorageInfo()
@@ -180,84 +172,6 @@ function toggleDay(r, day) {
   const idx = r.daysOfWeek.indexOf(day)
   if (idx >= 0) r.daysOfWeek.splice(idx, 1)
   else { r.daysOfWeek.push(day); r.daysOfWeek.sort() }
-}
-
-// --- Medication Management ---
-async function loadMedications() {
-  try {
-    medications.value = await getMedications(user.value.username)
-  } catch { medications.value = [] }
-}
-
-function openAddMedication() {
-  editingMedication.value = null
-  medForm.name = ''
-  medForm.dosage = ''
-  medForm.frequency = ''
-  medForm.notes = ''
-  medForm.startDate = new Date().toISOString().slice(0, 10)
-  medForm.endDate = ''
-  medForm.stillTaking = true
-  medMessage.value = ''
-  showMedForm.value = true
-}
-
-function openEditMedication(med) {
-  editingMedication.value = med
-  medForm.name = med.name
-  medForm.dosage = med.dosage || ''
-  medForm.frequency = med.frequency || ''
-  medForm.notes = med.notes || ''
-  medForm.startDate = (med.startDate || '').slice(0, 10)
-  medForm.endDate = med.endDate ? med.endDate.slice(0, 10) : ''
-  medForm.stillTaking = !med.endDate
-  medMessage.value = ''
-  showMedForm.value = true
-}
-
-function cancelMedForm() {
-  showMedForm.value = false
-  editingMedication.value = null
-  medMessage.value = ''
-}
-
-async function saveMedication() {
-  medMessage.value = ''
-  if (!medForm.name.trim()) { medMessage.value = 'Inserisci il nome del farmaco'; return }
-  const payload = {
-    id: editingMedication.value?.id || null,
-    name: medForm.name.trim(),
-    dosage: medForm.dosage.trim(),
-    frequency: medForm.frequency.trim(),
-    notes: medForm.notes.trim(),
-    startDate: medForm.startDate ? new Date(medForm.startDate + 'T00:00:00').toISOString() : new Date().toISOString(),
-    endDate: !medForm.stillTaking && medForm.endDate ? new Date(medForm.endDate + 'T00:00:00').toISOString() : null
-  }
-  await upsertMedication(payload, user.value.username)
-  await loadMedications()
-  cancelMedForm()
-}
-
-async function handleStopMedication(med) {
-  await stopMedication(med.id, user.value.username)
-  await loadMedications()
-}
-
-async function handleDeleteMedication(med) {
-  let ok = true
-  if (confirm) {
-    ok = await confirm({ title: t('remove') + ' ' + t('medications').toLowerCase(), message: `"${med.name}"?`, confirmText: t('remove'), variant: 'danger' })
-  } else {
-    ok = window.confirm(`Eliminare "${med.name}"?`)
-  }
-  if (!ok) return
-  await deleteMedication(med.id, user.value.username)
-  await loadMedications()
-}
-
-function formatMedDate(iso) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('it-IT')
 }
 
 // --- Password ---
@@ -686,64 +600,6 @@ async function handleInstall() {
       </div>
       <button class="btn btn-sm btn-primary" @click="handleSaveProfile" :disabled="!profileDirty">Salva profilo</button>
       <div v-if="profileMessage" class="form-success mt-sm">{{ profileMessage }}</div>
-    </CollapsibleSection>
-
-    <!-- Medications (farmaci) -->
-    <CollapsibleSection :title="'💊 ' + t('medications')" class="mb-md">
-      <div class="flex justify-end mb-sm">
-        <button class="btn btn-sm btn-ghost" @click="openAddMedication">{{ t('add_medication') }}</button>
-      </div>
-
-      <div v-if="medications.length === 0 && !showMedForm" class="text-center p-md">
-        <p class="text-secondary">{{ t('no_medications') }}</p>
-      </div>
-
-      <div v-for="med in medications" :key="med.id" class="reminder-item">
-        <div class="flex items-center gap-sm" style="justify-content:space-between">
-          <div>
-            <strong>{{ med.name }}</strong>
-            <span v-if="med.dosage" class="text-secondary"> · {{ med.dosage }}</span>
-            <span v-if="med.frequency" class="text-secondary"> · {{ med.frequency }}</span>
-          </div>
-          <span v-if="!med.endDate" class="chip chip--active">{{ t('medication_ongoing') }}</span>
-        </div>
-        <div class="text-secondary" style="font-size:0.75rem;margin-top:4px">
-          {{ t('medication_start') }}: {{ formatMedDate(med.startDate) }}
-          <template v-if="med.endDate"> — {{ t('medication_end') }}: {{ formatMedDate(med.endDate) }}</template>
-        </div>
-        <div v-if="med.notes" class="text-secondary" style="font-size:0.75rem;margin-top:2px">{{ med.notes }}</div>
-        <div class="flex gap-sm" style="margin-top:8px">
-          <button class="btn btn-sm btn-ghost" @click="openEditMedication(med)">{{ t('edit') }}</button>
-          <button v-if="!med.endDate" class="btn btn-sm btn-ghost" @click="handleStopMedication(med)">{{ t('medication_stop') }}</button>
-          <button class="btn btn-sm btn-ghost-error btn-icon" @click="handleDeleteMedication(med)" :title="t('remove')">
-            <AppIcon name="trash" :size="16" color="currentColor" />
-          </button>
-        </div>
-        <hr style="margin:var(--space-md) 0;border-color:var(--color-surface-overlay)" />
-      </div>
-
-      <!-- Inline add/edit form -->
-      <div v-if="showMedForm" style="margin-top:var(--space-sm)">
-        <h4 class="mb-sm">{{ editingMedication ? t('medication_edit') : t('medication_new') }}</h4>
-        <div class="form-group"><label class="form-label">{{ t('medication_name') }}</label><input v-model="medForm.name" type="text" class="form-input" /></div>
-        <div class="flex gap-sm">
-          <div class="form-group" style="flex:1"><label class="form-label">{{ t('medication_dosage') }}</label><input v-model="medForm.dosage" type="text" class="form-input" placeholder="50 mg" /></div>
-          <div class="form-group" style="flex:1"><label class="form-label">{{ t('medication_frequency') }}</label><input v-model="medForm.frequency" type="text" class="form-input" placeholder="1 al giorno" /></div>
-        </div>
-        <div class="form-group"><label class="form-label">{{ t('notes_optional') }}</label><input v-model="medForm.notes" type="text" class="form-input" /></div>
-        <div class="flex gap-sm items-center">
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">{{ t('medication_start') }}</label><input v-model="medForm.startDate" type="date" class="form-input" /></div>
-          <label class="flex items-center gap-sm" style="font-size:0.875rem;margin-top:auto">
-            <input v-model="medForm.stillTaking" type="checkbox" /> {{ t('medication_still_taking') }}
-          </label>
-        </div>
-        <div v-if="!medForm.stillTaking" class="form-group"><label class="form-label">{{ t('medication_end') }}</label><input v-model="medForm.endDate" type="date" class="form-input" /></div>
-        <div v-if="medMessage" class="form-error mb-sm">{{ medMessage }}</div>
-        <div class="flex gap-sm">
-          <button class="btn btn-sm btn-primary" @click="saveMedication">{{ t('save') }}</button>
-          <button class="btn btn-sm btn-ghost" @click="cancelMedForm">{{ t('cancel') }}</button>
-        </div>
-      </div>
     </CollapsibleSection>
 
     <!-- Password -->

@@ -11,6 +11,7 @@ const navItems = [
   { name: 'home', label: 'Home', icon: 'home', path: '/' },
   { name: 'readingList', label: 'Lista', icon: 'list', path: '/list' },
   { name: 'analisi', label: 'Analisi', icon: 'chart', path: '/analisi' },
+  { name: 'medications', label: 'Farmaci', icon: 'pill', path: '/medications' },
   { name: 'operators', label: 'Gestione', icon: 'users', path: '/operators', adminOnly: true },
   { name: 'settings', label: 'Altro', icon: 'settings', path: '/settings' },
 ]

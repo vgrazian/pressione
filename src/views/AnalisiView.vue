@@ -43,8 +43,10 @@ const generatingAction = ref(null)
 
 const bpChartEl = ref(null)
 const derivChartEl = ref(null)
+const derivDiaChartEl = ref(null)
 const pieChartEl = ref(null)
-let bpChart = null, derivChart = null, pieChart = null
+let bpChart = null, derivChart = null, derivDiaChart = null, pieChart = null
+const medLegend = ref([])
 
 const periods = [
   { value: '7', label: '7 Giorni' },
@@ -169,13 +171,71 @@ function renderActiveChart() {
   else renderPieChart()
 }
 
+function medLabel(iso) {
+  return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+}
+
+function snapMedToLabel(iso) {
+  const list = filteredReadings.value
+  if (!list.length) return null
+  const t = new Date(iso).getTime()
+  let best = list[0], bestDiff = Infinity
+  for (const r of list) {
+    const diff = Math.abs(new Date(r.timestamp).getTime() - t)
+    if (diff < bestDiff) { bestDiff = diff; best = r }
+  }
+  return medLabel(best.timestamp)
+}
+
+function formatMedDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('it-IT')
+}
+
 function renderBPChart() {
   if (bpChart) { bpChart.destroy(); bpChart = null }
   if (!bpChartEl.value) return
   const data = filteredReadings.value
   if (!data.length) return
   const C = getChartColors()
-  const labels = data.map(r => new Date(r.timestamp).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
+  const labels = data.map(r => medLabel(r.timestamp))
+
+  // Medication milestones (numbered to match the legend below the chart)
+  const annotations = {
+    goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: C.targetZoneBg, borderColor: C.targetZoneBorder, borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: C.targetLabelBg, color: C.targetLabelText } },
+    sys140: { type: 'line', yMin: 140, yMax: 140, borderColor: C.sys140Line, borderWidth: 1, borderDash: [5, 5] }
+  }
+  medLegend.value = []
+  if (medications.value.length && data.length >= 2) {
+    const minTs = new Date(data[data.length - 1].timestamp).getTime()
+    const maxTs = new Date(data[0].timestamp).getTime()
+    const sortedMeds = [...medications.value].sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+    const labelSlot = {}
+    let num = 0
+    sortedMeds.forEach(med => {
+      const start = new Date(med.startDate).getTime()
+      const end = med.endDate ? new Date(med.endDate).getTime() : null
+      const startIn = start >= minTs && start <= maxTs
+      const endIn = end != null && end >= minTs && end <= maxTs
+      if (!startIn && !endIn) return
+      num++
+      medLegend.value.push({ number: num, name: med.name, start: med.startDate, end: med.endDate })
+      const addLine = (iso, sign) => {
+        const lbl = snapMedToLabel(iso)
+        if (!lbl) return
+        const slot = labelSlot[lbl] || 0
+        labelSlot[lbl] = slot + 1
+        annotations['med' + num + sign + slot] = {
+          type: 'line', xMin: lbl, xMax: lbl,
+          borderColor: C.accent, borderWidth: 1, borderDash: [6, 4],
+          label: { display: true, content: sign + num, position: 'start', yAdjust: slot * 14, font: { size: 10, weight: 'bold' }, color: C.accent, backgroundColor: 'transparent' }
+        }
+      }
+      if (startIn) addLine(med.startDate, '+')
+      if (endIn) addLine(med.endDate, '-')
+    })
+  }
+
   bpChart = new Chart(bpChartEl.value, {
     type: 'line', data: { labels, datasets: [
       { label: 'Sistolica', data: data.map(r => r.systolic), borderColor: C.systolic, backgroundColor: C.systolicBg, borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0.35, fill: false },
@@ -186,10 +246,7 @@ function renderBPChart() {
       responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 11 }, color: C.textSecondary } },
-        annotation: { annotations: {
-          goalZone: { type: 'box', yMin: 90, yMax: 140, backgroundColor: C.targetZoneBg, borderColor: C.targetZoneBorder, borderWidth: 1, borderDash: [6, 3], label: { display: true, content: 'Target <140/90', position: 'start', font: { size: 9 }, backgroundColor: C.targetLabelBg, color: C.targetLabelText } },
-          sys140: { type: 'line', yMin: 140, yMax: 140, borderColor: C.sys140Line, borderWidth: 1, borderDash: [5, 5] }
-        } },
+        annotation: { annotations },
         tooltip: { callbacks: {
           title: (ctx) => data[ctx[0].dataIndex] ? new Date(data[ctx[0].dataIndex].timestamp).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' }) : '',
           label: (ctx) => { const r = data[ctx.dataIndex]; if (!r) return ''; if (ctx.datasetIndex === 0) return `Sistolica: ${r.systolic} mmHg`; if (ctx.datasetIndex === 1) return `Diastolica: ${r.diastolic} mmHg`; return `BPM: ${r.heartRate}` },
@@ -205,26 +262,34 @@ function renderBPChart() {
   })
 }
 
-function renderDerivChart() {
-  if (derivChart) { derivChart.destroy(); derivChart = null }
-  if (!derivChartEl.value) return
-  const d = derivatives.value
-  if (!d.timestamps.length) return
+function renderDerivBarChart(canvas, values, timestamps) {
+  if (!canvas || !values.length) return null
   const C = getChartColors()
-  const labels = d.timestamps.map(t => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
-  derivChart = new Chart(derivChartEl.value, {
+  const maxAbs = Math.max(...values.map(v => Math.abs(v)), 1)
+  const scale = Math.max(Math.ceil(maxAbs), 5)
+  const labels = timestamps.map(t => medLabel(t))
+  return new Chart(canvas, {
     type: 'bar', data: { labels, datasets: [
-      { label: 'dS/dt', data: d.systolic, backgroundColor: d.systolic.map(v => Math.abs(v) > 10 ? C.derivAlarm : v > 0 ? C.derivPositive : C.derivNegative), borderWidth: 0, borderRadius: 2 }
+      { label: 'dP/dt', data: values, backgroundColor: values.map(v => Math.abs(v) > 10 ? C.derivAlarm : v > 0 ? C.derivPositive : C.derivNegative), borderWidth: 0, borderRadius: 2 }
     ] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Variazione: ${ctx.raw} mmHg/ora` } } },
       scales: {
         x: { ticks: { maxTicksLimit: 12, font: { size: 10 } }, grid: { display: false } },
-        y: { min: -Math.max(d.maxRate + 2, 5), max: Math.max(d.maxRate + 2, 5), ticks: { font: { size: 10 } }, title: { display: true, text: 'mmHg/ora', font: { size: 10 } } }
+        y: { min: -scale, max: scale, ticks: { font: { size: 10 } }, title: { display: true, text: 'mmHg/ora', font: { size: 10 } } }
       }
     }
   })
+}
+
+function renderDerivChart() {
+  if (derivChart) { derivChart.destroy(); derivChart = null }
+  if (derivDiaChart) { derivDiaChart.destroy(); derivDiaChart = null }
+  const d = derivatives.value
+  if (!d.timestamps.length) return
+  derivChart = renderDerivBarChart(derivChartEl.value, d.systolic, d.timestamps)
+  derivDiaChart = renderDerivBarChart(derivDiaChartEl.value, d.diastolic, d.timestamps)
 }
 
 function renderPieChart() {
@@ -479,12 +544,26 @@ function applyCustomRange() { if (customFrom.value && customTo.value) {} }
             <span>{{ isNarrow ? t.shortLabel : t.label }}</span>
           </button>
         </div>
-        <div class="chart-wrap">
-          <canvas v-show="chartTab === 'bp'" ref="bpChartEl"></canvas>
-          <canvas v-show="chartTab === 'deriv'" ref="derivChartEl"></canvas>
-          <canvas v-show="chartTab === 'dist'" ref="pieChartEl"></canvas>
+        <div class="chart-wrap" v-show="chartTab === 'bp'">
+          <canvas ref="bpChartEl"></canvas>
+        </div>
+        <template v-if="chartTab === 'deriv'">
+          <p class="text-secondary mb-sm" style="font-size:0.75rem;font-weight:600">Sistolica (mmHg/ora)</p>
+          <div class="chart-wrap"><canvas ref="derivChartEl"></canvas></div>
+          <p class="text-secondary mb-sm mt-sm" style="font-size:0.75rem;font-weight:600">Diastolica (mmHg/ora)</p>
+          <div class="chart-wrap"><canvas ref="derivDiaChartEl"></canvas></div>
+        </template>
+        <div class="chart-wrap" v-show="chartTab === 'dist'">
+          <canvas ref="pieChartEl"></canvas>
         </div>
         <p v-if="chartTab === 'bp'" class="text-secondary mt-sm" style="font-size:0.6875rem">Zona verde: target ESC/ESH (&lt;140/90 mmHg).</p>
+        <div v-if="chartTab === 'bp' && medLegend.length" class="mt-sm">
+          <div class="text-secondary mb-sm" style="font-size:0.75rem;font-weight:600">💊 Farmaci</div>
+          <div v-for="m in medLegend" :key="m.number" class="flex items-center" style="gap:8px;font-size:0.75rem;color:var(--color-text-secondary);padding:2px 0">
+            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:50%;background:var(--color-accent);color:var(--color-on-accent);font-size:0.6875rem;font-weight:700">{{ m.number }}</span>
+            <span>{{ m.name }}&nbsp; <span style="opacity:0.75">+ {{ formatMedDate(m.start) }}<template v-if="m.end">&nbsp; − {{ formatMedDate(m.end) }}</template></span></span>
+          </div>
+        </div>
       </div>
 
       <div class="card mb-md">

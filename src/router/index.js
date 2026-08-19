@@ -37,6 +37,12 @@ const routes = [
         component: () => import('@/views/AnalisiView.vue'),
         meta: { requiresAuth: true }
     },
+    {
+        path: '/medications',
+        name: 'medications',
+        component: () => import('@/views/MedicationsView.vue'),
+        meta: { requiresAuth: true }
+    },
     // Legacy redirects
     { path: '/statistics', redirect: '/analisi' },
     { path: '/report', redirect: '/analisi' },
