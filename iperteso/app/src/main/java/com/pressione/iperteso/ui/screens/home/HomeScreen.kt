@@ -38,16 +38,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pressione.iperteso.R
-import com.pressione.iperteso.services.PhraseStore
 import com.pressione.iperteso.ui.components.AppBottomNav
 import com.pressione.iperteso.ui.components.AppTab
 import com.pressione.iperteso.ui.components.CategoryBadge
@@ -70,10 +66,6 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // Ironic phrase shown once after saving a reading
-    var phrase by remember { mutableStateOf(PhraseStore.pending) }
-    LaunchedEffect(Unit) { PhraseStore.pending = null }
 
     LaunchedEffect(session) {
         viewModel.initialize(session)
@@ -156,13 +148,6 @@ fun HomeScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Ironic phrase (shown once after saving)
-                if (phrase != null) {
-                    item {
-                        PhraseCard(phrase!!)
-                    }
-                }
-
                 // Latest reading
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -212,23 +197,6 @@ fun HomeScreen(
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
-    }
-}
-
-@Composable
-private fun PhraseCard(phrase: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Text(
-            text = phrase,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer
-        )
     }
 }
 

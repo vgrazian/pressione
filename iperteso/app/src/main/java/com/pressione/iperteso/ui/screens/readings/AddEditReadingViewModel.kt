@@ -4,14 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.annotation.StringRes
 import com.pressione.iperteso.R
-import com.pressione.iperteso.data.local.dao.SettingsDao
-import com.pressione.iperteso.data.local.dao.UserDao
 import com.pressione.iperteso.data.repository.ReadingRepository
 import com.pressione.iperteso.domain.model.Category
 import com.pressione.iperteso.domain.model.Reading
-import com.pressione.iperteso.services.MedicationEventStore
-import com.pressione.iperteso.services.PhraseStore
-import com.pressione.iperteso.services.Phrases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,32 +38,21 @@ data class AddEditUiState(
 )
 
 class AddEditReadingViewModel(
-    private val readingRepository: ReadingRepository,
-    private val settingsDao: SettingsDao,
-    private val userDao: UserDao
+    private val readingRepository: ReadingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddEditUiState())
     val uiState: StateFlow<AddEditUiState> = _uiState.asStateFlow()
 
     private var currentUsername: String = ""
-    private var currentGender: String? = null
 
     fun initializeForNew(username: String) {
         currentUsername = username
         _uiState.value = AddEditUiState()
-        viewModelScope.launch {
-            currentGender = userDao.getUser(username)?.gender
-            val events = MedicationEventStore.peekPending(username, settingsDao)
-            if (events.isNotEmpty()) {
-                _uiState.value = _uiState.value.copy(notes = events.joinToString("\n"))
-            }
-        }
     }
 
     fun initializeForEdit(username: String, reading: Reading) {
         currentUsername = username
-        viewModelScope.launch { currentGender = userDao.getUser(username)?.gender }
         val instant = reading.timestamp
         val ldt = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
         _uiState.value = AddEditUiState(
@@ -200,8 +184,6 @@ class AddEditReadingViewModel(
 
             try {
                 readingRepository.upsertReading(reading)
-                MedicationEventStore.clearPending(currentUsername, settingsDao)
-                PhraseStore.pending = Phrases.getRandomPhrase(reading.category, currentGender)
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
                     saved = true
