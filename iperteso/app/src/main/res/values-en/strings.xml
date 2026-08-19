@@ -236,7 +236,8 @@
     <string name="analysis_hrv">HRV</string>
     <string name="analysis_variations">Hourly variations</string>
     <string name="analysis_variations_sub">Rapid blood pressure variations (dP/dt &gt; 10 mmHg/h) are a cardiovascular risk indicator.</string>
-    <string name="analysis_derivative">Hourly SYS derivative</string>
+    <string name="analysis_derivative">Hourly SYS derivative (mmHg/h)</string>
+    <string name="analysis_derivative_dia">Hourly DIA derivative (mmHg/h)</string>
     <string name="analysis_distribution">ESC/ESH distribution</string>
     <string name="analysis_by_time">Distribution by time of day</string>
     <string name="analysis_morning">Morning</string>

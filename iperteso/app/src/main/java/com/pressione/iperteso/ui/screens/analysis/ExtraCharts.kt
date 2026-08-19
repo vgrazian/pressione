@@ -9,7 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pressione.iperteso.domain.model.Reading
 import java.time.ZoneId
 
@@ -18,30 +22,77 @@ import java.time.ZoneId
  * Red bars = rapid rise (>10 mmHg/h), warning for cardiovascular risk.
  */
 @Composable
-fun DerivativesBarChart(readings: List<Reading>, modifier: Modifier = Modifier) {
+fun DerivativesBarChart(
+    readings: List<Reading>,
+    valueOf: (Reading) -> Int,
+    modifier: Modifier = Modifier
+) {
     val sorted = readings.sortedBy { it.timestamp.toEpochMilli() }
     val derivatives = sorted.zipWithNext { a, b ->
         val hours = (b.timestamp.toEpochMilli() - a.timestamp.toEpochMilli()) / (1000.0 * 3600.0)
-        if (hours > 0) (b.systolic - a.systolic).toFloat() / hours.toFloat() else 0f
+        if (hours > 0) (valueOf(b) - valueOf(a)).toFloat() / hours.toFloat() else 0f
     }
 
     val positiveColor = Color(0xFFD32F2F).copy(alpha = 0.8f)
     val negativeColor = Color(0xFF1976D2).copy(alpha = 0.5f)
     val alarmColor = Color(0xFFD32F2F)
     val zeroLineColor = MaterialTheme.colorScheme.outlineVariant
+    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+    val textMeasurer = rememberTextMeasurer()
+    val axisStyle = TextStyle(
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontSize = 8.sp
+    )
 
     Canvas(modifier = modifier.fillMaxWidth().height(200.dp)) {
         if (derivatives.isEmpty()) return@Canvas
 
         val w = size.width
         val h = size.height
-        val maxAbs = maxOf(derivatives.maxOf { kotlin.math.abs(it) }, 1f)
-        val barW = (w / derivatives.size) * 0.7f
+        val paddingLeft = 30.dp.toPx()
+        val paddingRight = 4.dp.toPx()
+        val plotLeft = paddingLeft
+        val plotW = (w - paddingLeft - paddingRight).coerceAtLeast(1f)
         val centerY = h / 2f
+        val plotHalf = h / 2f - 8.dp.toPx()
 
+        // Nice round scale for the y axis (>= max |dP/dt|, at least 10)
+        val rawMax = derivatives.maxOf { kotlin.math.abs(it) }.coerceAtLeast(10f)
+        val scale = when {
+            rawMax <= 10f -> 10f
+            rawMax <= 15f -> 15f
+            rawMax <= 20f -> 20f
+            rawMax <= 30f -> 30f
+            rawMax <= 40f -> 40f
+            rawMax <= 50f -> 50f
+            else -> kotlin.math.ceil(rawMax / 10f) * 10f
+        }
+
+        fun yFor(v: Float): Float = centerY - (v / scale) * plotHalf
+
+        // Y-axis gridlines + value labels
+        listOf(-scale, -10f, 0f, 10f, scale).distinct().forEach { v ->
+            val y = yFor(v)
+            drawLine(
+                color = if (v == 0f) zeroLineColor else gridColor,
+                start = Offset(plotLeft, y),
+                end = Offset(plotLeft + plotW, y),
+                strokeWidth = 1.dp.toPx()
+            )
+            val label = if (v == 0f) "0" else "%+.0f".format(v)
+            val layout = textMeasurer.measure(label, axisStyle)
+            drawText(
+                textLayoutResult = layout,
+                topLeft = Offset(plotLeft - layout.size.width - 4.dp.toPx(), y - layout.size.height / 2f)
+            )
+        }
+
+        // Bars
+        val barW = (plotW / derivatives.size) * 0.7f
         derivatives.forEachIndexed { i, d ->
-            val x = i * (w / derivatives.size) + (w / derivatives.size - barW) / 2
-            val barH = (kotlin.math.abs(d) / maxAbs) * (h / 2f - 8.dp.toPx())
+            val slotW = plotW / derivatives.size
+            val x = plotLeft + i * slotW + (slotW - barW) / 2
+            val barH = (kotlin.math.abs(d) / scale) * plotHalf
             val color = if (d > 10f) alarmColor else if (d > 0f) positiveColor else negativeColor
 
             if (d >= 0f) {
@@ -59,21 +110,15 @@ fun DerivativesBarChart(readings: List<Reading>, modifier: Modifier = Modifier) 
             }
         }
 
-        // Zero line
-        drawLine(
-            color = zeroLineColor,
-            start = Offset(0f, centerY),
-            end = Offset(w, centerY),
-            strokeWidth = 1.dp.toPx()
-        )
-
-        // Alarm threshold label
-        drawLine(
-            color = alarmColor,
-            start = Offset(0f, centerY - (10f / maxAbs) * (h / 2f)),
-            end = Offset(w, centerY - (10f / maxAbs) * (h / 2f)),
-            strokeWidth = 1.5.dp.toPx()
-        )
+        // Alarm threshold line at +10 mmHg/h (only if within scale)
+        if (scale > 10f) {
+            drawLine(
+                color = alarmColor,
+                start = Offset(plotLeft, yFor(10f)),
+                end = Offset(plotLeft + plotW, yFor(10f)),
+                strokeWidth = 1.5.dp.toPx()
+            )
+        }
     }
 }
 

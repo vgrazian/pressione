@@ -684,7 +684,7 @@ private fun TrendTab(readings: List<Reading>, stats: Statistics, medications: Li
 
 @Composable
 private fun VariationsTab(readings: List<Reading>, stats: Statistics) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text(stringResource(R.string.analysis_variations), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(stringResource(R.string.analysis_variations_sub),
@@ -696,7 +696,11 @@ private fun VariationsTab(readings: List<Reading>, stats: Statistics) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(stringResource(R.string.analysis_derivative), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    DerivativesBarChart(readings = readings)
+                    DerivativesBarChart(readings = readings, valueOf = { it.systolic })
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(stringResource(R.string.analysis_derivative_dia), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    DerivativesBarChart(readings = readings, valueOf = { it.diastolic })
                 }
             }
         }

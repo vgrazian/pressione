@@ -236,7 +236,8 @@
     <string name="analysis_hrv">HRV</string>
     <string name="analysis_variations">Variazioni orarie</string>
     <string name="analysis_variations_sub">Le variazioni rapide della pressione (dP/dt &gt; 10 mmHg/h) sono un indicatore di rischio cardiovascolare.</string>
-    <string name="analysis_derivative">Derivata oraria SYS</string>
+    <string name="analysis_derivative">Derivata oraria SYS (mmHg/h)</string>
+    <string name="analysis_derivative_dia">Derivata oraria DIA (mmHg/h)</string>
     <string name="analysis_distribution">Distribuzione ESC/ESH</string>
     <string name="analysis_by_time">Distribuzione per fascia oraria</string>
     <string name="analysis_morning">Mattina</string>
