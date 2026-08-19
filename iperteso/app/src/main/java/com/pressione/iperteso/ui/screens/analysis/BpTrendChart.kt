@@ -10,7 +10,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pressione.iperteso.domain.model.Medication
 import com.pressione.iperteso.domain.model.Reading
 import com.pressione.iperteso.ui.theme.CategoryGrade1
@@ -31,6 +36,12 @@ fun BpTrendChart(
     val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     val targetColor = Color(0xFF2E7D32).copy(alpha = 0.25f)
     val milestoneColor = MaterialTheme.colorScheme.tertiary
+    val textMeasurer = rememberTextMeasurer()
+    val milestoneLabelStyle = TextStyle(
+        color = milestoneColor,
+        fontSize = 9.sp,
+        fontWeight = FontWeight.Bold
+    )
 
     Canvas(
         modifier = modifier
@@ -43,7 +54,7 @@ fun BpTrendChart(
         val h = size.height
         val paddingLeft = 8.dp.toPx()
         val paddingRight = 8.dp.toPx()
-        val paddingTop = 12.dp.toPx()
+        val paddingTop = 16.dp.toPx()
         val paddingBottom = 12.dp.toPx()
         val chartW = w - paddingLeft - paddingRight
         val chartH = h - paddingTop - paddingBottom
@@ -111,8 +122,8 @@ fun BpTrendChart(
             strokeWidth = 1.5.dp.toPx()
         )
 
-        // Medication milestones (therapy changes)
-        fun drawMilestone(x: Float, isEnd: Boolean) {
+        // Medication milestones (therapy changes) — numbered to match the legend
+        fun drawMilestone(x: Float, number: Int, isStart: Boolean) {
             var y = paddingTop
             val dash = 8.dp.toPx()
             val gap = 6.dp.toPx()
@@ -126,25 +137,20 @@ fun BpTrendChart(
                 )
                 y += dash + gap
             }
-            val marker = Path()
-            if (!isEnd) {
-                marker.moveTo(x - 6.dp.toPx(), paddingTop + 9.dp.toPx())
-                marker.lineTo(x + 6.dp.toPx(), paddingTop + 9.dp.toPx())
-                marker.lineTo(x, paddingTop)
-            } else {
-                marker.moveTo(x - 6.dp.toPx(), paddingTop + chartH - 9.dp.toPx())
-                marker.lineTo(x + 6.dp.toPx(), paddingTop + chartH - 9.dp.toPx())
-                marker.lineTo(x, paddingTop + chartH)
-            }
-            marker.close()
-            drawPath(marker, milestoneColor)
+            val label = (if (isStart) "+" else "-") + number
+            val layout = textMeasurer.measure(label, milestoneLabelStyle)
+            drawText(
+                textLayoutResult = layout,
+                topLeft = Offset(x - layout.size.width / 2f, 0f)
+            )
         }
 
-        medications.forEach { med ->
+        medications.forEachIndexed { idx, med ->
+            val number = idx + 1
             val start = med.startDate.toEpochMilli()
-            if (start in minT..maxT) drawMilestone(xForTime(start), isEnd = false)
+            if (start in minT..maxT) drawMilestone(xForTime(start), number, isStart = true)
             med.endDate?.toEpochMilli()?.let { end ->
-                if (end in minT..maxT) drawMilestone(xForTime(end), isEnd = true)
+                if (end in minT..maxT) drawMilestone(xForTime(end), number, isStart = false)
             }
         }
     }

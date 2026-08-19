@@ -595,24 +595,32 @@ private fun TrendTab(readings: List<Reading>, stats: Statistics, medications: Li
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        relevantMeds.forEach { med ->
+                        relevantMeds.forEachIndexed { index, med ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(top = 4.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(8.dp)
-                                        .background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(50))
-                                )
+                                        .size(18.dp)
+                                        .background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(50)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${index + 1}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onTertiary
+                                    )
+                                }
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     buildString {
                                         append(med.name)
-                                        append(" — ")
+                                        append("   + ")
                                         append(medDateFormat.format(med.startDate.atZone(ZoneId.systemDefault())))
                                         med.endDate?.let {
-                                            append(" → ")
+                                            append("   - ")
                                             append(medDateFormat.format(it.atZone(ZoneId.systemDefault())))
                                         }
                                     },
