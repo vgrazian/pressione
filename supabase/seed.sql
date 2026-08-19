@@ -3,12 +3,20 @@
 -- Hash generato con: SELECT encode(digest('Pressione2026!', 'sha256'), 'hex')
 -- Nota: nell'applicazione usiamo SHA-256 per l'hashing delle password
 -- Questi hash sono precalcolati per la password 'Pressione2026!'
-INSERT INTO users (username, email, password_hash, role, active)
+INSERT INTO users (
+        username,
+        email,
+        password_hash,
+        role,
+        disabled,
+        is_seeded
+    )
 VALUES (
         'nadia',
         'nadia@pressione.local',
         'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
         'admin',
+        false,
         true
     ),
     (
@@ -16,6 +24,7 @@ VALUES (
         'roberto@pressione.local',
         'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
         'user',
+        false,
         true
     ),
     (
@@ -23,6 +32,7 @@ VALUES (
         'barbara@pressione.local',
         'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
         'user',
+        false,
         true
     ),
     (
@@ -30,6 +40,7 @@ VALUES (
         'valerio@pressione.local',
         'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
         'admin',
+        false,
         true
     ),
     (
@@ -37,6 +48,7 @@ VALUES (
         'marco@pressione.local',
         'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
         'user',
+        false,
         true
     ),
     (
@@ -44,6 +56,7 @@ VALUES (
         'rita@pressione.local',
         'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
         'user',
+        false,
         true
     ),
     (
@@ -51,6 +64,7 @@ VALUES (
         'anna@pressione.local',
         'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
         'user',
+        false,
         true
     ) ON CONFLICT (username) DO NOTHING;
 -- Seed farmaci: timeline terapeutica realistica per ogni utente seed,

@@ -57,7 +57,7 @@ class AuthApi {
 
     suspend fun setUserActive(username: String, active: Boolean) {
         client.from("users").update({
-            set("active", active)
+            set("disabled", !active)
             set("updated_at", java.time.Instant.now().toString())
         }) { filter { eq("username", username) } }
     }
@@ -122,7 +122,8 @@ class AuthApi {
 data class UserResponse(
     val username: String, val email: String,
     @SerialName("password_hash") val passwordHash: String,
-    val role: String = "user", val active: Boolean = true,
+    val role: String = "user",
+    @SerialName("disabled") val disabled: Boolean = false,
     @SerialName("birth_date") val birthDate: String? = null,
     val gender: String? = null,
     @SerialName("profile_completed") val profileCompleted: Boolean = false,
@@ -135,7 +136,10 @@ data class UserResponse(
     @SerialName("street_number") val streetNumber: String? = null,
     val city: String? = null,
     @SerialName("postal_code") val postalCode: String? = null
-)
+) {
+    /** The app uses `active` internally; production stores the inverse `disabled`. */
+    val active: Boolean get() = !disabled
+}
 
 @Serializable
 data class CreateUserRequest(
