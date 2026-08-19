@@ -54,22 +54,65 @@ fun BpTrendChart(
         val h = size.height
         val paddingLeft = 8.dp.toPx()
         val paddingRight = 8.dp.toPx()
-        val paddingTop = 16.dp.toPx()
         val paddingBottom = 12.dp.toPx()
         val chartW = w - paddingLeft - paddingRight
+
+        val minT = sorted.first().timestamp.toEpochMilli()
+        val maxT = sorted.last().timestamp.toEpochMilli()
+        val timeSpan = (maxT - minT).coerceAtLeast(1L)
+
+        fun xForTime(t: Long): Float =
+            paddingLeft + chartW * ((t - minT).toFloat() / timeSpan).coerceIn(0f, 1f)
+
+        // ── Medication milestones: build + stagger labels so that milestones
+        //    on the same date are shifted vertically instead of overlapping.
+        data class PlacedMilestone(
+            val x: Float,
+            val number: Int,
+            val isStart: Boolean,
+            val slot: Int
+        )
+
+        var lineHeight = 0f
+        val placedMilestones = mutableListOf<PlacedMilestone>()
+        if (medications.isNotEmpty()) {
+            val slotRightEdge = mutableListOf<Float>()
+            val pending = mutableListOf<Triple<Float, Int, Boolean>>() // x, number, isStart
+            medications.forEachIndexed { idx, med ->
+                val number = idx + 1
+                val start = med.startDate.toEpochMilli()
+                if (start in minT..maxT) pending += Triple(xForTime(start), number, true)
+                med.endDate?.toEpochMilli()?.let { end ->
+                    if (end in minT..maxT) pending += Triple(xForTime(end), number, false)
+                }
+            }
+            pending.sortedBy { it.first }.forEach { (x, number, isStart) ->
+                val label = (if (isStart) "+" else "-") + number
+                val layout = textMeasurer.measure(label, milestoneLabelStyle)
+                if (lineHeight == 0f) lineHeight = layout.size.height.toFloat()
+                val left = x - layout.size.width / 2f
+                val right = x + layout.size.width / 2f
+                var slot = slotRightEdge.indexOfFirst { it < left }
+                if (slot == -1) {
+                    slot = slotRightEdge.size
+                    slotRightEdge += 0f
+                }
+                slotRightEdge[slot] = right
+                placedMilestones += PlacedMilestone(x, number, isStart, slot)
+            }
+        }
+
+        // Reserve extra top space so staggered labels stay above the plot area
+        val baseTopPadding = 16.dp.toPx()
+        val extraSlots = placedMilestones.maxOfOrNull { it.slot } ?: 0
+        val paddingTop = baseTopPadding + extraSlots * lineHeight
         val chartH = h - paddingTop - paddingBottom
 
         val minY = 50f
         val maxY = 220f
         val rangeY = maxY - minY
 
-        val minT = sorted.first().timestamp.toEpochMilli()
-        val maxT = sorted.last().timestamp.toEpochMilli()
-        val timeSpan = (maxT - minT).coerceAtLeast(1L)
-
         fun yFor(v: Float): Float = paddingTop + chartH * (1f - (v - minY) / rangeY)
-        fun xForTime(t: Long): Float =
-            paddingLeft + chartW * ((t - minT).toFloat() / timeSpan).coerceIn(0f, 1f)
 
         // Target zone 90-140
         val zoneTop = yFor(140f)
@@ -123,7 +166,7 @@ fun BpTrendChart(
         )
 
         // Medication milestones (therapy changes) — numbered to match the legend
-        fun drawMilestone(x: Float, number: Int, isStart: Boolean) {
+        placedMilestones.forEach { m ->
             var y = paddingTop
             val dash = 8.dp.toPx()
             val gap = 6.dp.toPx()
@@ -131,27 +174,18 @@ fun BpTrendChart(
                 val yEnd = minOf(y + dash, paddingTop + chartH)
                 drawLine(
                     color = milestoneColor,
-                    start = Offset(x, y),
-                    end = Offset(x, yEnd),
+                    start = Offset(m.x, y),
+                    end = Offset(m.x, yEnd),
                     strokeWidth = 1.5.dp.toPx()
                 )
                 y += dash + gap
             }
-            val label = (if (isStart) "+" else "-") + number
+            val label = (if (m.isStart) "+" else "-") + m.number
             val layout = textMeasurer.measure(label, milestoneLabelStyle)
             drawText(
                 textLayoutResult = layout,
-                topLeft = Offset(x - layout.size.width / 2f, 0f)
+                topLeft = Offset(m.x - layout.size.width / 2f, m.slot * lineHeight)
             )
-        }
-
-        medications.forEachIndexed { idx, med ->
-            val number = idx + 1
-            val start = med.startDate.toEpochMilli()
-            if (start in minT..maxT) drawMilestone(xForTime(start), number, isStart = true)
-            med.endDate?.toEpochMilli()?.let { end ->
-                if (end in minT..maxT) drawMilestone(xForTime(end), number, isStart = false)
-            }
         }
     }
 }
